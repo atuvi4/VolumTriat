@@ -1,0 +1,358 @@
+/* =========================================================
+   Project75 — sistema visual premium (vanilla)
+   ========================================================= */
+:root{
+  --bg:#F7F8FA;
+  --surface:#FFFFFF;
+  --surface-2:#FBFCFD;
+  --text:#111827;
+  --muted:#6B7280;
+  --faint:#9CA3AF;
+
+  --accent:#0E7A5F;          /* teal-green profund */
+  --accent-strong:#0B6450;
+  --accent-soft:#E7F3EF;
+  --accent-line:#CDE7DF;
+
+  --warn:#B4692B;            /* taronja elegant */
+  --warn-soft:#FBF2E9;
+  --info:#2F5FE0;
+  --info-soft:#EEF2FD;
+
+  --gym:#0E7A5F; --run:#2563EB; --bike:#B4692B; --swim:#0E8FA8;
+
+  --border:#ECEEF1;
+  --border-2:#E3E6EA;
+
+  --radius:18px;
+  --radius-sm:13px;
+  --shadow-sm:0 1px 2px rgba(17,24,39,.04);
+  --shadow:0 1px 2px rgba(17,24,39,.03), 0 10px 26px rgba(17,24,39,.05);
+  --shadow-lg:0 20px 50px rgba(17,24,39,.10);
+
+  --maxw:960px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.45;
+  font-feature-settings:"cv02","cv03","cv04","ss01";
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+h1,h2,h3{letter-spacing:-.02em}
+
+/* icones */
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
+.ic.sm{width:16px;height:16px}
+.ic.lg{width:24px;height:24px}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+.app{display:flex;min-height:100vh;max-width:1280px;margin:0 auto}
+
+/* Sidebar (desktop) */
+.sidebar{display:none;flex-direction:column;width:250px;flex-shrink:0;
+  border-right:1px solid var(--border);background:var(--surface);
+  padding:24px 16px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:38px;height:38px;border-radius:11px;flex-shrink:0;
+  background:linear-gradient(145deg,#12aa80,#0B6450);
+  color:#fff;font-weight:800;font-size:15px;letter-spacing:-.04em;
+  display:grid;place-items:center;box-shadow:0 4px 12px rgba(11,100,80,.28)}
+.brand-txt{display:flex;flex-direction:column;line-height:1.15}
+.bname{font-weight:800;font-size:17px}
+.btag{font-size:11px;color:var(--faint);font-weight:500;letter-spacing:.01em}
+.side-nav{margin-top:26px;display:flex;flex-direction:column;gap:3px;flex:1}
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:11px 12px;border-radius:11px;color:var(--muted);font-weight:600;font-size:14.5px;transition:.12s}
+.nav-item .ic{color:var(--faint)}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent-strong)}
+.nav-item.active .ic{color:var(--accent)}
+.side-foot{border-top:1px solid var(--border);padding-top:14px;margin-top:8px}
+.userchip{display:flex;align-items:center;gap:11px}
+.userchip .av{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);
+  color:var(--accent-strong);font-weight:700;display:grid;place-items:center;font-size:14px}
+.userchip .u-name{font-weight:700;font-size:13.5px}
+.userchip .u-sub{font-size:11.5px;color:var(--faint)}
+.side-streak{display:flex;align-items:center;gap:6px;margin-top:12px;color:var(--warn);
+  font-weight:700;font-size:13px}
+
+/* Main */
+.main{flex:1;min-width:0;padding-bottom:88px}
+.content{max-width:var(--maxw);margin:0 auto;padding:8px 18px 44px}
+
+/* Appbar (mobile) */
+.appbar{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px calc(10px);position:sticky;top:0;z-index:15;
+  background:rgba(247,248,250,.86);backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--border)}
+.appbar .brand .mark{width:32px;height:32px;border-radius:9px;font-size:13px}
+.appbar .bname{font-size:15px}
+.streak-pill{display:inline-flex;align-items:center;gap:6px;background:var(--warn-soft);
+  color:var(--warn);font-weight:700;font-size:13px;padding:7px 12px;border-radius:999px}
+
+/* Page head */
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;
+  gap:12px;padding:18px 0 6px;max-width:var(--maxw);margin:0 auto}
+.pagehead h1{font-size:26px;margin:0;font-weight:800}
+.pagehead .sub{margin:2px 0 0;color:var(--muted);font-size:13.5px;font-weight:500}
+
+.screen{display:none;animation:fade .2s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* =========================================================
+   CARDS & PRIMITIVES
+   ========================================================= */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
+.card.flat{box-shadow:none}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.card > h2.sec{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 12px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* estat del dia */
+.badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12.5px;
+  padding:7px 13px;border-radius:999px;background:var(--accent-soft);color:var(--accent-strong)}
+.badge .dotb{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.info{background:var(--info-soft);color:var(--info)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 17px;border-radius:12px;font-weight:650;font-size:14.5px;
+  border:1px solid var(--border-2);background:var(--surface);color:var(--text);transition:.12s}
+.btn:hover{border-color:var(--faint)}
+.btn .ic{width:17px;height:17px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 12px rgba(14,122,95,.22)}
+.btn.primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn.ghost{background:var(--surface-2)}
+.btn.block{flex:1;min-width:130px}
+.btn.small{padding:9px 13px;font-size:13px;border-radius:10px}
+.btn.on{background:var(--info);color:#fff;border-color:var(--info)}
+.btn:disabled{opacity:.55;cursor:default}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.quickrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:2px}
+.quickrow .btn{padding:13px 8px;flex-direction:column;gap:6px;font-size:12.5px;text-align:center}
+.quickrow .btn .ic{width:19px;height:19px}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+.hero{background:linear-gradient(160deg,#0E7A5F 0%,#0B5A47 100%);color:#fff;border:none;
+  box-shadow:0 14px 34px rgba(11,90,71,.28);position:relative;overflow:hidden;padding:22px}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;
+  border-radius:50%;background:rgba(255,255,255,.06)}
+.hero .eyebrow{color:rgba(255,255,255,.72)}
+.hero-title{font-size:22px;font-weight:800;margin:8px 0 6px;line-height:1.2;position:relative}
+.hero-sub{color:rgba(255,255,255,.82);font-size:14px;margin:0;position:relative}
+.hero-actions{display:flex;gap:10px;margin-top:16px;position:relative;flex-wrap:wrap}
+.hero .btn{background:#fff;color:var(--accent-strong);border:none}
+.hero .btn.line{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)}
+
+/* stats card */
+.stats{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.ring{--p:0;position:relative;width:104px;height:104px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--accent) calc(var(--p)*1%), #EEF1F3 0)}
+.ring-in{position:absolute;inset:9px;background:var(--surface);border-radius:50%;
+  display:grid;place-items:center;text-align:center}
+.ring-in b{font-size:20px;font-weight:800;line-height:1}
+.ring-in span{font-size:10.5px;color:var(--muted);margin-top:3px}
+.stat-bars{flex:1;min-width:180px;display:flex;flex-direction:column;gap:14px}
+.metric .row{margin-bottom:7px;font-weight:600;font-size:13.5px}
+.metric .row .v{color:var(--muted);font-weight:600}
+.bar{height:8px;background:#EEF1F3;border-radius:999px;overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .45s cubic-bezier(.4,0,.2,1)}
+.bar.big{height:11px}
+.bar.prot > i{background:#12aa80}
+
+/* mini training + coach on dashboard */
+.grid2{display:grid;grid-template-columns:1fr;gap:14px}
+.mini-train{display:flex;align-items:center;gap:14px}
+.mini-train .ico{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);
+  color:var(--accent);display:grid;place-items:center}
+.mini-train .t b{display:block;font-size:15px;font-weight:700}
+.mini-train .t span{font-size:12.5px;color:var(--muted)}
+
+/* coach insight */
+.insight{border:1px solid var(--accent-line);background:var(--surface);border-radius:var(--radius);
+  padding:16px 16px 16px 18px;position:relative;overflow:hidden}
+.insight::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.insight.warn{border-color:#EAD8C2}.insight.warn::before{background:var(--warn)}
+.insight .ihead{display:flex;align-items:center;gap:8px;color:var(--accent-strong);font-weight:700;font-size:12.5px;letter-spacing:.02em;margin-bottom:7px}
+.insight.warn .ihead{color:var(--warn)}
+.insight p{margin:0;font-size:14.5px;line-height:1.5}
+
+/* =========================================================
+   NUTRICIÓ
+   ========================================================= */
+.seg{display:inline-flex;background:#EDEFF2;border-radius:11px;padding:3px}
+.seg button{padding:8px 15px;border-radius:9px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--text);box-shadow:var(--shadow-sm)}
+
+.objgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.obj{border:1px solid var(--border);border-radius:14px;padding:13px 12px;background:var(--surface-2)}
+.obj .ov{font-size:19px;font-weight:800;letter-spacing:-.02em}
+.obj .ol{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.obj .og{font-size:11px;color:var(--faint);font-weight:600}
+.obj.ok{background:var(--accent-soft);border-color:var(--accent-line)}
+.obj.ok .ov,.obj.ok .ol{color:var(--accent-strong)}
+
+.meal{border:1px solid var(--border);border-radius:16px;padding:15px;margin-top:11px;background:var(--surface);transition:.15s}
+.meal.done{background:var(--surface-2);border-color:var(--border)}
+.meal .slot{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700}
+.meal .name{font-weight:700;font-size:15.5px;margin-top:3px}
+.meal.done .name{color:var(--muted)}
+.meal .macros{display:flex;gap:14px;margin-top:8px;color:var(--muted);font-size:13px;font-weight:600}
+.meal .macros .m{display:inline-flex;align-items:center;gap:5px}
+.meal .macros .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.meal .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;align-items:center}
+.doneflag{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-weight:700;font-size:13.5px}
+
+/* =========================================================
+   ENTRENAMENT
+   ========================================================= */
+.week{display:flex;flex-direction:column}
+.wday{display:flex;align-items:center;gap:14px;padding:13px 12px;border-radius:13px;position:relative}
+.wday + .wday{margin-top:2px}
+.wday .wd{width:42px;flex-shrink:0}
+.wday .wd b{display:block;font-size:13px;font-weight:700}
+.wday .wd span{font-size:11px;color:var(--faint)}
+.wday .wl{font-weight:650;font-size:14.5px;flex:1}
+.wday.now{background:var(--accent-soft)}
+.wday.now::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--accent)}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
+  padding:5px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border)}
+.tag .tdot{width:7px;height:7px;border-radius:50%}
+.tag--gym .tdot{background:var(--gym)} .tag--gym{color:var(--gym)}
+.tag--run .tdot{background:var(--run)} .tag--run{color:var(--run)}
+.tag--bike .tdot{background:var(--bike)} .tag--bike{color:var(--bike)}
+.tag--swim .tdot{background:var(--swim)} .tag--swim{color:var(--swim)}
+.chip-now{font-size:11px;font-weight:700;color:var(--accent);background:#fff;border:1px solid var(--accent-line);padding:4px 9px;border-radius:999px}
+.chip-done{font-size:11px;font-weight:700;color:var(--faint);background:var(--surface-2);padding:4px 9px;border-radius:999px}
+
+.focus-card .fc-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.focus-card .fc-title{font-size:19px;font-weight:800;margin:12px 0 4px}
+
+/* =========================================================
+   EVOLUCIÓ
+   ========================================================= */
+.evomini{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:var(--shadow-sm)}
+.mcard .mi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
+.mcard .mv{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.mcard .ml{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+.mcard .mv.up{color:var(--accent)}
+.mcard.amber .mi{background:var(--warn-soft);color:var(--warn)}
+
+.goalwrap .ends{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:9px}
+.goalwrap .ends b{color:var(--accent)}
+.miles{position:relative;height:26px;margin-top:10px}
+.mile{position:absolute;transform:translateX(-50%);font-size:11px;font-weight:700;color:var(--faint);text-align:center}
+.mile .m-dot{display:block;width:9px;height:9px;border-radius:50%;background:#D3D7DD;margin:0 auto 4px;border:2px solid var(--surface);box-shadow:0 0 0 1px #D3D7DD}
+.mile.hit{color:var(--accent-strong)}
+.mile.hit .m-dot{background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.goal-note{margin:16px 0 0;font-size:13px;color:var(--muted)}
+.goal-note b{color:var(--text)}
+
+.chart{height:150px;display:flex;align-items:flex-end;gap:8px;padding:8px 2px 24px;position:relative}
+.chart .col{flex:1;border-radius:7px 7px 3px 3px;position:relative;min-height:8px;
+  background:linear-gradient(180deg,#16a882,#0E7A5F)}
+.chart .col > em{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:10px;color:var(--faint);font-style:normal;font-weight:600}
+.chart .col > i{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:var(--muted);font-style:normal;opacity:0;transition:.15s}
+.chart .col:hover > i{opacity:1}
+
+.photos{display:flex;gap:11px;margin-top:12px}
+.photo{flex:1;aspect-ratio:3/4;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--faint)}
+.photo .ic{width:26px;height:26px;stroke-width:1.4}
+.photo span{font-size:11.5px;font-weight:600}
+.photo.add{border:1px dashed var(--accent-line);color:var(--accent)}
+
+/* =========================================================
+   COACH
+   ========================================================= */
+.coach-main{border:1px solid var(--accent-line)}
+.coach-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.coach-head .ci{width:30px;height:30px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.coach-head b{font-size:14.5px}.coach-head span{font-size:11.5px;color:var(--faint);display:block;font-weight:500;margin-top:-1px}
+.coach-body{font-size:16px;line-height:1.55;font-weight:500}
+.coach-ctx{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ctx{flex:1;min-width:130px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:11px 13px}
+.ctx .cl{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.ctx .cv{font-size:15px;font-weight:700;margin-top:3px}
+
+/* =========================================================
+   CONFIGURACIÓ
+   ========================================================= */
+.setgroup{margin-bottom:20px}
+.setgroup > .gt{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);padding:0 4px 8px}
+.setgroup .card{padding:4px 16px;margin-bottom:0}
+.set{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;border-top:1px solid var(--border);font-weight:600;font-size:14.5px}
+.set:first-child{border-top:none}
+.set .val{color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.set .val .ic{color:var(--faint)}
+
+/* =========================================================
+   BOTTOM NAV (mobile)
+   ========================================================= */
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:20;
+  background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(14px);
+  border-top:1px solid var(--border);display:flex;justify-content:space-around;
+  padding:9px 6px calc(9px + env(safe-area-inset-bottom))}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);
+  font-size:10.5px;font-weight:650;flex:1;padding:3px 0}
+.tab .ic{width:22px;height:22px}
+.tab.active{color:var(--accent)}
+
+/* =========================================================
+   SHEET + TOAST
+   ========================================================= */
+.overlay{position:fixed;inset:0;background:rgba(17,24,39,.44);display:none;
+  align-items:flex-end;justify-content:center;z-index:40;backdrop-filter:blur(2px)}
+.overlay.open{display:flex}
+.sheet{background:var(--surface);width:100%;max-width:500px;border-radius:22px 22px 0 0;
+  padding:22px 20px calc(26px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg);animation:up .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(34px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h3{margin:0 0 3px;font-size:19px}
+.sheet .sh-sub{margin:0 0 6px;color:var(--muted);font-size:13.5px}
+.opt{border:1px solid var(--border);border-radius:14px;padding:15px;margin-top:10px;
+  display:flex;justify-content:space-between;align-items:center;font-weight:650;font-size:14.5px;transition:.12s}
+.opt:hover{border-color:var(--accent);background:var(--accent-soft)}
+.opt .ov{color:var(--muted);font-weight:600;font-size:13px}
+.qlabel{font-weight:700;margin-top:16px;font-size:13.5px}
+.checkopt{display:flex;gap:9px;flex-wrap:wrap;margin:9px 0 2px}
+.chip{border:1px solid var(--border-2);border-radius:999px;padding:11px 16px;font-weight:600;font-size:14px}
+.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.toast{position:fixed;bottom:102px;left:50%;transform:translateX(-50%) translateY(18px);opacity:0;
+  background:#111827;color:#fff;padding:13px 18px;border-radius:13px;font-size:13.5px;font-weight:600;
+  z-index:60;transition:.26s cubic-bezier(.2,.8,.2,1);pointer-events:none;max-width:86%;text-align:center;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* =========================================================
+   RESPONSIVE (desktop)
+   ========================================================= */
+@media(min-width:860px){
+  .sidebar{display:flex}
+  .appbar{display:none}
+  .tabbar{display:none}
+  .main{padding-bottom:0}
+  .content{padding:8px 30px 50px}
+  .grid2{grid-template-columns:1fr 1fr}
+  .evomini{grid-template-columns:repeat(4,1fr)}
+  .overlay{align-items:center}
+  .sheet{border-radius:22px;max-width:460px}
+  @keyframes up{from{transform:translateY(12px);opacity:.4}to{transform:none;opacity:1}}
+}
+@media(max-width:420px){
+  .objgrid{grid-template-columns:repeat(2,1fr)}
+  .quickrow{grid-template-columns:repeat(3,1fr)}
+}

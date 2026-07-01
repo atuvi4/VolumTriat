@@ -1,0 +1,166 @@
+import type { FoodItem } from './nutritionTypes';
+
+/* =========================================================
+   Base local d'aliments habituals per volum.
+   NOTA D'HONESTEDAT (veure README_NUTRITION.md):
+   Els valors per 100 g són valors de REFERÈNCIA ESTÀNDARD compilats
+   (alineats amb rangs USDA/BEDCA típics), NO mesures de laboratori
+   d'aquesta app. Per això la confiança màxima aquí és "medium".
+   Els aliments molt variables per marca/tall es marquen "low" i
+   alguns com "placeholder_pending_verification" fins connectar API.
+   ========================================================= */
+
+export const FOODS: FoodItem[] = [
+  {
+    id: 'rice_cooked', name: 'Arròs blanc cuit', category: 'carb',
+    kcalPer100g: 130, proteinPer100g: 2.7, carbsPer100g: 28, fatPer100g: 0.3, fiberPer100g: 0.4,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'pasta_cooked', name: 'Pasta cuita', category: 'carb',
+    kcalPer100g: 158, proteinPer100g: 5.8, carbsPer100g: 31, fatPer100g: 0.9, fiberPer100g: 1.8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 220, gran: 300, 'molt gran': 380 },
+  },
+  {
+    id: 'bread', name: 'Pa', category: 'carb',
+    kcalPer100g: 265, proteinPer100g: 9, carbsPer100g: 49, fatPer100g: 3.2, fiberPer100g: 2.7,
+    source: 'local_verified', confidence: 'low', // molt variable per tipus de pa
+    portions: { petit: 40, normal: 80, gran: 120, 'molt gran': 160 },
+  },
+  {
+    id: 'oats', name: 'Civada (flocs)', category: 'carb',
+    kcalPer100g: 379, proteinPer100g: 13, carbsPer100g: 67, fatPer100g: 6.5, fiberPer100g: 10,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 30, normal: 40, gran: 60, 'molt gran': 80 },
+  },
+  {
+    id: 'potato_cooked', name: 'Patata cuita', category: 'carb',
+    kcalPer100g: 87, proteinPer100g: 1.9, carbsPer100g: 20, fatPer100g: 0.1, fiberPer100g: 1.8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'chicken_breast', name: 'Pit de pollastre (cuit)', category: 'protein',
+    kcalPer100g: 165, proteinPer100g: 31, carbsPer100g: 0, fatPer100g: 3.6,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'egg', name: 'Ou', category: 'protein', servingName: '1 ou ≈ 50 g',
+    kcalPer100g: 143, proteinPer100g: 13, carbsPer100g: 0.7, fatPer100g: 9.5,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 50, normal: 100, gran: 150, 'molt gran': 200 },
+  },
+  {
+    id: 'tuna_can', name: 'Tonyina (al natural, llauna)', category: 'protein',
+    kcalPer100g: 116, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 1,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 60, normal: 100, gran: 140, 'molt gran': 180 },
+  },
+  {
+    id: 'salmon', name: 'Salmó', category: 'protein',
+    kcalPer100g: 208, proteinPer100g: 20, carbsPer100g: 0, fatPer100g: 13,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'beef_lean', name: 'Vedella magra (cuita)', category: 'protein',
+    kcalPer100g: 187, proteinPer100g: 27, carbsPer100g: 0, fatPer100g: 8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'greek_yogurt', name: 'Iogurt grec', category: 'dairy',
+    kcalPer100g: 97, proteinPer100g: 9, carbsPer100g: 4, fatPer100g: 5,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 125, normal: 200, gran: 300, 'molt gran': 400 },
+  },
+  {
+    id: 'milk_whole', name: 'Llet sencera', category: 'dairy',
+    kcalPer100g: 61, proteinPer100g: 3.2, carbsPer100g: 4.8, fatPer100g: 3.3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 200, normal: 300, gran: 400, 'molt gran': 500 },
+  },
+  {
+    id: 'cheese', name: 'Formatge semi', category: 'dairy',
+    kcalPer100g: 350, proteinPer100g: 25, carbsPer100g: 2, fatPer100g: 27,
+    source: 'local_verified', confidence: 'low', // molt variable per tipus
+    portions: { petit: 20, normal: 30, gran: 50, 'molt gran': 70 },
+  },
+  {
+    id: 'olive_oil', name: "Oli d'oliva", category: 'fat',
+    kcalPer100g: 884, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 100,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 10, normal: 15, gran: 20, 'molt gran': 25 },
+  },
+  {
+    id: 'nuts', name: 'Fruits secs (mescla)', category: 'fat',
+    kcalPer100g: 607, proteinPer100g: 21, carbsPer100g: 22, fatPer100g: 50, fiberPer100g: 9,
+    source: 'local_verified', confidence: 'low', // varia molt per mescla
+    portions: { petit: 15, normal: 25, gran: 40, 'molt gran': 60 },
+  },
+  {
+    id: 'peanut_butter', name: 'Crema de cacauet', category: 'fat',
+    kcalPer100g: 588, proteinPer100g: 25, carbsPer100g: 20, fatPer100g: 50, fiberPer100g: 6,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 15, normal: 20, gran: 30, 'molt gran': 40 },
+  },
+  {
+    id: 'banana', name: 'Plàtan', category: 'fruit', servingName: '1 plàtan ≈ 120 g',
+    kcalPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 23, fatPer100g: 0.3, fiberPer100g: 2.6,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 120, gran: 160, 'molt gran': 200 },
+  },
+  {
+    id: 'lentils_cooked', name: 'Llenties cuites', category: 'legume',
+    kcalPer100g: 116, proteinPer100g: 9, carbsPer100g: 20, fatPer100g: 0.4, fiberPer100g: 8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'chickpeas_cooked', name: 'Cigrons cuits', category: 'legume',
+    kcalPer100g: 164, proteinPer100g: 9, carbsPer100g: 27, fatPer100g: 2.6, fiberPer100g: 8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'cereal', name: 'Cereals', category: 'carb',
+    kcalPer100g: 375, proteinPer100g: 8, carbsPer100g: 84, fatPer100g: 2, fiberPer100g: 6,
+    source: 'placeholder_pending_verification', confidence: 'low', // depèn totalment de la marca
+    portions: { petit: 30, normal: 50, gran: 80, 'molt gran': 120 },
+  },
+  {
+    id: 'honey', name: 'Mel', category: 'sweetener',
+    kcalPer100g: 304, proteinPer100g: 0.3, carbsPer100g: 82, fatPer100g: 0,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 10, normal: 15, gran: 25, 'molt gran': 40 },
+  },
+  {
+    id: 'whey', name: 'Proteïna whey', category: 'supplement', isSupplement: true,
+    servingName: '1 cassó ≈ 30 g',
+    kcalPer100g: 400, proteinPer100g: 80, carbsPer100g: 8, fatPer100g: 6,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 20, normal: 30, gran: 40, 'molt gran': 50 },
+  },
+];
+
+export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
+
+export function getFood(id: string): FoodItem | undefined {
+  return FOOD_MAP[id];
+}
+
+// Ració per defecte segons categoria (fallback si un aliment no defineix portions)
+export const DEFAULT_PORTIONS: Record<string, Record<string, number>> = {
+  carb: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  protein: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  dairy: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  fat: { petit: 10, normal: 15, gran: 20, 'molt gran': 30 },
+  fruit: { petit: 100, normal: 130, gran: 180, 'molt gran': 220 },
+  legume: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  sweetener: { petit: 10, normal: 15, gran: 25, 'molt gran': 40 },
+  supplement: { petit: 20, normal: 30, gran: 40, 'molt gran': 50 },
+  other: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+};

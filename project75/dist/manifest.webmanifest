@@ -1,0 +1,12 @@
+{
+  "name": "Project75 — Nutrition-first hybrid coach",
+  "short_name": "Project75",
+  "description": "App personal per guanyar volum de forma agressiva però sostenible.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F8FA",
+  "theme_color": "#F7F8FA",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F7F8FA">
+<title>Project75 — Nutrition-first hybrid coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== SVG ICON SPRITE ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></symbol>
+    <symbol id="i-nutri" viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 0 0 4 0V3"/><path d="M8 10v11"/><path d="M18 3c-1.7 1-3 3-3 6v3h3"/><path d="M18 12v9"/></symbol>
+    <symbol id="i-train" viewBox="0 0 24 24"><path d="M6.5 8v8M4 9.5v5M17.5 8v8M20 9.5v5M6.5 12h11"/></symbol>
+    <symbol id="i-evo" viewBox="0 0 24 24"><path d="M3 17 9 11l4 4 8-8"/><path d="M17 7h4v4"/></symbol>
+    <symbol id="i-coach" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 12h3M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 17h8M16 17h4"/><circle cx="14" cy="17" r="2"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 3 4 4.4 4 8a4 4 0 1 1-8 0c0-2 1-3.2 2-4 0 1 .6 2 1.6 2C11 8 11 5 12 2Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M17 3l4 4-4 4"/><path d="M21 7H9a4 4 0 0 0-4 4"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h12a4 4 0 0 0 4-4"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24"><path d="M6 3h12l-1.4 15.6A2 2 0 0 1 14.6 20.5H9.4a2 2 0 0 1-2-1.9L6 3Z"/><path d="M6.6 8.5h10.8"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 2.5 20h19L12 3.5Z"/><path d="M12 10v4.5M12 18h.01"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a7 7 0 1 0 10 10Z"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M9 5h6"/><path d="M12 5v3"/><path d="M5.5 8h13l1.2 10a2 2 0 0 1-2 2.2H6.3a2 2 0 0 1-2-2.2L5.5 8Z"/><path d="M9.5 12.5h5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m5 18 5-5 4 3 3-2 3 3"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- ===== SIDEBAR (desktop) ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">75</div>
+      <div class="brand-txt"><span class="bname">Project75</span><span class="btag">Nutrition-first hybrid coach</span></div>
+    </div>
+    <nav class="side-nav">
+      <button class="nav-item active" data-go="avui"><svg class="ic"><use href="#i-home"/></svg> Avui</button>
+      <button class="nav-item" data-go="nutri"><svg class="ic"><use href="#i-nutri"/></svg> Nutrició</button>
+      <button class="nav-item" data-go="gym"><svg class="ic"><use href="#i-train"/></svg> Entrenament</button>
+      <button class="nav-item" data-go="evo"><svg class="ic"><use href="#i-evo"/></svg> Evolució</button>
+      <button class="nav-item" data-go="coach"><svg class="ic"><use href="#i-coach"/></svg> Coach</button>
+      <button class="nav-item" data-go="config"><svg class="ic"><use href="#i-settings"/></svg> Configuració</button>
+    </nav>
+    <div class="side-foot">
+      <div class="userchip">
+        <div class="av">T</div>
+        <div><div class="u-name">Tuvi</div><div class="u-sub">67 → 75-80 kg</div></div>
+      </div>
+      <div class="side-streak"><svg class="ic sm"><use href="#i-flame"/></svg> <span data-streak>0</span> dies de ratxa</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ===== APPBAR (mobile) ===== -->
+    <header class="appbar">
+      <div class="brand"><div class="mark">75</div><span class="bname">Project75</span></div>
+      <span class="streak-pill"><svg class="ic sm"><use href="#i-flame"/></svg> <span data-streak>0</span></span>
+    </header>
+
+    <!-- ============ AVUI ============ -->
+    <section class="screen active" id="avui">
+      <div class="pagehead"><div><h1>Avui</h1><p class="sub" id="dateSub"></p></div><span id="stateBadge"></span></div>
+      <div class="content">
+        <div class="hero" id="hero"></div>
+        <div class="card stats" id="stats"></div>
+        <div class="grid2">
+          <div class="card"><h2 class="sec">Entrenament d'avui</h2><div class="mini-train" id="miniTrain"></div></div>
+          <div class="insight" id="coachMini"></div>
+        </div>
+        <div class="quickrow">
+          <button class="btn ghost" onclick="openCheckin()"><svg class="ic"><use href="#i-check-circle"/></svg>Check-in</button>
+          <button class="btn ghost" onclick="addShake()"><svg class="ic"><use href="#i-cup"/></svg>Batut</button>
+          <button class="btn ghost" id="hardBtn" onclick="toggleHardDay()"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ NUTRICIÓ ============ -->
+    <section class="screen" id="nutri">
+      <div class="pagehead"><div><h1>Nutrició</h1><p class="sub">Mode simple · marca, no comptis</p></div>
+        <span class="seg"><button class="on" id="segSimple" onclick="setMode('simple')">Simple</button><button id="segPrecis" onclick="setMode('precis')">Precís</button></span>
+      </div>
+      <div class="content">
+        <div class="card">
+          <h2 class="sec">Objectiu d'avui</h2>
+          <div class="objgrid" id="objgrid"></div>
+          <div class="metric" style="margin-top:16px">
+            <div class="row"><span>Calories</span><span class="v" id="kcalLbl"></span></div>
+            <div class="bar big"><i id="kcalBar"></i></div>
+          </div>
+        </div>
+        <div id="recWrap"></div>
+        <div id="mealsWrap"></div>
+        <div class="btns">
+          <button class="btn ghost block" onclick="addShake()"><svg class="ic"><use href="#i-cup"/></svg>Afegir batut</button>
+          <button class="btn ghost block" id="lowApBtn" onclick="toggleLowAppetite()"></button>
+          <button class="btn ghost block" onclick="openRescue()"><svg class="ic"><use href="#i-alert"/></svg>Rescat</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ENTRENAMENT ============ -->
+    <section class="screen" id="gym">
+      <div class="pagehead"><div><h1>Entrenament</h1><p class="sub">Força + resistència híbrida</p></div></div>
+      <div class="content">
+        <div class="card"><h2 class="sec">Planning de la setmana</h2><div class="week" id="weekWrap"></div></div>
+        <div class="card focus-card" id="focusCard"></div>
+        <div id="conflictNote"></div>
+      </div>
+    </section>
+
+    <!-- ============ EVOLUCIÓ ============ -->
+    <section class="screen" id="evo">
+      <div class="pagehead"><div><h1>Evolució</h1><p class="sub">La tendència, no el pes d'un dia</p></div></div>
+      <div class="content">
+        <div class="evomini" id="evoMini"></div>
+        <div class="card">
+          <h2 class="sec">Camí cap a 75 kg · després 80 kg</h2>
+          <div class="goalwrap" id="goalCard"></div>
+          <div class="miles" id="miles"></div>
+          <p class="goal-note" id="goalNote"></p>
+        </div>
+        <div class="card"><h2 class="sec">Pes · últimes setmanes</h2><div class="chart" id="chart"></div></div>
+        <div class="card">
+          <h2 class="sec">Fotos de progrés</h2>
+          <div class="photos">
+            <div class="photo"><svg class="ic"><use href="#i-image"/></svg><span>Setmana 1</span></div>
+            <div class="photo"><svg class="ic"><use href="#i-image"/></svg><span>Setmana 4</span></div>
+            <div class="photo add"><svg class="ic"><use href="#i-plus"/></svg><span>Afegir</span></div>
+          </div>
+        </div>
+        <div class="btns">
+          <button class="btn primary block" onclick="addWeight()"><svg class="ic"><use href="#i-plus"/></svg>Afegir pes</button>
+          <button class="btn ghost block" onclick="toast('Aquí afegiries una foto de progrés')"><svg class="ic"><use href="#i-image"/></svg>Afegir foto</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COACH ============ -->
+    <section class="screen" id="coach">
+      <div class="pagehead"><div><h1>Coach</h1><p class="sub">Recomanacions segons les teves dades</p></div></div>
+      <div class="content">
+        <div class="card coach-main">
+          <div class="coach-head">
+            <div class="ci"><svg class="ic"><use href="#i-coach"/></svg></div>
+            <div><b>Recomanació del coach</b><span>Basada en el teu dia i estat</span></div>
+          </div>
+          <div class="coach-body" id="coachFull"></div>
+          <div class="coach-ctx" id="coachCtx"></div>
+          <div class="btns">
+            <button class="btn primary block" data-go="nutri"><svg class="ic"><use href="#i-nutri"/></svg>Obrir nutrició</button>
+            <button class="btn ghost block" onclick="addShake()"><svg class="ic"><use href="#i-cup"/></svg>Afegir batut</button>
+          </div>
+        </div>
+        <div class="card flat" style="border-style:dashed;color:var(--muted)">
+          <div class="row"><span class="small">Assistent conversacional amb IA</span><span class="badge info">V3</span></div>
+          <p class="small muted" style="margin:8px 0 0">Aviat podràs preguntar-li directament. De moment, les recomanacions es generen amb regles segons les teves dades.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONFIG ============ -->
+    <section class="screen" id="config">
+      <div class="pagehead"><div><h1>Configuració</h1><p class="sub">Project75 · v0.3</p></div></div>
+      <div class="content">
+        <div class="setgroup"><div class="gt">Objectiu corporal</div><div class="card">
+          <div class="set"><span>Pes actual → objectiu</span><span class="val" id="cfgGoal">67 → 75-80 kg <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="set"><span>Ritme</span><span class="val">Agressiu sostenible <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+        </div></div>
+        <div class="setgroup"><div class="gt">Nutrició</div><div class="card">
+          <div class="set"><span>Objectiu de calories</span><span class="val">3.000 kcal <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="set"><span>Objectiu de proteïna</span><span class="val">150 g <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="set"><span>Mode per defecte</span><span class="val">Simple <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="set"><span>Aliments que em cansen</span><span class="val" id="cfgDislikes">cap <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+        </div></div>
+        <div class="setgroup"><div class="gt">Entrenament</div><div class="card">
+          <div class="set"><span>Rutina de gym</span><span class="val">4-5 dies <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="set"><span>Triatló</span><span class="val">Iniciació <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+        </div></div>
+        <div class="setgroup"><div class="gt">Preferències</div><div class="card">
+          <div class="set"><span>To del coach</span><span class="val">Equilibrat <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="set"><span>Recordatoris</span><span class="val">2 actius <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+        </div></div>
+        <div class="setgroup"><div class="gt">Dades</div><div class="card">
+          <div class="set"><span>Reiniciar dades del prototip</span><button class="btn small ghost" onclick="resetAll()">Reiniciar</button></div>
+        </div></div>
+        <p class="small muted" style="text-align:center;margin-top:6px">Dades desades localment al navegador (localStorage)</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== BOTTOM NAV (mobile) ===== -->
+<nav class="tabbar">
+  <button class="tab active" data-go="avui"><svg class="ic"><use href="#i-home"/></svg>Avui</button>
+  <button class="tab" data-go="nutri"><svg class="ic"><use href="#i-nutri"/></svg>Nutrició</button>
+  <button class="tab" data-go="gym"><svg class="ic"><use href="#i-train"/></svg>Gym</button>
+  <button class="tab" data-go="evo"><svg class="ic"><use href="#i-evo"/></svg>Evolució</button>
+  <button class="tab" data-go="coach"><svg class="ic"><use href="#i-coach"/></svg>Coach</button>
+</nav>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
