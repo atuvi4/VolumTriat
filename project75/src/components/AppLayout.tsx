@@ -7,7 +7,7 @@ import { useApp } from '../hooks/useAppState';
 import { isStarted } from '../utils/project';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { state, tab, setTab, toast, sheet, closeSheet } = useApp();
+  const { state, tab, setTab, toast, sheet, closeSheet, isReadOnly } = useApp();
   const started = isStarted(state.profile.projectStartDate);
 
   return (
@@ -24,6 +24,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="font-extrabold text-[15px]">Project75</span>
           </div>
           <div className="flex items-center gap-2">
+            {isReadOnly && (
+              <span className="inline-flex items-center gap-1.5 bg-info-soft text-info font-bold text-[12px] px-3 py-[7px] rounded-full">
+                <Icon name="info" size={15} /> Mode visita
+              </span>
+            )}
             {started ? (
               <span className="inline-flex items-center gap-1.5 bg-warn-soft text-warn font-bold text-[13px] px-3 py-[7px] rounded-full">
                 <Icon name="flame" size={16} /> {state.streak}
@@ -45,7 +50,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="max-w-[960px] mx-auto px-[18px] md:px-[30px] pb-11 animate-fade">{children}</div>
+        <div className="max-w-[960px] mx-auto px-[18px] md:px-[30px] pb-11 animate-fade">
+          {isReadOnly && (
+            <div className="flex items-center gap-2 bg-info-soft text-info rounded-xl2 px-4 py-3 mt-3.5 md:mt-5 text-[13.5px] font-semibold">
+              <Icon name="info" size={17} className="shrink-0" />
+              Estàs veient Project75 en <b className="font-bold">mode visita</b>. Les accions estan bloquejades.
+            </div>
+          )}
+          {children}
+        </div>
       </main>
 
       <MobileNav />

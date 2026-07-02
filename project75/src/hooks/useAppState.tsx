@@ -16,6 +16,7 @@ import { resolveRecipe } from '../nutrition/mealBuilder';
 import { todayISO } from '../utils/date';
 import { doneCount } from '../utils/goals';
 import { isStarted } from '../utils/project';
+import { detectReadOnly } from '../utils/readOnly';
 
 const KEY = 'project75_state_v3'; // v3: data d'inici + sense dades mock
 
@@ -76,6 +77,8 @@ interface Ctx {
   sheet: ReactNode | null;
   openSheet: (n: ReactNode) => void;
   closeSheet: () => void;
+  /** Mode visita actiu (URL ?demo=1 / ?readonly=1 / ?view=demo). Bloqueja edicions. */
+  isReadOnly: boolean;
   markMeal: (id: string) => void;
   changeMeal: (id: string, data: ManualLog) => void;
   partialMeal: (id: string, pct: number) => void;
@@ -110,10 +113,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const [sheet, setSheet] = useState<ReactNode | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
+  const [isReadOnly] = useState(detectReadOnly);
 
   useEffect(() => {
+    // En mode visita no escrivim res: no toquem les dades del dispositiu.
+    if (isReadOnly) return;
     localStorage.setItem(KEY, JSON.stringify(state));
-  }, [state]);
+  }, [state, isReadOnly]);
 
   const showToast = useCallback((m: string) => {
     setToast(m);
@@ -431,21 +437,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showToast('Projecte reiniciat · dades netes');
   }, [showToast]);
 
-  const value = useMemo<Ctx>(
-    () => ({
-      state, tab, setTab, toast, showToast, sheet, openSheet, closeSheet,
-      markMeal, changeMeal, partialMeal, skipMeal, undoMeal, addExtra, addAdjustment, removeExtra,
-      swapMeal, dislikeMeal, addRecipe, regenerateDay, addShake, markGym,
-      setDayMode, toggleHardDay, toggleLowAppetite, submitCheckin, addWeight, updateProfile,
-      setProjectStartDate, startToday, togglePrep, resetAll,
-    }),
-    [
-      state, tab, toast, sheet, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
-      skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, dislikeMeal,
-      addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
-      submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll,
-    ],
-  );
+  const value = useMemo<Ctx>(() => {
+    // Punt únic de bloqueig: en mode visita, cap acció d'edició s'executa.
+    function guard<A extends unknown[]>(fn: (...a: A) => void) {
+      return (...a: A) => {
+        if (isReadOnly) {
+          showToast('Mode visita: aquesta acció està bloquejada.');
+          return;
+        }
+        fn(...a);
+      };
+    }
+    return {
+      state, tab, setTab, toast, showToast, sheet, openSheet, closeSheet, isReadOnly,
+      // navegació i visualització no es bloquegen
+      markMeal: guard(markMeal),
+      changeMeal: guard(changeMeal),
+      partialMeal: guard(partialMeal),
+      skipMeal: guard(skipMeal),
+      undoMeal: guard(undoMeal),
+      addExtra: guard(addExtra),
+      addAdjustment: guard(addAdjustment),
+      removeExtra: guard(removeExtra),
+      swapMeal: guard(swapMeal),
+      dislikeMeal: guard(dislikeMeal),
+      addRecipe: guard(addRecipe),
+      regenerateDay: guard(regenerateDay),
+      addShake: guard(addShake),
+      markGym: guard(markGym),
+      setDayMode: guard(setDayMode),
+      toggleHardDay: guard(toggleHardDay),
+      toggleLowAppetite: guard(toggleLowAppetite),
+      submitCheckin: guard(submitCheckin),
+      addWeight: guard(addWeight),
+      updateProfile: guard(updateProfile),
+      setProjectStartDate: guard(setProjectStartDate),
+      startToday: guard(startToday),
+      togglePrep: guard(togglePrep),
+      resetAll: guard(resetAll),
+    };
+  }, [
+    state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
+    skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, dislikeMeal,
+    addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
+    submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll,
+  ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
 }
