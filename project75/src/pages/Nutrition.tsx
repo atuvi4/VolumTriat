@@ -238,48 +238,84 @@ export default function Nutrition() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2.5 mt-3.5">
-        <Button
-          block
-          variant="ghost"
-          icon="plus"
-          onClick={() =>
-            openSheet(
-              <ManualEntrySheet
-                title="Afegir extra"
-                sub="Alguna cosa que has menjat fora del menú."
-                submitLabel="Afegir extra"
-                onSubmit={(d) => addExtra(d)}
-              />,
-            )
-          }
-        >
-          Afegir extra
-        </Button>
-        <Button block variant="ghost" icon="cup" onClick={addShake}>Afegir batut</Button>
-        <Button block active={state.dayMode === 'pocaGana'} icon="moon" onClick={toggleLowAppetite}>
-          {state.dayMode === 'pocaGana' ? 'Poca gana · actiu' : 'Poca gana'}
-        </Button>
-        <Button block variant="ghost" icon="alert" onClick={() => openSheet(<RescueSheet />)}>Rescat</Button>
-      </div>
-
-      {/* Ajust setmanal recomanat */}
-      <Card title="Ajust setmanal recomanat" className="mt-3.5">
-        <div className="font-bold text-[15px]">{adj.title}</div>
-        <p className="text-[14px] text-ink/80 mt-1 mb-2">{adj.message}</p>
-        <div className="flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted bg-surface2 border border-line rounded-full px-2.5 py-1">
-            <Icon name="database" size={12} /> {adj.dataUsed}
-          </span>
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted bg-surface2 border border-line rounded-full px-2.5 py-1">
-            <Icon name="info" size={12} /> confiança {CONFIDENCE_LABEL[adj.confidence]}
-          </span>
-          {adj.deltaKcal !== 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent bg-accent-soft rounded-full px-2.5 py-1">
-              {adj.deltaKcal > 0 ? '+' : ''}{adj.deltaKcal} kcal/dia
-            </span>
-          )}
+      {/* 4) Accions ràpides — principals visibles, la resta a «Més opcions» */}
+      <Card title="Accions ràpides" className="mt-3.5">
+        <div className="flex flex-wrap gap-2.5">
+          <Button block active={state.dayMode === 'pocaGana'} icon="moon" onClick={toggleLowAppetite}>
+            {state.dayMode === 'pocaGana' ? 'Poca gana · actiu' : 'Poca gana'}
+          </Button>
+          <Button block variant="ghost" icon="cup" onClick={addShake}>Afegir batut</Button>
+          <Button block variant="ghost" icon="alert" onClick={() => openSheet(<RescueSheet />)}>Rescat</Button>
         </div>
+        <details className="mt-3 group">
+          <summary className="cursor-pointer text-[13px] font-semibold text-accent list-none flex items-center gap-1">
+            <Icon name="chev" size={14} /> Més opcions
+          </summary>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {moreActions.map((a) => (
+              <button
+                key={a.label}
+                onClick={a.run}
+                className="shrink-0 inline-flex items-center gap-2 bg-surface border border-line2 rounded-full px-3.5 py-2.5 text-[13px] font-semibold hover:border-faint"
+              >
+                <Icon name={a.icon} size={16} /> {a.label}
+              </button>
+            ))}
+          </div>
+        </details>
+      </Card>
+
+      {/* 5) Objectiu calculat (plegat) */}
+      <Card className="mt-3.5">
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center gap-2 font-bold text-[13.5px] text-accent-strong">
+            <Icon name="target" size={16} /> Objectiu: {nf(g.kcal)} kcal · {g.prot} g proteïna
+            <Icon name="chev" size={14} className="ml-auto text-muted" />
+          </summary>
+          <p className="text-[14px] leading-relaxed mt-2 mb-0">{targets.explanation}</p>
+          <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-[13px]">
+            {[
+              ['BMR estimat', `${targets.bmr} kcal`],
+              ['Manteniment', `~${targets.tdeeMid} kcal`],
+              ['Proteïna', `${targets.proteinRange[0]}-${targets.proteinRange[1]} g`],
+              ['Greix mínim', `${targets.fatMin} g`],
+            ].map(([l, v]) => (
+              <div key={l} className="bg-surface2 border border-line rounded-xl px-3 py-2">
+                <div className="text-[11px] text-faint font-semibold">{l}</div>
+                <div className="font-bold">{v}</div>
+              </div>
+            ))}
+            <p className="col-span-2 md:col-span-4 text-muted m-0 mt-1">{targets.proteinNote}</p>
+            <p className="col-span-2 md:col-span-4 text-faint text-[12px] m-0">
+              Pujada objectiu: {targets.weeklyGain[0]}-{targets.weeklyGain[1]} kg/setmana. Estimacions amb factor d'activitat aproximat; no és consell mèdic.
+            </p>
+          </div>
+        </details>
+      </Card>
+
+      {/* 6) Ajust setmanal recomanat (plegat) */}
+      <Card className="mt-3.5">
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center gap-2 font-bold text-[13.5px]">
+            <Icon name="scale" size={16} className="text-muted" /> Ajust setmanal recomanat
+            <Icon name="chev" size={14} className="ml-auto text-muted" />
+          </summary>
+          <div className="mt-2 font-bold text-[15px]">{adj.title}</div>
+          <p className="text-[14px] text-ink/80 mt-1 mb-2">{adj.message}</p>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted bg-surface2 border border-line rounded-full px-2.5 py-1">
+              <Icon name="database" size={12} /> {adj.dataUsed}
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted bg-surface2 border border-line rounded-full px-2.5 py-1">
+              <Icon name="info" size={12} /> confiança {CONFIDENCE_LABEL[adj.confidence]}
+            </span>
+            {adj.deltaKcal !== 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent bg-accent-soft rounded-full px-2.5 py-1">
+                {adj.deltaKcal > 0 ? '+' : ''}{adj.deltaKcal} kcal/dia
+              </span>
+            )}
+          </div>
+        </details>
       </Card>
 
       {/* Productes / API */}
