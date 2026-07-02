@@ -33,7 +33,7 @@ export function getDirective(state: AppState): Directive {
       sub: `Prioritat ara. Opció ràpida: batut + iogurt grec (≈40 g). Objectiu del dia: ${g.prot} g.`,
       cta: 'nutri',
     };
-  if (w.type !== 'gym')
+  if (w.type === 'run' || w.type === 'bike' || w.type === 'swim')
     return {
       title: 'Compensa el cardio amb un batut',
       sub: 'Has cremat de més amb la sessió. Suma calories líquides per no frenar el volum.',

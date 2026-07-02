@@ -12,9 +12,9 @@ import { todayISO, toLocalISO } from '../utils/date';
 import type { WorkoutDay } from '../types';
 
 const ADAPT: WorkoutDay[] = [
-  { label: 'Sessió suau + primer dia de nutrició', type: 'gym', focus: "El focus real d'avui és la nutrició: primer dia complet." },
-  { label: 'Bici iniciació 30-40 min (o caminada)', type: 'bike', focus: 'Baix impacte. Si cal, una caminada llarga també val.' },
-  { label: 'Natació tècnica suau o descans actiu', type: 'swim', focus: 'Tècnica tranquil·la. Revisa la compra i els menús.' },
+  { label: 'Sessió suau + primer dia de nutrició', type: 'gym', focus: "El focus real d'avui és la nutrició: primer dia complet. L'entrenament, suau." },
+  { label: 'Gym o running zona 2 · 30-40 min', type: 'run', focus: 'Tu tries: gym de base o un running suau. Sense intensitat.' },
+  { label: 'Descans o caminada', type: 'rest', focus: 'Dia lleuger. Opcional: bici només si ve de gust, mai per obligació.' },
 ];
 const abbrOf = (iso: string) => DAY_ABBR[new Date(iso + 'T00:00:00').getDay()];
 const ddmm = (iso: string) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
@@ -45,6 +45,7 @@ export default function Training() {
     return (
       <section>
         <PageHead title="Entrenament" sub="Encara no has començat" right={<Badge tone="warn">Preparació</Badge>} />
+        <PhaseCard />
         <Card title="Primera setmana proposta (adaptació)" className="mb-3.5">
           <div className="flex flex-col">
             {preview.map(({ iso, day }) => (
@@ -73,6 +74,7 @@ export default function Training() {
     return (
       <section>
         <PageHead title="Entrenament" sub={`Setmana 0 · Adaptació · Dia ${projectDay(start)}`} right={<Badge>Adaptació</Badge>} />
+        <PhaseCard />
         <div className="grid md:grid-cols-[1.15fr_1fr] gap-3.5 items-start">
           <Card title="Setmana 0 · Adaptació">
             <div className="flex flex-col">
@@ -97,7 +99,8 @@ export default function Training() {
 
   return (
     <section>
-      <PageHead title="Entrenament" sub="Força + resistència híbrida" />
+      <PageHead title="Entrenament" sub="Gym base + running · triatló progressiu" />
+      <PhaseCard />
       <div className="grid md:grid-cols-[1.15fr_1fr] gap-3.5 items-start">
         <Card title="Planning de la setmana">
           <div className="flex flex-col">
@@ -126,6 +129,46 @@ export default function Training() {
         </div>
       </div>
     </section>
+  );
+}
+
+function PhaseCard() {
+  const combos = [
+    'Gym tren superior + running zona 2: bona combinació.',
+    'Gym cames + running: només suau i curt, o millor separar-ho si les cames estan carregades.',
+    'Running intens: no el posis després d’un dia dur de cames.',
+    'Deixa com a mínim 1 dia realment lleuger o de descans a la setmana.',
+  ];
+  return (
+    <Card title="Fase actual" className="mb-3.5">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-accent-soft text-accent grid place-items-center shrink-0">
+          <Icon name="train" size={18} />
+        </div>
+        <div>
+          <b className="block text-[15px] font-bold">Base actual: gym + running</b>
+          <span className="text-[13px] text-muted">
+            Triatló més endavant: la bici i la natació entraran progressivament, sense pressa.
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3.5 bg-surface2 border border-line rounded-xl p-3.5">
+        <p className="text-[13.5px] leading-relaxed m-0">
+          Pots combinar <b>gym + zona 2</b> el mateix dia si et va millor per horaris. Millor ajuntar
+          càrrega que escampar-la i no descansar mai.
+        </p>
+      </div>
+
+      <ul className="mt-3 flex flex-col gap-2">
+        {combos.map((t) => (
+          <li key={t} className="flex items-start gap-2 text-[13.5px] leading-snug">
+            <span className="mt-[7px] w-[5px] h-[5px] rounded-full bg-accent shrink-0" />
+            <span>{t}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 

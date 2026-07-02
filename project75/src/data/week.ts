@@ -6,9 +6,9 @@ export const WEEK: Record<number, WorkoutDay> = {
   2: { label: 'Cames', type: 'gym', focus: 'Carrega hidrats: les cames volen energia.' },
   3: { label: 'Esquena + abdominals', type: 'gym', focus: 'Bon dia per un snack post-entreno.' },
   4: { label: 'Braç · tríceps, bíceps, espatlla', type: 'gym', focus: 'Sessió curta: aprofita per menjar bé.' },
-  5: { label: 'Running suau · 5 km', type: 'run', focus: 'Ritme còmode. Compensa amb un batut.' },
-  6: { label: 'Bici iniciació · 30-40 min', type: 'bike', focus: "Familiaritza't. Baix impacte, ideal." },
-  0: { label: 'Natació tècnica · 20 min', type: 'swim', focus: 'Tècnica primer. Curt i tranquil.' },
+  5: { label: 'Running zona 2 · 5 km', type: 'run', focus: 'Ritme còmode, hauries de poder parlar. Compensa amb un batut.' },
+  6: { label: 'Running zona 2 o gym suau · 30-40 min', type: 'run', focus: 'Suau. La bici entrarà aquí més endavant, sense pressa.' },
+  0: { label: 'Descans o caminada', type: 'rest', focus: 'Dia lleuger de veritat. La natació arribarà progressivament.' },
 };
 
 export const CAT_LABEL: Record<WorkoutType, string> = {
@@ -16,6 +16,7 @@ export const CAT_LABEL: Record<WorkoutType, string> = {
   run: 'Running',
   bike: 'Bici',
   swim: 'Natació',
+  rest: 'Descans',
 };
 
 export const DAY_ABBR: Record<number, string> = {

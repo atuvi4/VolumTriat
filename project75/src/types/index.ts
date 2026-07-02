@@ -2,7 +2,7 @@ import type { ResolvedMeal } from '../nutrition/nutritionTypes';
 
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
-export type WorkoutType = 'gym' | 'run' | 'bike' | 'swim';
+export type WorkoutType = 'gym' | 'run' | 'bike' | 'swim' | 'rest';
 
 export interface WeightEntry {
   d: string; // ISO date

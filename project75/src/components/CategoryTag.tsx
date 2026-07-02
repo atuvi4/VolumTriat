@@ -6,12 +6,14 @@ const dot: Record<WorkoutType, string> = {
   run: 'bg-cat-run',
   bike: 'bg-cat-bike',
   swim: 'bg-cat-swim',
+  rest: 'bg-faint',
 };
 const text: Record<WorkoutType, string> = {
   gym: 'text-cat-gym',
   run: 'text-cat-run',
   bike: 'text-cat-bike',
   swim: 'text-cat-swim',
+  rest: 'text-muted',
 };
 
 export default function CategoryTag({ type }: { type: WorkoutType }) {
