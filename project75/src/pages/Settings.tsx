@@ -4,6 +4,7 @@ import PageHead from '../components/PageHead';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import BrainInsightsCard from '../components/BrainInsightsCard';
+import FoodSearchProCard from '../components/FoodSearchProCard';
 import { currentWeight } from '../utils/goals';
 import type { Ritme } from '../types';
 
@@ -148,6 +149,8 @@ export default function Settings() {
           </Button>
         </Field>
       </Group>
+
+      <FoodSearchProCard />
 
       <BrainInsightsCard />
 
