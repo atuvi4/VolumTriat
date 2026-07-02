@@ -9,39 +9,54 @@ export interface Directive {
   cta: 'batut' | 'nutri' | 'checkin';
 }
 
+/**
+ * Coach Brain v1 — motor de regles (sense IA).
+ * Prioritat: seguretat > nutrició (mínim, gana, calories, proteïna) > entrenament > pes.
+ * To: professional + amic directe, exigent però comprensiu, zero culpa,
+ * frases curtes i accionables. "Empeny el resultat, no la persona."
+ * Límit: no és consell mèdic; deriva a professional davant de senyals d'alarma.
+ */
+
 /** Frase única de "prioritat ara" per al hero del Dashboard. */
 export function getDirective(state: AppState): Directive {
   const g = goalsFor(state);
   const left = g.kcal - doneKcal(state.meals);
+  const dp = doneProt(state.meals);
   const w = todayWorkout();
 
   if (state.dayMode === 'dificil')
     return {
       title: 'Objectiu mínim: 1 batut + 1 ingesta',
-      sub: 'Avui no busquem perfecció. Amb això, el dia compta i la ratxa segueix.',
+      sub: 'Avui no busquem perfecció. Amb això el dia compta i la ratxa segueix.',
       cta: 'batut',
     };
   if (state.dayMode === 'pocaGana')
     return {
       title: 'Comença per calories líquides',
-      sub: 'Dia de baixa gana. Un batut ara suma molt sense esforç de masticar.',
+      sub: 'Dia de poca gana: un batut ara suma molt sense esforç de masticar.',
       cta: 'batut',
     };
   if (doneCount(state.meals) === 0)
     return {
-      title: 'Completa una ingesta amb proteïna',
-      sub: `Prioritat ara. Opció ràpida: batut + iogurt grec (≈40 g). Objectiu del dia: ${g.prot} g.`,
+      title: 'Obre el dia amb proteïna',
+      sub: `Primera ingesta: batut + iogurt grec (≈40 g). Objectiu del dia: ${g.prot} g.`,
+      cta: 'nutri',
+    };
+  if (w.type === 'gym' && dp < g.prot)
+    return {
+      title: 'Dia de força: assegura la proteïna',
+      sub: `Vas per ${dp}/${g.prot} g. Reparteix-la i tanca amb una ingesta post-entreno.`,
       cta: 'nutri',
     };
   if (w.type === 'run' || w.type === 'bike' || w.type === 'swim')
     return {
-      title: 'Compensa el cardio amb un batut',
-      sub: 'Has cremat de més amb la sessió. Suma calories líquides per no frenar el volum.',
+      title: 'Suma hidrats al voltant del cardio',
+      sub: 'Sessió suau (zona 2), compatible amb gym. Un batut evita frenar el volum.',
       cta: 'batut',
     };
   if (left > 500)
     return {
-      title: `Et queden ${nf(left)} kcal per l'objectiu`,
+      title: `Et queden ${nf(left)} kcal`,
       sub: 'Vas bé. Un batut abans de dormir ho tanca sense esforç.',
       cta: 'batut',
     };
@@ -53,7 +68,7 @@ export function getDirective(state: AppState): Directive {
     };
   return {
     title: 'Objectiu del dia cobert',
-    sub: 'Calories i proteïna dins. Mantén la constància: així es passa de 67 a 75.',
+    sub: 'Calories i proteïna dins. La constància és el que et porta de 67 a 75.',
     cta: 'nutri',
   };
 }
@@ -62,21 +77,27 @@ export function getDirective(state: AppState): Directive {
 export function getCoachLine(state: AppState): string {
   const g = goalsFor(state);
   const left = g.kcal - doneKcal(state.meals);
+  const dp = doneProt(state.meals);
+  const w = todayWorkout();
+
   if (state.dayMode === 'dificil')
-    return 'Mode dia difícil. Objectiu mínim: 1 batut ara + una ingesta fàcil. Amb això el dia compta.';
+    return 'Dia difícil, sense culpa. Objectiu mínim: 1 batut ara + una ingesta fàcil. Amb això el dia ja compta.';
   if (state.dayMode === 'pocaGana')
-    return 'Dia de baixa gana detectat. Canviem a calories líquides i objectiu mínim. Comença per un batut.';
+    return 'Poca gana avui. Passem a calories líquides: un batut suma sense esforç. Empenyem el resultat, no el cos.';
   if (doneCount(state.meals) === 0)
-    return 'Prioritat ara: completa una ingesta amb proteïna. Opció ràpida: batut + iogurt grec (≈40 g).';
-  if (left > 500) return `Bon ritme. Et queden ~${nf(left)} kcal: un batut abans de dormir ho tanca fàcil.`;
+    return `Primer moviment del dia: una ingesta amb proteïna (batut + iogurt grec, ≈40 g). Objectiu: ${g.prot} g.`;
+  if (w.type === 'gym' && dp < g.prot)
+    return `Dia de força: reparteix la proteïna (${dp}/${g.prot} g). Una ingesta post-entreno tanca la recuperació.`;
+  if (left > 500) return `Bon ritme. Et queden ~${nf(left)} kcal; un batut abans de dormir ho tanca fàcil.`;
   if (left > 0) return `Gairebé hi ets: ~${nf(left)} kcal per tancar. Un snack dens ho resol.`;
-  return 'Objectiu cobert avui. Calories i proteïna dins. Descansa i demà seguim.';
+  return 'Objectiu cobert avui: calories i proteïna dins. Descansa bé; la constància fa la resta.';
 }
 
 /** Motor de recomanacions basat en regles per a la pàgina Coach.
- *  Cada recomanació explica: què, per què, quina dada usa i amb quina confiança. */
+ *  Cada recomanació explica: què, per què, quina dada usa i amb quina confiança.
+ *  Es prioritzen i es mostren només les més rellevants (nutrició primer). */
 export function getRecommendations(state: AppState): Recommendation[] {
-  const recs: Recommendation[] = [];
+  const items: { p: number; rec: Recommendation }[] = [];
   const g = goalsFor(state);
   const dk = doneKcal(state.meals);
   const dp = doneProt(state.meals);
@@ -85,103 +106,165 @@ export function getRecommendations(state: AppState): Recommendation[] {
   const hasTrend = state.weights.length >= MIN_FOR_TREND;
   const trend = hasTrend ? trendPerWeek(state.weights) : 0;
   const ci = state.checkin;
+  const moodLow = ci?.mood === 'low';
+  const energyLow = ci?.energy === 'low';
+  const lowApp = ci?.appetite === 'poca' || state.dayMode === 'pocaGana';
+  const rapidLoss = hasTrend && trend <= -0.5;
 
-  // 1. Ànim baix → adaptar dificultat (NO és consell mèdic)
-  if (ci?.mood === 'low' && state.dayMode !== 'dificil') {
-    recs.push({
-      id: 'anxiety',
-      tone: 'warn',
-      title: 'Adaptem el dia',
-      body: 'Passem a objectiu mínim i to suau perquè no abandonis. Prioritat: una ingesta fàcil o un batut.',
-      why: 'Els dies baixos, mantenir el mínim protegeix la constància, que és el que porta resultats.',
-      dataUsed: 'Check-in: ànim baix',
-      confidence: 'medium',
-      action: { label: 'Activar dia difícil', kind: 'hardDay' },
+  // 0. LÍMIT / SEGURETAT — fatiga acumulada o pèrdua de pes ràpida.
+  //    No és consell mèdic; baixa exigència i, si cal, deriva a un professional.
+  if ((moodLow && energyLow) || rapidLoss) {
+    items.push({
+      p: 0,
+      rec: {
+        id: 'safety',
+        tone: 'warn',
+        title: 'Avui toca recuperar',
+        body: 'Baixa exigència: descansa i menja fàcil. No forcis l’entrenament dur.',
+        why: rapidLoss
+          ? 'Estàs perdent pes quan l’objectiu és pujar-ne. Prioritza menjar i descans; si no es redreça en uns dies, consulta un professional. Això no és consell mèdic.'
+          : 'Ànim i energia baixos alhora demanen recuperar. Si apareix dolor, mareig o ansietat forta, atura’t i consulta un professional. Això no és consell mèdic.',
+        dataUsed: rapidLoss ? `Tendència: ${trend.toFixed(2)} kg/setmana` : 'Check-in: ànim i energia baixos',
+        confidence: 'medium',
+        action: state.dayMode !== 'dificil' ? { label: 'Baixar exigència', kind: 'hardDay' } : undefined,
+      },
     });
   }
 
-  // 2. Gana baixa → calories líquides
-  if ((ci?.appetite === 'poca' || state.dayMode === 'pocaGana') && state.dayMode !== 'dificil') {
-    recs.push({
-      id: 'lowapp',
-      tone: 'info',
-      title: 'Passa a calories líquides',
-      body: 'Un batut de llet + plàtan + civada + crema de cacauet suma calories sense esforç de masticar.',
-      why: 'Amb poca gana, els líquids són més fàcils d’ingerir i aporten energia i carbohidrats.',
-      dataUsed: 'Estat: poca gana',
-      confidence: 'medium',
-      action: { label: 'Afegir batut', kind: 'addShake' },
+  // 1. Dia difícil actiu → salvar el mínim
+  if (state.dayMode === 'dificil') {
+    items.push({
+      p: 2,
+      rec: {
+        id: 'hardmin',
+        tone: 'warn',
+        title: 'Salva el mínim del dia',
+        body: '1 batut + 1 ingesta fàcil. Prou per no trencar la ratxa.',
+        why: 'Un dia dolent no atura el progrés; abandonar-ne uns quants seguits, sí.',
+        dataUsed: 'Estat: dia difícil',
+        confidence: 'high',
+        action: { label: 'Afegir batut', kind: 'addShake' },
+      },
+    });
+  } else if (moodLow) {
+    // Ànim baix (amb energia normal) → adaptar exigència sense culpa
+    items.push({
+      p: 2,
+      rec: {
+        id: 'mood',
+        tone: 'warn',
+        title: 'Adaptem el dia, sense culpa',
+        body: 'Passem a objectiu mínim: una ingesta fàcil o un batut. Salvar el mínim ja és guanyar.',
+        why: 'Els dies fluixos, protegir el mínim manté la constància, que és el que porta el resultat.',
+        dataUsed: 'Check-in: ànim baix',
+        confidence: 'medium',
+        action: { label: 'Activar dia difícil', kind: 'hardDay' },
+      },
     });
   }
 
-  // 3. Falten calories → batut/snack
+  // 2. Gana baixa → calories líquides i aliments fàcils
+  if (lowApp && state.dayMode !== 'dificil') {
+    items.push({
+      p: 3,
+      rec: {
+        id: 'lowapp',
+        tone: 'info',
+        title: 'Passa a calories líquides',
+        body: 'Batut de llet + plàtan + civada + crema de cacauet: calories denses sense masticar.',
+        why: 'Amb poca gana, els líquids entren millor i mantenen energia i carbohidrats.',
+        dataUsed: 'Estat: poca gana',
+        confidence: 'medium',
+        action: { label: 'Afegir batut', kind: 'addShake' },
+      },
+    });
+  }
+
+  // 3. Falten calories → solució de mínima fricció
   if (left >= 300) {
-    recs.push({
-      id: 'kcalgap',
-      tone: 'accent',
-      title: `Et falten ${nf(left)} kcal per l'objectiu`,
-      body: 'Opció ràpida: batut de llet + plàtan + civada + crema de cacauet abans de dormir.',
-      why: 'Suma calories líquides (útil si hi ha poca gana) i aporta carbohidrats i greixos densos.',
-      dataUsed: `Registrat ${nf(dk)} de ${nf(g.kcal)} kcal objectiu`,
-      confidence: 'high',
-      action: { label: 'Afegir batut', kind: 'addShake' },
+    items.push({
+      p: 4,
+      rec: {
+        id: 'kcalgap',
+        tone: 'accent',
+        title: `Et falten ${nf(left)} kcal`,
+        body: 'Solució ràpida: un batut dens abans de dormir (llet + plàtan + civada + crema de cacauet).',
+        why: 'Tancar el superàvit cada dia és el que fa pujar el pes; els líquids ho fan fàcil.',
+        dataUsed: `Registrat ${nf(dk)} de ${nf(g.kcal)} kcal`,
+        confidence: 'high',
+        action: { label: 'Afegir batut', kind: 'addShake' },
+      },
     });
   }
 
-  // 4. Entrenament fort (gym) → prioritzar proteïna / post-entreno
+  // 4. Entrenament de força → proteïna repartida
   if (w.type === 'gym' && dp < g.prot) {
-    recs.push({
-      id: 'protein',
-      tone: 'accent',
-      title: `Dia de força · ${w.label}`,
-      body: `Prioritza la proteïna: vas per ${dp} de ${g.prot} g. Una ingesta o batut post-entreno ajuda a recuperar i créixer.`,
-      why: 'Els dies d’entrenament de força, la proteïna repartida afavoreix la síntesi muscular.',
-      dataUsed: `Proteïna ${dp}/${g.prot} g · avui: ${w.label}`,
-      confidence: 'high',
-      action: { label: 'Obrir nutrició', kind: 'openNutrition' },
+    items.push({
+      p: 5,
+      rec: {
+        id: 'protein',
+        tone: 'accent',
+        title: `Dia de força · ${w.label}`,
+        body: `Prioritza proteïna: ${dp}/${g.prot} g. Una ingesta o batut post-entreno tanca la recuperació.`,
+        why: 'La proteïna repartida al llarg del dia afavoreix la síntesi muscular i el creixement.',
+        dataUsed: `Proteïna ${dp}/${g.prot} g · ${w.label}`,
+        confidence: 'high',
+        action: { label: 'Obrir nutrició', kind: 'openNutrition' },
+      },
     });
-  } else if ((w.type === 'run' || w.type === 'bike') && left > 0) {
-    recs.push({
-      id: 'cardio',
-      tone: 'info',
-      title: 'Carbohidrats al voltant del cardio',
-      body: 'Afegeix hidrats abans/després de la sessió (plàtan, civada, arròs) per rendir i recuperar.',
-      why: 'El cardio consumeix glicogen; reposar-lo protegeix el volum i el rendiment.',
-      dataUsed: `Sessió d'avui: ${w.label}`,
-      confidence: 'medium',
-    });
-  }
-
-  // 5. Pes no puja → afegir 150-250 kcal/dia (només amb tendència fiable)
-  if (hasTrend && trend < 0.2) {
-    recs.push({
-      id: 'stall',
-      tone: 'info',
-      title: 'El pes puja per sota de l’objectiu',
-      body: 'Puja +150-250 kcal/dia de forma fàcil (un batut extra diari) i revisem la tendència en una setmana.',
-      why: 'Sense superàvit no hi ha pujada; ajustem poc a poc per no acumular greix.',
-      dataUsed: `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`,
-      confidence: 'medium',
-      action: { label: 'Registrar pes', kind: 'addWeight' },
+  } else if (w.type === 'run' && left > 0) {
+    // Running en zona 2 → hidrats i compatibilitat amb el gym
+    items.push({
+      p: 6,
+      rec: {
+        id: 'run',
+        tone: 'info',
+        title: 'Running en zona 2',
+        body: 'Suau: pots combinar-lo amb gym el mateix dia. Suma hidrats a l’entorn (plàtan, civada, arròs).',
+        why: 'A intensitat baixa el running conviu amb la força; els hidrats reposen glicogen i protegeixen el volum.',
+        dataUsed: `Sessió d'avui: ${w.label}`,
+        confidence: 'medium',
+      },
     });
   }
 
-  // fallback positiu
-  if (recs.length === 0) {
-    recs.push({
-      id: 'ok',
-      tone: 'accent',
-      title: 'Vas ben encaminat',
-      body: hasTrend
-        ? 'Objectius del dia dins de rang i tendència a l’alça. Mantén la constància: és el que et porta a 75 kg.'
-        : 'Objectius del dia dins de rang. Registra el pes uns quants dies i podré llegir la teva tendència real.',
-      why: 'La regularitat setmanal pesa més que qualsevol dia perfecte aïllat.',
-      dataUsed: hasTrend
-        ? `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`
-        : `Encara recopilant dades de pes (${state.weights.length}/${MIN_FOR_TREND} registres)`,
-      confidence: 'medium',
+  // 5. Pes per sota de l'objectiu (tendència fiable; l'ajust fi es fa a Nutrició)
+  if (hasTrend && trend > -0.5 && trend < 0.2) {
+    items.push({
+      p: 7,
+      rec: {
+        id: 'stall',
+        tone: 'info',
+        title: 'El pes no puja al ritme objectiu',
+        body: 'Puja +150-250 kcal/dia de forma fàcil (un batut extra) i deixa passar una setmana abans de tornar a ajustar.',
+        why: 'Es mira el patró de dies, no un sol pesatge. Sense superàvit no hi ha pujada; ajustem poc a poc.',
+        dataUsed: `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`,
+        confidence: 'medium',
+        action: { label: 'Veure ajust a Nutrició', kind: 'openNutrition' },
+      },
     });
   }
 
-  return recs;
+  // Fallback positiu (o estat de dades de pes insuficients)
+  if (items.length === 0) {
+    items.push({
+      p: 9,
+      rec: {
+        id: 'ok',
+        tone: 'accent',
+        title: 'Vas ben encaminat',
+        body: hasTrend
+          ? 'Objectius del dia dins de rang i pes en línia. Mantén la constància: és el que et porta a 75 kg.'
+          : 'Objectius del dia dins de rang. Registra el pes uns dies i podré llegir la teva tendència real.',
+        why: 'La regularitat setmanal pesa més que qualsevol dia perfecte aïllat.',
+        dataUsed: hasTrend
+          ? `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`
+          : `Encara recopilant dades (${state.weights.length}/${MIN_FOR_TREND} pesos)`,
+        confidence: 'medium',
+      },
+    });
+  }
+
+  // Ordena per prioritat (nutrició/seguretat primer) i mostra només les rellevants.
+  return items.sort((a, b) => a.p - b.p).slice(0, 4).map((i) => i.rec);
 }

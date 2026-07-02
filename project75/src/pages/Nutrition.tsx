@@ -3,31 +3,75 @@ import PageHead from '../components/PageHead';
 import Card from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 import MealCard from '../components/MealCard';
-import CoachRecommendation from '../components/CoachRecommendation';
+import NutritionAdjustCard from '../components/NutritionAdjustCard';
+import ExtraRow from '../components/ExtraRow';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
-import SwapSheet from '../components/sheets/SwapSheet';
 import RescueSheet from '../components/sheets/RescueSheet';
 import QuickOptionsSheet from '../components/sheets/QuickOptionsSheet';
 import CalcSheet from '../components/sheets/CalcSheet';
-import { goalsFor, doneKcal, doneProt, doneCount, currentWeight } from '../utils/goals';
+import ManualEntrySheet from '../components/sheets/ManualEntrySheet';
+import PartialSheet from '../components/sheets/PartialSheet';
+import MealActionsSheet from '../components/sheets/MealActionsSheet';
+import RelatedAdjustSheet from '../components/sheets/RelatedAdjustSheet';
+import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, mealStatus } from '../utils/goals';
+import { nutritionAdjust } from '../utils/nutritionAdvice';
 import { nf } from '../utils/format';
 import { computeTargets } from '../nutrition/nutritionTargets';
 import { weeklyAdjustment } from '../nutrition/adjustmentRules';
 import { NOCOOK_RECIPES, OUTSIDE_RECIPES } from '../nutrition/mealPlans';
 import { CONFIDENCE_LABEL } from '../nutrition/nutritionSources';
 import { isStarted } from '../utils/project';
-import type { Recommendation } from '../types';
+import type { AdjustContext, ManualLog, ResolvedMeal } from '../nutrition/nutritionTypes';
 
 export default function Nutrition() {
   const app = useApp();
-  const { state, markMeal, dislikeMeal, openSheet, addShake, regenerateDay, toggleLowAppetite, setDayMode, showToast } = app;
+  const {
+    state, markMeal, changeMeal, partialMeal, skipMeal, undoMeal,
+    addExtra, addAdjustment, removeExtra,
+    openSheet, closeSheet, addShake, regenerateDay, toggleLowAppetite, setDayMode, showToast,
+  } = app;
   const g = goalsFor(state);
   const dk = doneKcal(state.meals);
   const dp = doneProt(state.meals);
   const dc = doneCount(state.meals);
   const shakes = state.meals.filter((m) => m.done && m.tags.includes('liquid_calories')).length;
-  const left = g.kcal - dk;
+  const plannedMeals = state.meals.filter((m) => !m.isExtra);
+  const extras = state.meals.filter((m) => m.isExtra);
+
+  // Ajustos recomanats relacionats amb un àpat concret.
+  const relatedAdjustments = (mealId: string) =>
+    state.meals.filter((m) => m.isExtra && m.extraOrigin === 'adjustment' && m.relatedMealId === mealId);
+
+  // Aplica una acció sobre un àpat i, si tenia ajustos relacionats, pregunta si treure'ls.
+  // Mai esborra res sol; els extres manuals i batuts no relacionats no es toquen.
+  const applyThenMaybePrompt = (meal: ResolvedMeal, apply: () => void) => {
+    apply();
+    const related = relatedAdjustments(meal.id);
+    if (related.length > 0) openSheet(<RelatedAdjustSheet meal={meal} related={related} />);
+    else closeSheet();
+  };
+
+  // Context per als ajustos afegits des de «Ajust per arribar avui».
+  const contextMeal =
+    plannedMeals.find((m) => mealStatus(m) === 'skipped') ??
+    plannedMeals.find((m) => mealStatus(m) === 'partial') ??
+    plannedMeals.find((m) => mealStatus(m) === 'changed');
+  const lastPlannedId = plannedMeals[plannedMeals.length - 1]?.id;
+  const adjustContext: AdjustContext = contextMeal
+    ? {
+        relatedMealId: contextMeal.id,
+        relatedMealStatus: mealStatus(contextMeal) as 'skipped' | 'partial' | 'changed',
+        suggestedAfterMealId: contextMeal.id,
+        suggestedTiming: `Per compensar «${contextMeal.slot}»`,
+      }
+    : { suggestedAfterMealId: lastPlannedId, suggestedTiming: 'Per tancar el dia' };
+
+  // Repartiment d'extres: col·locats sota el seu àpat, o a les seccions del final.
+  const plannedIds = new Set(plannedMeals.map((m) => m.id));
+  const isPlaced = (e: ResolvedMeal) => !!e.suggestedAfterMealId && plannedIds.has(e.suggestedAfterMealId);
+  const looseAdjustments = extras.filter((e) => !isPlaced(e) && e.extraOrigin === 'adjustment');
+  const manualExtras = extras.filter((e) => !isPlaced(e) && e.extraOrigin !== 'adjustment');
 
   const weightKg = currentWeight(state.weights) || state.profile.startWeight;
   const targets = computeTargets({
@@ -50,16 +94,7 @@ export default function Nutrition() {
     { v: nf(dk), gg: nf(g.kcal), l: 'Calories', ok: dk >= g.kcal },
   ];
 
-  const gapRec: Recommendation = {
-    id: 'gap',
-    tone: 'accent',
-    title: `Et falten ~${nf(left)} kcal`,
-    body: 'Opció ràpida i de mínima fricció: un batut dens abans de dormir (llet + plàtan + civada + crema de cacauet).',
-    why: 'Suma calories líquides —útil si hi ha poca gana— amb carbohidrats i greixos per recuperar.',
-    dataUsed: `Registrat ${nf(dk)} de ${nf(g.kcal)} kcal`,
-    confidence: 'high',
-    action: { label: 'Afegir batut', kind: 'addShake' },
-  };
+  const adjust = nutritionAdjust(state);
 
   const quick = [
     { icon: 'x' as const, label: 'No tinc gana', run: () => { setDayMode('pocaGana'); showToast('Mode poca gana: prioritzo líquids'); } },
@@ -148,11 +183,13 @@ export default function Nutrition() {
       </Card>
 
       {isStarted(state.profile.projectStartDate) ? (
-        left >= 300 && (
-          <div className="mb-3.5">
-            <CoachRecommendation rec={gapRec} onAction={() => addShake()} />
-          </div>
-        )
+        <div className="mb-3.5">
+          <NutritionAdjustCard
+            adjust={adjust}
+            onAddShake={() => addAdjustment(adjustContext)}
+            onRescue={() => openSheet(<RescueSheet adjust={adjustContext} />)}
+          />
+        </div>
       ) : (
         <div className="relative overflow-hidden bg-surface border border-accent-line rounded-xl2 p-4 pl-[18px] mb-3.5">
           <span className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
@@ -165,21 +202,90 @@ export default function Nutrition() {
         </div>
       )}
 
-      {/* àpats */}
+      {/* àpats planificats · cada ajust relacionat es mostra just sota el seu àpat */}
       <div>
-        {state.meals.map((m) => (
-          <MealCard
-            key={m.id}
-            meal={m}
-            onComplete={() => markMeal(m.id)}
-            onSwap={() => openSheet(<SwapSheet meal={m} />)}
-            onDislike={() => dislikeMeal(m.id)}
-            onViewCalc={() => openSheet(<CalcSheet meal={m} />)}
-          />
-        ))}
+        {plannedMeals.map((m) => {
+          const onChange = (d: ManualLog) => applyThenMaybePrompt(m, () => changeMeal(m.id, d));
+          const onPartial = (pct: number) => applyThenMaybePrompt(m, () => partialMeal(m.id, pct));
+          const placed = extras.filter((e) => e.suggestedAfterMealId === m.id);
+          return (
+            <div key={m.id}>
+              <MealCard
+                meal={m}
+                onMarkDone={() => applyThenMaybePrompt(m, () => markMeal(m.id))}
+                onOpenOptions={() =>
+                  openSheet(
+                    <MealActionsSheet
+                      meal={m}
+                      onChange={onChange}
+                      onPartial={onPartial}
+                      onSkip={() => applyThenMaybePrompt(m, () => skipMeal(m.id))}
+                    />,
+                  )
+                }
+                onUndo={() => applyThenMaybePrompt(m, () => undoMeal(m.id))}
+                onEdit={() =>
+                  mealStatus(m) === 'changed'
+                    ? openSheet(
+                        <ManualEntrySheet
+                          title={`Editar «${m.slot}»`}
+                          sub="Ajusta la dada manual del que has menjat."
+                          submitLabel="Desar canvi"
+                          initial={m.logged}
+                          closeOnSubmit={false}
+                          onSubmit={onChange}
+                        />,
+                      )
+                    : openSheet(<PartialSheet meal={m} onSave={onPartial} />)
+                }
+                onViewCalc={() => openSheet(<CalcSheet meal={m} />)}
+              />
+              {placed.map((e) => (
+                <ExtraRow key={e.id} meal={e} onRemove={() => removeExtra(e.id)} />
+              ))}
+            </div>
+          );
+        })}
       </div>
 
+      {/* ajustos recomanats sense àpat concret relacionat */}
+      {looseAdjustments.length > 0 && (
+        <div className="mt-3.5">
+          <div className="text-[11px] uppercase tracking-[0.07em] text-faint font-bold mb-1">Ajustos recomanats d'avui</div>
+          {looseAdjustments.map((m) => (
+            <ExtraRow key={m.id} meal={m} onRemove={() => removeExtra(m.id)} />
+          ))}
+        </div>
+      )}
+
+      {/* extres manuals */}
+      {manualExtras.length > 0 && (
+        <div className="mt-3.5">
+          <div className="text-[11px] uppercase tracking-[0.07em] text-faint font-bold mb-1">Extres manuals</div>
+          {manualExtras.map((m) => (
+            <ExtraRow key={m.id} meal={m} onRemove={() => removeExtra(m.id)} />
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2.5 mt-3.5">
+        <Button
+          block
+          variant="ghost"
+          icon="plus"
+          onClick={() =>
+            openSheet(
+              <ManualEntrySheet
+                title="Afegir extra"
+                sub="Alguna cosa que has menjat fora del menú."
+                submitLabel="Afegir extra"
+                onSubmit={(d) => addExtra(d)}
+              />,
+            )
+          }
+        >
+          Afegir extra
+        </Button>
         <Button block variant="ghost" icon="cup" onClick={addShake}>Afegir batut</Button>
         <Button block active={state.dayMode === 'pocaGana'} icon="moon" onClick={toggleLowAppetite}>
           {state.dayMode === 'pocaGana' ? 'Poca gana · actiu' : 'Poca gana'}

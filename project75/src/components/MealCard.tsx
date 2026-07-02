@@ -1,75 +1,136 @@
 import type { ResolvedMeal } from '../nutrition/nutritionTypes';
 import { SOURCE_META, precisionSummary } from '../nutrition/nutritionSources';
+import { mealStatus, mealEaten } from '../utils/goals';
 import Icon from './Icon';
 
 interface Props {
   meal: ResolvedMeal;
-  onComplete: () => void;
-  onSwap: () => void;
-  onDislike: () => void;
+  onMarkDone: () => void;
+  onOpenOptions: () => void;
+  onUndo: () => void;
+  onEdit: () => void;
   onViewCalc: () => void;
 }
 
-export default function MealCard({ meal, onComplete, onSwap, onDislike, onViewCalc }: Props) {
-  const n = meal.nutrition;
+const STATUS_BADGE: Record<
+  Exclude<ReturnType<typeof mealStatus>, 'pending'>,
+  { label: string; cls: string; icon: 'check' | 'swap' | 'clock' | 'x' }
+> = {
+  done: { label: 'Fet', cls: 'text-accent bg-accent-soft', icon: 'check' },
+  changed: { label: 'Canviat', cls: 'text-info bg-info-soft', icon: 'swap' },
+  partial: { label: 'Parcial', cls: 'text-info bg-info-soft', icon: 'clock' },
+  skipped: { label: 'Saltat', cls: 'text-muted bg-surface2', icon: 'x' },
+};
+
+export default function MealCard({ meal, onMarkDone, onOpenOptions, onUndo, onEdit, onViewCalc }: Props) {
+  const status = mealStatus(meal);
+  const eaten = mealEaten(meal);
+  const pending = status === 'pending';
+  const skipped = status === 'skipped';
+  const badge = status === 'pending' ? null : STATUS_BADGE[status];
   const sources = meal.sources.map((s) => SOURCE_META[s].short).join(' · ');
+
+  // Xifres a mostrar: intake real si compta, si no la recepta planificada.
+  const shown = eaten ?? meal.nutrition;
+
   return (
     <div
       className={`border rounded-2xl p-[15px] mt-[11px] transition-colors ${
-        meal.done ? 'bg-surface2 border-line' : 'bg-surface border-line'
-      }`}
+        pending ? 'bg-surface border-line' : 'bg-surface2 border-line'
+      } ${skipped ? 'opacity-70' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-[11px] uppercase tracking-[0.07em] text-faint font-bold">{meal.slot}</div>
-          <div className={`font-bold text-[15.5px] mt-[3px] ${meal.done ? 'text-muted' : ''}`}>{meal.name}</div>
+          <div className={`font-bold text-[15.5px] mt-[3px] ${!pending ? 'text-muted' : ''} ${skipped ? 'line-through' : ''}`}>
+            {meal.name}
+          </div>
         </div>
-        {meal.tags.includes('supplement') && (
-          <span className="text-[10.5px] font-bold text-info bg-info-soft px-2 py-1 rounded-full shrink-0">Suplement</span>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {meal.tags.includes('supplement') && (
+            <span className="text-[10.5px] font-bold text-info bg-info-soft px-2 py-1 rounded-full">Suplement</span>
+          )}
+          {badge && (
+            <span className={`inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-1 rounded-full ${badge.cls}`}>
+              <Icon name={badge.icon} size={12} />
+              {badge.label}
+              {status === 'partial' && meal.partialPct ? ` ${meal.partialPct}%` : ''}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 mt-2 text-[13px] font-semibold text-muted">
-        <span>{n.kcal} kcal</span>
-        <span>{n.protein} g proteïna</span>
-        <span className="text-faint font-medium">{n.carbs}C · {n.fat}G</span>
-      </div>
+      {/* Xifres */}
+      {skipped ? (
+        <div className="mt-2 text-[13px] font-semibold text-faint">No suma calories ni proteïna avui.</div>
+      ) : (
+        <div className="flex flex-wrap gap-3 mt-2 text-[13px] font-semibold text-muted">
+          <span>{shown.kcal} kcal</span>
+          <span>{shown.protein} g proteïna</span>
+          {status === 'done' && <span className="text-faint font-medium">{shown.carbs}C · {shown.fat}G</span>}
+        </div>
+      )}
 
-      {/* transparència de dades */}
-      <button
-        onClick={onViewCalc}
-        className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-muted hover:text-accent"
-      >
-        <Icon name="database" size={13} />
-        {precisionSummary(meal.precision, meal.confidence)} · Fonts: {sources}
-        <span className="text-accent">· Veure càlcul</span>
-      </button>
-
-      <div className="flex flex-wrap items-center gap-2 mt-3">
-        {meal.done ? (
-          <span className="inline-flex items-center gap-1.5 text-accent font-bold text-[13.5px]">
-            <Icon name="check" size={16} /> Completat
-          </span>
+      {/* Transparència de dades */}
+      {!skipped &&
+        (status === 'changed' ? (
+          <div className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-muted">
+            <Icon name="edit" size={13} /> Dada manual · introduïda per tu
+          </div>
+        ) : status === 'partial' ? (
+          <div className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-muted">
+            <Icon name="info" size={13} /> Estimació proporcional ({meal.partialPct ?? 0}% de la recepta)
+          </div>
         ) : (
           <button
-            onClick={onComplete}
-            className="inline-flex items-center gap-1.5 bg-accent text-white font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:bg-accent-strong"
+            onClick={onViewCalc}
+            className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-muted hover:text-accent"
           >
-            <Icon name="check" size={16} /> Completar
+            <Icon name="database" size={13} />
+            {precisionSummary(meal.precision, meal.confidence)} · Fonts: {sources}
+            <span className="text-accent">· Veure càlcul</span>
           </button>
+        ))}
+
+      {meal.logged?.note && (
+        <div className="mt-1.5 text-[12px] text-faint italic">«{meal.logged.note}»</div>
+      )}
+
+      {/* Accions */}
+      <div className="flex flex-wrap items-center gap-2 mt-3">
+        {pending ? (
+          <>
+            <button
+              onClick={onMarkDone}
+              className="inline-flex items-center gap-1.5 bg-accent text-white font-semibold text-[13px] px-4 py-2 rounded-[10px] hover:bg-accent-strong"
+            >
+              <Icon name="check" size={16} /> Fet
+            </button>
+            <button
+              onClick={onOpenOptions}
+              className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"
+            >
+              <Icon name="chev" size={16} /> Opcions
+            </button>
+          </>
+        ) : (
+          <>
+            {(status === 'changed' || status === 'partial') && (
+              <button
+                onClick={onEdit}
+                className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"
+              >
+                <Icon name="edit" size={15} /> Editar
+              </button>
+            )}
+            <button
+              onClick={onUndo}
+              className="inline-flex items-center gap-1.5 text-muted font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:text-ink"
+            >
+              <Icon name="swap" size={15} /> Desfer
+            </button>
+          </>
         )}
-        <button
-          onClick={onSwap}
-          className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"
-        >
-          <Icon name="swap" size={16} /> Canviar
-        </button>
-        <button
-          onClick={onDislike}
-          className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"
-        >
-          <Icon name="x" size={16} /> No em ve de gust
-        </button>
       </div>
     </div>
   );

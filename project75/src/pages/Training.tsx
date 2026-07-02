@@ -3,6 +3,7 @@ import PageHead from '../components/PageHead';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 import TrainingDayCard from '../components/TrainingDayCard';
+import RoadmapCard from '../components/RoadmapCard';
 import CategoryTag from '../components/CategoryTag';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
@@ -45,6 +46,7 @@ export default function Training() {
     return (
       <section>
         <PageHead title="Entrenament" sub="Encara no has començat" right={<Badge tone="warn">Preparació</Badge>} />
+        <RoadmapCard className="mb-3.5" />
         <PhaseCard />
         <Card title="Primera setmana proposta (adaptació)" className="mb-3.5">
           <div className="flex flex-col">
@@ -74,6 +76,7 @@ export default function Training() {
     return (
       <section>
         <PageHead title="Entrenament" sub={`Setmana 0 · Adaptació · Dia ${projectDay(start)}`} right={<Badge>Adaptació</Badge>} />
+        <RoadmapCard className="mb-3.5" />
         <PhaseCard />
         <div className="grid md:grid-cols-[1.15fr_1fr] gap-3.5 items-start">
           <Card title="Setmana 0 · Adaptació">
@@ -148,7 +151,7 @@ function PhaseCard() {
         <div>
           <b className="block text-[15px] font-bold">Base actual: gym + running</b>
           <span className="text-[13px] text-muted">
-            Triatló més endavant: la bici i la natació entraran progressivament, sense pressa.
+            Bici i natació entren aviat, en microdosi tècnica (contacte, no rendiment). Sense pressa ni sensació d'anar tard.
           </span>
         </div>
       </div>

@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppState, CheckIn, Profile, Tab } from '../types';
-import type { MealRecipe, ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { AdjustContext, ManualLog, MealRecipe, ResolvedMeal } from '../nutrition/nutritionTypes';
 import { DEFAULT_PROFILE } from '../data/program';
 import { defaultDayRecipes, RECIPE_POOL, SHAKE_RECIPES } from '../nutrition/mealPlans';
 import { resolveRecipe } from '../nutrition/mealBuilder';
@@ -77,6 +77,13 @@ interface Ctx {
   openSheet: (n: ReactNode) => void;
   closeSheet: () => void;
   markMeal: (id: string) => void;
+  changeMeal: (id: string, data: ManualLog) => void;
+  partialMeal: (id: string, pct: number) => void;
+  skipMeal: (id: string) => void;
+  undoMeal: (id: string) => void;
+  addExtra: (data: ManualLog) => void;
+  addAdjustment: (ctx: AdjustContext, recipe?: MealRecipe) => void;
+  removeExtra: (id: string) => void;
   swapMeal: (id: string, recipe: MealRecipe) => void;
   dislikeMeal: (id: string) => void;
   addRecipe: (recipe: MealRecipe) => void;
@@ -133,12 +140,141 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const markMeal = useCallback(
     (id: string) => {
       setState((s) => {
-        const meals = s.meals.map((m) => (m.id === id ? { ...m, done: true } : m));
+        const meals = s.meals.map((m) =>
+          m.id === id
+            ? { ...m, done: true, status: 'done' as const, logged: undefined, partialPct: undefined }
+            : m,
+        );
         return bumpStreak({ ...s, meals });
       });
-      showToast('Ingesta completada');
+      showToast('Àpat fet');
     },
     [bumpStreak, showToast],
+  );
+
+  const changeMeal = useCallback(
+    (id: string, data: ManualLog) => {
+      setState((s) =>
+        bumpStreak({
+          ...s,
+          meals: s.meals.map((m) =>
+            m.id === id
+              ? { ...m, done: false, status: 'changed' as const, logged: { ...data }, partialPct: undefined }
+              : m,
+          ),
+        }),
+      );
+      showToast('Àpat canviat · dada manual');
+    },
+    [bumpStreak, showToast],
+  );
+
+  const partialMeal = useCallback(
+    (id: string, pct: number) => {
+      const p = Math.max(1, Math.min(100, Math.round(pct)));
+      setState((s) =>
+        bumpStreak({
+          ...s,
+          meals: s.meals.map((m) =>
+            m.id === id
+              ? { ...m, done: false, status: 'partial' as const, partialPct: p, logged: undefined }
+              : m,
+          ),
+        }),
+      );
+      showToast(`Ració parcial · ${p}%`);
+    },
+    [bumpStreak, showToast],
+  );
+
+  const skipMeal = useCallback(
+    (id: string) => {
+      setState((s) => ({
+        ...s,
+        meals: s.meals.map((m) =>
+          m.id === id
+            ? { ...m, done: false, status: 'skipped' as const, logged: undefined, partialPct: undefined }
+            : m,
+        ),
+      }));
+      showToast('Àpat saltat · sense culpa, recalculo');
+    },
+    [showToast],
+  );
+
+  const undoMeal = useCallback(
+    (id: string) => {
+      setState((s) => {
+        const m = s.meals.find((x) => x.id === id);
+        if (m?.isExtra) return { ...s, meals: s.meals.filter((x) => x.id !== id) };
+        return {
+          ...s,
+          meals: s.meals.map((x) =>
+            x.id === id
+              ? { ...x, done: false, status: 'pending' as const, logged: undefined, partialPct: undefined }
+              : x,
+          ),
+        };
+      });
+      showToast('Estat esborrat');
+    },
+    [showToast],
+  );
+
+  const addExtra = useCallback(
+    (data: ManualLog) => {
+      const extra: ResolvedMeal = {
+        id: `extra-${Date.now()}`,
+        slot: 'snack',
+        name: data.name?.trim() || 'Extra',
+        done: false,
+        status: 'changed',
+        isExtra: true,
+        extraOrigin: 'manual',
+        createdAt: new Date().toISOString(),
+        logged: { ...data },
+        tags: [],
+        nutrition: { kcal: data.kcal, protein: data.protein, carbs: 0, fat: 0, fiber: 0 },
+        precision: 'manual_estimate',
+        confidence: 'low',
+        sources: ['manual_estimate'],
+        ingredients: [],
+      };
+      setState((s) => bumpStreak({ ...s, meals: [...s.meals, extra] }));
+      showToast('Extra afegit · dada manual');
+    },
+    [bumpStreak, showToast],
+  );
+
+  /** Ajust afegit des de «Ajust per arribar avui»: batut/snack (recepta calculada)
+   *  amb metadata del canvi que l'ha provocat, perquè sigui reversible i contextual. */
+  const addAdjustment = useCallback(
+    (ctx: AdjustContext, recipe?: MealRecipe) => {
+      const r = recipe ?? SHAKE_RECIPES[Math.floor(Math.random() * SHAKE_RECIPES.length)];
+      const base = resolveRecipe(r, { id: `adj-${Date.now()}`, done: true });
+      const extra: ResolvedMeal = {
+        ...base,
+        isExtra: true,
+        extraOrigin: 'adjustment',
+        relatedMealId: ctx.relatedMealId,
+        relatedMealStatus: ctx.relatedMealStatus,
+        suggestedAfterMealId: ctx.suggestedAfterMealId,
+        suggestedTiming: ctx.suggestedTiming,
+        createdAt: new Date().toISOString(),
+      };
+      setState((s) => bumpStreak({ ...s, meals: [...s.meals, extra] }));
+      setTab('nutri');
+      showToast('Ajust afegit · el pots treure quan vulguis');
+    },
+    [bumpStreak, showToast],
+  );
+
+  const removeExtra = useCallback(
+    (id: string) => {
+      setState((s) => ({ ...s, meals: s.meals.filter((m) => m.id !== id) }));
+      showToast('Extra eliminat');
+    },
+    [showToast],
   );
 
   const swapMeal = useCallback(
@@ -298,12 +434,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(
     () => ({
       state, tab, setTab, toast, showToast, sheet, openSheet, closeSheet,
-      markMeal, swapMeal, dislikeMeal, addRecipe, regenerateDay, addShake, markGym,
+      markMeal, changeMeal, partialMeal, skipMeal, undoMeal, addExtra, addAdjustment, removeExtra,
+      swapMeal, dislikeMeal, addRecipe, regenerateDay, addShake, markGym,
       setDayMode, toggleHardDay, toggleLowAppetite, submitCheckin, addWeight, updateProfile,
       setProjectStartDate, startToday, togglePrep, resetAll,
     }),
     [
-      state, tab, toast, sheet, showToast, openSheet, closeSheet, markMeal, swapMeal, dislikeMeal,
+      state, tab, toast, sheet, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
+      skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, dislikeMeal,
       addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
       submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll,
     ],

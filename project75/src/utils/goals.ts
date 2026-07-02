@@ -1,5 +1,5 @@
 import type { AppState, Goals, WeightEntry } from '../types';
-import type { ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { CalculatedNutrition, MealStatus, ResolvedMeal } from '../nutrition/nutritionTypes';
 
 export function goalsFor(state: AppState): Goals {
   const { dayMode, profile } = state;
@@ -13,11 +13,53 @@ export function goalsFor(state: AppState): Goals {
   };
 }
 
+/** Estat real de l'àpat. Deriva de `done` si `status` no hi és (dades antigues). */
+export function mealStatus(m: ResolvedMeal): MealStatus {
+  return m.status ?? (m.done ? 'done' : 'pending');
+}
+
+/**
+ * Nutrició que REALMENT consta com menjada d'un àpat, o null si no compta.
+ * - done → recepta calculada
+ * - changed / extra → dada manual introduïda per l'usuari
+ * - partial → estimació proporcional de la recepta
+ * - pending / skipped → no suma
+ */
+export function mealEaten(m: ResolvedMeal): CalculatedNutrition | null {
+  const st = mealStatus(m);
+  if (st === 'done') return m.nutrition;
+  if (st === 'changed') {
+    if (!m.logged) return null;
+    return { kcal: m.logged.kcal, protein: m.logged.protein, carbs: 0, fat: 0, fiber: 0 };
+  }
+  if (st === 'partial') {
+    const f = Math.max(0, Math.min(100, m.partialPct ?? 0)) / 100;
+    const n = m.nutrition;
+    return {
+      kcal: Math.round(n.kcal * f),
+      protein: Math.round(n.protein * f),
+      carbs: Math.round(n.carbs * f),
+      fat: Math.round(n.fat * f),
+      fiber: Math.round(n.fiber * f * 10) / 10,
+    };
+  }
+  return null; // pending, skipped
+}
+
 export const doneKcal = (meals: ResolvedMeal[]): number =>
-  meals.filter((m) => m.done).reduce((s, m) => s + m.nutrition.kcal, 0);
+  meals.reduce((s, m) => s + (mealEaten(m)?.kcal ?? 0), 0);
 export const doneProt = (meals: ResolvedMeal[]): number =>
-  meals.filter((m) => m.done).reduce((s, m) => s + m.nutrition.protein, 0);
-export const doneCount = (meals: ResolvedMeal[]): number => meals.filter((m) => m.done).length;
+  meals.reduce((s, m) => s + (mealEaten(m)?.protein ?? 0), 0);
+/** Àpats amb intake real (fet + canviat + parcial + extres). */
+export const doneCount = (meals: ResolvedMeal[]): number =>
+  meals.filter((m) => mealEaten(m) !== null).length;
+
+/** Recompte d'estats dels àpats PLANIFICATS (exclou extres). */
+export function statusCounts(meals: ResolvedMeal[]): Record<MealStatus, number> {
+  const c: Record<MealStatus, number> = { pending: 0, done: 0, changed: 0, partial: 0, skipped: 0 };
+  for (const m of meals) if (!m.isExtra) c[mealStatus(m)]++;
+  return c;
+}
 
 export const currentWeight = (weights: WeightEntry[]): number =>
   weights.length ? weights[weights.length - 1].kg : 0;

@@ -77,6 +77,29 @@ export interface CalculatedNutrition {
   fiber: number;
 }
 
+/** Estat real d'un àpat planificat durant el dia. */
+export type MealStatus = 'pending' | 'done' | 'changed' | 'partial' | 'skipped';
+
+/** Registre introduït per l'usuari (àpat canviat o extra). Dada manual, no verificada. */
+export interface ManualLog {
+  name?: string;
+  kcal: number;
+  protein: number;
+  note?: string;
+}
+
+/** Origen d'un extra: manual (l'afegeix l'usuari lliurement) o ajust recomanat. */
+export type ExtraOrigin = 'manual' | 'adjustment' | 'shake' | 'rescue';
+
+/** Context que acompanya un ajust afegit des de «Ajust per arribar avui».
+ *  Permet que l'ajust sàpiga quin canvi l'ha provocat i on col·locar-lo. */
+export interface AdjustContext {
+  relatedMealId?: string;
+  relatedMealStatus?: 'skipped' | 'partial' | 'changed';
+  suggestedAfterMealId?: string;
+  suggestedTiming?: string;
+}
+
 export interface ResolvedIngredient {
   foodId: string;
   name: string;
@@ -94,7 +117,27 @@ export interface ResolvedMeal {
   recipeId?: string;
   slot: MealSlot;
   name: string;
+  /** Compatibilitat: true quan status === 'done'. La font de veritat és `status`. */
   done: boolean;
+  /** Estat real de l'àpat. Si falta (dades antigues), es deriva de `done`. */
+  status?: MealStatus;
+  /** Percentatge menjat (0-100) quan status === 'partial'. */
+  partialPct?: number;
+  /** Dada manual quan status === 'changed' o és un extra. */
+  logged?: ManualLog;
+  /** True si és un extra afegit fora del menú (no és un àpat planificat). */
+  isExtra?: boolean;
+  /** Origen de l'extra (manual vs ajust recomanat). */
+  extraOrigin?: ExtraOrigin;
+  /** Àpat que ha motivat l'ajust, si n'hi ha. */
+  relatedMealId?: string;
+  relatedMealStatus?: 'skipped' | 'partial' | 'changed';
+  /** Col·locació contextual: es mostra just després d'aquest àpat. */
+  suggestedAfterMealId?: string;
+  /** Text orientatiu de quan fer-lo (sense calcular hores). */
+  suggestedTiming?: string;
+  /** ISO de creació (per ordenar). */
+  createdAt?: string;
   tags: RecipeTag[];
   nutrition: CalculatedNutrition;
   precision: Precision; // pitjor precisió dels ingredients

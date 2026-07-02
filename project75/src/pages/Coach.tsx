@@ -10,6 +10,7 @@ import { getRecommendations, getCoachLine } from '../utils/coach';
 import { goalsFor, doneKcal, doneProt } from '../utils/goals';
 import { nf } from '../utils/format';
 import { isStarted, daysUntilStart } from '../utils/project';
+import { currentPhase } from '../data/annualRoadmap';
 import type { RecAction } from '../types';
 
 export default function Coach() {
@@ -46,6 +47,7 @@ export default function Coach() {
   const g = goalsFor(state);
   const left = Math.max(0, g.kcal - doneKcal(state.meals));
   const recs = getRecommendations(state);
+  const phase = currentPhase(state);
 
   const onAction = (kind: RecAction) => {
     if (kind === 'addShake') addShake();
@@ -86,6 +88,27 @@ export default function Coach() {
           </div>
         </div>
       </Card>
+
+      {/* orientació de fase (macrocicle anual, lleugera) */}
+      <div className="relative overflow-hidden bg-surface border border-accent-line rounded-xl2 p-4 pl-[18px] mb-3.5">
+        <span className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
+        <div className="flex items-center gap-2 font-bold text-[12.5px] text-accent-strong mb-1.5">
+          <Icon name="calendar" size={16} /> Fase {phase.order} · {phase.name}
+        </div>
+        <p className="text-[14px] leading-relaxed m-0">
+          Prioritat ara: {phase.nutritionFocus.toLowerCase()} {phase.trainingFocus}
+        </p>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {phase.cautions.map((c) => (
+            <span
+              key={c}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted bg-surface2 border border-line rounded-full px-2.5 py-1"
+            >
+              <Icon name="info" size={12} /> {c}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* recomanacions accionables */}
       <h2 className="text-[11px] font-bold tracking-[0.08em] uppercase text-faint mb-2.5 px-1">Accions recomanades</h2>
