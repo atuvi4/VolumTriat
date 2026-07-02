@@ -64,6 +64,8 @@ export interface MealIngredient {
 export interface MealRecipe {
   id: string;
   slot: MealSlot;
+  /** Slots addicionals on la recepta també encaixa (p. ex. dinar i sopar). */
+  slots?: MealSlot[];
   name: string;
   ingredients: MealIngredient[];
   tags: RecipeTag[];

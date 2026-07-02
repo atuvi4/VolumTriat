@@ -1,4 +1,4 @@
-import type { MealRecipe } from './nutritionTypes';
+import type { MealRecipe, MealSlot } from './nutritionTypes';
 
 /* Àpats definits per INGREDIENTS (grams). La nutrició la calcula el motor.
    precision:
@@ -59,31 +59,10 @@ export function defaultDayRecipes(): MealRecipe[] {
   ];
 }
 
-/** Alternatives per "Canviar" i "Canvia'm el dia". */
+/** Alternatives per "Canviar" i "Canvia'm el dia".
+ *  Cada recepta declara el seu slot principal i, si escau, `slots` on també encaixa. */
 export const RECIPE_POOL: MealRecipe[] = [
-  {
-    id: 'r-pollastre-patata', slot: 'dinar', name: 'Pollastre + patata + oli', tags: ['high_protein'],
-    ingredients: [
-      { foodId: 'chicken_breast', grams: 180, portionLabel: 'gran', precision: P },
-      { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
-      { foodId: 'olive_oil', grams: 15, portionLabel: 'normal', precision: P },
-    ],
-  },
-  {
-    id: 'r-salmo-arros', slot: 'sopar', name: 'Salmó + arròs', tags: ['high_protein'],
-    ingredients: [
-      { foodId: 'salmon', grams: 150, portionLabel: 'normal', precision: P },
-      { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
-    ],
-  },
-  {
-    id: 'r-llenties-arros', slot: 'dinar', name: 'Llenties amb arròs + ou', tags: ['homemade'],
-    ingredients: [
-      { foodId: 'lentils_cooked', grams: 250, portionLabel: 'normal', precision: P },
-      { foodId: 'rice_cooked', grams: 150, portionLabel: 'petit', precision: P },
-      { foodId: 'egg', grams: 50, portionLabel: 'petit', precision: P },
-    ],
-  },
+  /* ---------- ESMORZAR ---------- */
   {
     id: 'r-ous-torrades', slot: 'esmorzar', name: 'Ous remenats + torrades', tags: ['high_protein'],
     ingredients: [
@@ -93,7 +72,81 @@ export const RECIPE_POOL: MealRecipe[] = [
     ],
   },
   {
-    id: 'r-cigrons', slot: 'dinar', name: 'Cigrons + tonyina', tags: ['high_protein', 'no_cook'],
+    id: 'r-esm-torrades-ou-platan', slot: 'esmorzar', name: 'Torrades + ous + plàtan', tags: ['high_protein', 'homemade'],
+    ingredients: [
+      { foodId: 'bread', grams: 80, portionLabel: 'normal', precision: P },
+      { foodId: 'egg', grams: 100, portionLabel: 'normal', precision: P },
+      { foodId: 'banana', grams: 120, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-esm-iogurt-civada', slot: 'esmorzar', name: 'Iogurt grec + civada + mel + plàtan', tags: ['high_protein', 'quick'],
+    ingredients: [
+      { foodId: 'greek_yogurt', grams: 200, portionLabel: 'normal', precision: P },
+      { foodId: 'oats', grams: 40, portionLabel: 'normal', precision: P },
+      { foodId: 'honey', grams: 15, portionLabel: 'normal', precision: P },
+      { foodId: 'banana', grams: 120, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-esm-cereals-llet', slot: 'esmorzar', name: 'Cereals amb llet + plàtan', tags: ['quick'],
+    ingredients: [
+      { foodId: 'cereal', grams: 60, portionLabel: 'gran', precision: P },
+      { foodId: 'milk_whole', grams: 300, portionLabel: 'normal', precision: P },
+      { foodId: 'banana', grams: 120, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-esm-entrepa', slot: 'esmorzar', slots: ['berenar'], name: 'Entrepà de formatge + oli', tags: ['quick'],
+    ingredients: [
+      { foodId: 'bread', grams: 80, portionLabel: 'normal', precision: P },
+      { foodId: 'cheese', grams: 40, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
+    ],
+  },
+
+  /* ---------- DINAR / SOPAR ---------- */
+  {
+    id: 'r-arros-pollastre', slot: 'dinar', slots: ['sopar'], name: 'Arròs + pollastre + oli', tags: ['high_protein', 'post_workout'],
+    ingredients: [
+      { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
+      { foodId: 'chicken_breast', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 15, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-pollastre-patata', slot: 'dinar', slots: ['sopar'], name: 'Pollastre + patata + oli', tags: ['high_protein'],
+    ingredients: [
+      { foodId: 'chicken_breast', grams: 180, portionLabel: 'gran', precision: P },
+      { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
+      { foodId: 'olive_oil', grams: 15, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-pasta-tonyina', slot: 'dinar', slots: ['sopar'], name: 'Pasta + tonyina', tags: ['high_protein'],
+    ingredients: [
+      { foodId: 'pasta_cooked', grams: 220, portionLabel: 'normal', precision: P },
+      { foodId: 'tuna_can', grams: 100, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
+    ],
+  },
+  {
+    id: 'r-salmo-arros', slot: 'sopar', slots: ['dinar'], name: 'Salmó + arròs', tags: ['high_protein'],
+    ingredients: [
+      { foodId: 'salmon', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-llenties-arros', slot: 'dinar', slots: ['sopar'], name: 'Llenties amb arròs + ou', tags: ['homemade'],
+    ingredients: [
+      { foodId: 'lentils_cooked', grams: 250, portionLabel: 'normal', precision: P },
+      { foodId: 'rice_cooked', grams: 150, portionLabel: 'petit', precision: P },
+      { foodId: 'egg', grams: 50, portionLabel: 'petit', precision: P },
+    ],
+  },
+  {
+    id: 'r-cigrons', slot: 'dinar', slots: ['sopar'], name: 'Cigrons + tonyina', tags: ['high_protein', 'no_cook'],
     ingredients: [
       { foodId: 'chickpeas_cooked', grams: 250, portionLabel: 'normal', precision: P },
       { foodId: 'tuna_can', grams: 100, portionLabel: 'normal', precision: P },
@@ -101,14 +154,114 @@ export const RECIPE_POOL: MealRecipe[] = [
     ],
   },
   {
-    id: 'r-iogurt-fruits', slot: 'berenar', name: 'Iogurt grec + fruits secs + mel', tags: ['quick'],
+    id: 'r-patata-ous', slot: 'dinar', slots: ['sopar'], name: 'Patata + ous + oli', tags: ['homemade'],
+    ingredients: [
+      { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
+      { foodId: 'egg', grams: 150, portionLabel: 'gran', precision: P },
+      { foodId: 'olive_oil', grams: 15, portionLabel: 'normal', precision: P },
+    ],
+  },
+
+  /* ---------- SOPAR (específics) ---------- */
+  {
+    id: 'r-sopar-pasta-tonyina-formatge', slot: 'sopar', name: 'Pasta + tonyina + formatge', tags: ['high_protein', 'homemade'],
+    ingredients: [
+      { foodId: 'pasta_cooked', grams: 220, portionLabel: 'normal', precision: P },
+      { foodId: 'tuna_can', grams: 100, portionLabel: 'normal', precision: P },
+      { foodId: 'cheese', grams: 30, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-sopar-arros-ous', slot: 'sopar', name: 'Arròs + ous + oli', tags: ['homemade'],
+    ingredients: [
+      { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
+      { foodId: 'egg', grams: 150, portionLabel: 'gran', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
+    ],
+  },
+  {
+    id: 'r-sopar-truita-pa', slot: 'sopar', name: 'Truita + pa', tags: ['high_protein'],
+    ingredients: [
+      { foodId: 'egg', grams: 150, portionLabel: 'gran', precision: P },
+      { foodId: 'bread', grams: 80, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
+    ],
+  },
+
+  /* ---------- BERENAR / SNACK ---------- */
+  {
+    id: 'r-iogurt-fruits', slot: 'berenar', slots: ['snack'], name: 'Iogurt grec + fruits secs + mel', tags: ['quick'],
     ingredients: [
       { foodId: 'greek_yogurt', grams: 200, portionLabel: 'normal', precision: P },
       { foodId: 'nuts', grams: 25, portionLabel: 'normal', precision: P },
       { foodId: 'honey', grams: 15, portionLabel: 'normal', precision: P },
     ],
   },
+  {
+    id: 'r-berenar-iogurt-civada', slot: 'berenar', slots: ['snack'], name: 'Iogurt grec + civada + mel + cacauet', tags: ['high_protein', 'quick'],
+    ingredients: [
+      { foodId: 'greek_yogurt', grams: 200, portionLabel: 'normal', precision: P },
+      { foodId: 'oats', grams: 40, portionLabel: 'normal', precision: P },
+      { foodId: 'honey', grams: 15, portionLabel: 'normal', precision: P },
+      { foodId: 'peanut_butter', grams: 20, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-snack-batut-platan', slot: 'snack', slots: ['berenar'], name: 'Batut de plàtan + llet + civada', tags: ['liquid_calories', 'low_appetite'],
+    ingredients: [
+      { foodId: 'milk_whole', grams: 300, portionLabel: 'normal', precision: P },
+      { foodId: 'banana', grams: 120, portionLabel: 'normal', precision: P },
+      { foodId: 'oats', grams: 40, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-platan-cacauet', slot: 'berenar', slots: ['snack'], name: 'Plàtan + crema de cacauet + pa', tags: ['quick'],
+    ingredients: [
+      { foodId: 'banana', grams: 120, portionLabel: 'normal', precision: P },
+      { foodId: 'peanut_butter', grams: 30, portionLabel: 'gran', precision: P },
+      { foodId: 'bread', grams: 40, portionLabel: 'petit', precision: P },
+    ],
+  },
+  {
+    id: 'r-pa-formatge-fruits', slot: 'berenar', slots: ['snack'], name: 'Pa + formatge + fruits secs', tags: ['no_cook'],
+    ingredients: [
+      { foodId: 'bread', grams: 80, portionLabel: 'normal', precision: P },
+      { foodId: 'cheese', grams: 50, portionLabel: 'gran', precision: P },
+      { foodId: 'nuts', grams: 25, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'r-snack-batut-proteic', slot: 'snack', slots: ['berenar'], name: 'Batut de proteïna + iogurt + fruits secs', tags: ['high_protein', 'liquid_calories', 'supplement'],
+    ingredients: [
+      { foodId: 'whey', grams: 30, portionLabel: 'normal', precision: P },
+      { foodId: 'greek_yogurt', grams: 200, portionLabel: 'normal', precision: P },
+      { foodId: 'nuts', grams: 20, portionLabel: 'petit', precision: P },
+    ],
+  },
 ];
+
+/** La recepta encaixa en aquest slot (principal o addicional)? */
+export function slotMatchesRecipe(r: MealRecipe, slot: MealSlot): boolean {
+  return r.slot === slot || (r.slots?.includes(slot) ?? false);
+}
+
+/** Alternatives per "Canviar" un àpat: específiques del slot, excloent la recepta
+ *  actual i el que s'ha marcat com "no em ve de gust". Ordre estable (slot
+ *  principal primer) — sense atzar per render. */
+export function swapOptionsFor(
+  meal: { slot: MealSlot; name: string; recipeId?: string },
+  dislikes: string[] = [],
+): MealRecipe[] {
+  const disliked = (name: string) =>
+    dislikes.some((d) => d && name.toLowerCase().includes(d.toLowerCase()));
+  return RECIPE_POOL.filter(
+    (r) =>
+      slotMatchesRecipe(r, meal.slot) &&
+      r.id !== meal.recipeId &&
+      r.name !== meal.name &&
+      !disliked(r.name),
+  ).sort((a, b) => Number(b.slot === meal.slot) - Number(a.slot === meal.slot));
+}
 
 /** Batuts d'alta densitat (rescat, afegir batut). */
 export const SHAKE_RECIPES: MealRecipe[] = [
