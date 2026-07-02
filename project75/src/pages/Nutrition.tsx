@@ -11,7 +11,7 @@ import RescueSheet from '../components/sheets/RescueSheet';
 import QuickOptionsSheet from '../components/sheets/QuickOptionsSheet';
 import CalcSheet from '../components/sheets/CalcSheet';
 import { goalsFor, doneKcal, doneProt, doneCount, currentWeight } from '../utils/goals';
-import { nf, kilo } from '../utils/format';
+import { nf } from '../utils/format';
 import { computeTargets } from '../nutrition/nutritionTargets';
 import { weeklyAdjustment } from '../nutrition/adjustmentRules';
 import { NOCOOK_RECIPES, OUTSIDE_RECIPES } from '../nutrition/mealPlans';
@@ -47,7 +47,7 @@ export default function Nutrition() {
     { v: String(dc), gg: `${g.meals}`, l: 'Àpats', ok: dc >= g.meals },
     { v: `${dp}g`, gg: `${g.prot}g`, l: 'Proteïna', ok: dp >= g.prot },
     { v: String(shakes), gg: '1', l: 'Batut', ok: shakes >= 1 },
-    { v: kilo(dk), gg: kilo(g.kcal), l: 'Calories', ok: dk >= g.kcal },
+    { v: nf(dk), gg: nf(g.kcal), l: 'Calories', ok: dk >= g.kcal },
   ];
 
   const gapRec: Recommendation = {
@@ -147,9 +147,21 @@ export default function Nutrition() {
         </div>
       </Card>
 
-      {left >= 300 && (
-        <div className="mb-3.5">
-          <CoachRecommendation rec={gapRec} onAction={() => addShake()} />
+      {isStarted(state.profile.projectStartDate) ? (
+        left >= 300 && (
+          <div className="mb-3.5">
+            <CoachRecommendation rec={gapRec} onAction={() => addShake()} />
+          </div>
+        )
+      ) : (
+        <div className="relative overflow-hidden bg-surface border border-accent-line rounded-xl2 p-4 pl-[18px] mb-3.5">
+          <span className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
+          <div className="flex items-center gap-2 font-bold text-[12.5px] text-accent-strong mb-1.5">
+            <Icon name="cup" size={16} /> Preparació
+          </div>
+          <p className="text-[14.5px] leading-relaxed m-0">
+            Avui no cal complir calories. Deixa preparat un batut i 2 opcions fàcils per demà.
+          </p>
         </div>
       )}
 

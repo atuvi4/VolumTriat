@@ -21,8 +21,10 @@ export function computeTargets(input: TargetInput): NutritionTargets {
   const bmr = Math.round(bmrMifflin(sex, weightKg, heightCm, age));
   const { low, mid, high } = tdeeRange(bmr);
 
-  // Superàvit segons ritme (volum sostenible vs agressiu sostenible)
-  const surplus = ritme === 'agressiu' ? { lo: 250, hi: 450, start: 300 } : { lo: 100, hi: 250, start: 150 };
+  // Superàvit segons ritme (volum sostenible vs agressiu sostenible).
+  // 'start' s'alinea amb el límit baix del rang perquè l'objectiu inicial coincideixi
+  // amb el configurat (evita mostrar una xifra intermèdia òrfena tipus 3050).
+  const surplus = ritme === 'agressiu' ? { lo: 250, hi: 450, start: 250 } : { lo: 100, hi: 250, start: 150 };
 
   const kcalRange: [number, number] = [round50(mid + surplus.lo), round50(mid + surplus.hi)];
   const kcalStart = round50(mid + surplus.start);

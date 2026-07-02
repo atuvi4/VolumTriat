@@ -1,5 +1,5 @@
 import type { AppState } from '../types';
-import { todayISO } from './date';
+import { todayISO, toLocalISO } from './date';
 
 const at0 = (iso: string) => new Date(iso + 'T00:00:00');
 const DAY = 86400000;
@@ -27,7 +27,7 @@ export function startWeekSundayISO(startISO: string): string {
   const day = s.getDay(); // 0=Dg..6=Ds
   const toSunday = (7 - day) % 7;
   s.setDate(s.getDate() + toSunday);
-  return s.toISOString().slice(0, 10);
+  return toLocalISO(s);
 }
 
 /** Estem a la primera setmana parcial (adaptació) entre l'inici i el diumenge? */

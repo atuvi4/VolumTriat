@@ -35,7 +35,7 @@ export default function Settings() {
   const [age, setAge] = useState(p.age);
   const [heightCm, setHeight] = useState(p.heightCm);
   const [startWeight, setStart] = useState(p.startWeight);
-  const [current, setCurrent] = useState(currentWeight(state.weights));
+  const [current, setCurrent] = useState<number | ''>(state.weights.length ? currentWeight(state.weights) : '');
   const [target1, setT1] = useState(p.target1);
   const [target2, setT2] = useState(p.target2);
   const [kcalGoal, setKcal] = useState(p.kcalGoal);
@@ -44,7 +44,8 @@ export default function Settings() {
 
   const save = () => {
     updateProfile({ name, age, heightCm, startWeight, target1, target2, kcalGoal, protGoal, ritme, projectStartDate: startDate });
-    if (current !== currentWeight(state.weights)) addWeight(current);
+    // Només registra pes actual si és un valor real i diferent de l'últim registrat (mai 0).
+    if (typeof current === 'number' && current > 0 && current !== currentWeight(state.weights)) addWeight(current);
   };
 
   return (
@@ -90,7 +91,14 @@ export default function Settings() {
           <input type="number" step="0.1" className={inputCls} value={startWeight} onChange={(e) => setStart(+e.target.value)} />
         </Field>
         <Field label="Pes actual (kg)">
-          <input type="number" step="0.1" className={inputCls} value={current} onChange={(e) => setCurrent(+e.target.value)} />
+          <input
+            type="number"
+            step="0.1"
+            className={inputCls}
+            placeholder="No registrat"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value === '' ? '' : +e.target.value)}
+          />
         </Field>
         <Field label="Objectiu primer (kg)">
           <input type="number" step="0.5" className={inputCls} value={target1} onChange={(e) => setT1(+e.target.value)} />

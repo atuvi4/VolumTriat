@@ -5,6 +5,7 @@ import Badge from '../components/Badge';
 import CoachRecommendation from '../components/CoachRecommendation';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
+import InitialWeightSheet from '../components/sheets/InitialWeightSheet';
 import { getRecommendations, getCoachLine } from '../utils/coach';
 import { goalsFor, doneKcal, doneProt } from '../utils/goals';
 import { nf } from '../utils/format';
@@ -13,7 +14,7 @@ import type { RecAction } from '../types';
 
 export default function Coach() {
   const app = useApp();
-  const { state, addShake, toggleHardDay, setTab, addWeight } = app;
+  const { state, addShake, toggleHardDay, setTab, openSheet } = app;
 
   if (!isStarted(state.profile.projectStartDate)) {
     const days = daysUntilStart(state.profile.projectStartDate);
@@ -50,7 +51,7 @@ export default function Coach() {
     if (kind === 'addShake') addShake();
     else if (kind === 'hardDay') toggleHardDay();
     else if (kind === 'openNutrition') setTab('nutri');
-    else if (kind === 'addWeight') { addWeight(); setTab('evo'); }
+    else if (kind === 'addWeight') { openSheet(<InitialWeightSheet />); }
     else if (kind === 'lowAppetite') app.toggleLowAppetite();
   };
 

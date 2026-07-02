@@ -8,7 +8,7 @@ import Button from '../components/Button';
 import Icon from '../components/Icon';
 import { WEEK, WEEK_ORDER, DAY_ABBR, CAT_LABEL, todayWorkout } from '../data/week';
 import { isStarted, inAdaptationWeek, startWeekSundayISO, projectDay } from '../utils/project';
-import { todayISO } from '../utils/date';
+import { todayISO, toLocalISO } from '../utils/date';
 import type { WorkoutDay } from '../types';
 
 const ADAPT: WorkoutDay[] = [
@@ -26,7 +26,7 @@ function adaptationDays(startISO: string): { iso: string; day: WorkoutDay }[] {
   const end = new Date(sunday + 'T00:00:00');
   let i = 0;
   while (cur.getTime() <= end.getTime()) {
-    const iso = cur.toISOString().slice(0, 10);
+    const iso = toLocalISO(cur);
     out.push({ iso, day: ADAPT[Math.min(i, ADAPT.length - 1)] });
     cur.setDate(cur.getDate() + 1);
     i++;

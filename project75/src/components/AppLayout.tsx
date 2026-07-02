@@ -7,7 +7,7 @@ import { useApp } from '../hooks/useAppState';
 import { isStarted } from '../utils/project';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { state, toast, sheet, closeSheet } = useApp();
+  const { state, tab, setTab, toast, sheet, closeSheet } = useApp();
   const started = isStarted(state.profile.projectStartDate);
 
   return (
@@ -23,15 +23,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-extrabold text-[15px]">Project75</span>
           </div>
-          {started ? (
-            <span className="inline-flex items-center gap-1.5 bg-warn-soft text-warn font-bold text-[13px] px-3 py-[7px] rounded-full">
-              <Icon name="flame" size={16} /> {state.streak}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 bg-warn-soft text-warn font-bold text-[12px] px-3 py-[7px] rounded-full">
-              Preparació
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {started ? (
+              <span className="inline-flex items-center gap-1.5 bg-warn-soft text-warn font-bold text-[13px] px-3 py-[7px] rounded-full">
+                <Icon name="flame" size={16} /> {state.streak}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 bg-warn-soft text-warn font-bold text-[12px] px-3 py-[7px] rounded-full">
+                Preparació
+              </span>
+            )}
+            <button
+              onClick={() => setTab('config')}
+              aria-label="Configuració"
+              className={`w-9 h-9 grid place-items-center rounded-full border ${
+                tab === 'config' ? 'bg-accent-soft border-accent-line text-accent-strong' : 'border-line2 text-muted'
+              }`}
+            >
+              <Icon name="settings" size={18} />
+            </button>
+          </div>
         </header>
 
         <div className="max-w-[960px] mx-auto px-[18px] md:px-[30px] pb-11 animate-fade">{children}</div>

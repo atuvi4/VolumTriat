@@ -1,4 +1,12 @@
-export const todayISO = (): string => new Date().toISOString().slice(0, 10);
+/** Data en hora LOCAL en format YYYY-MM-DD (evita el desfasament d'UTC de toISOString). */
+export const toLocalISO = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+export const todayISO = (): string => toLocalISO(new Date());
 
 const DIES = ['diumenge', 'dilluns', 'dimarts', 'dimecres', 'dijous', 'divendres', 'dissabte'];
 const MESOS = [

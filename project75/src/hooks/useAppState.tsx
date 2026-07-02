@@ -87,7 +87,7 @@ interface Ctx {
   toggleHardDay: () => void;
   toggleLowAppetite: () => void;
   submitCheckin: (c: Omit<CheckIn, 'at'>) => void;
-  addWeight: (kg?: number) => void;
+  addWeight: (kg: number) => void;
   updateProfile: (p: Partial<Profile>) => void;
   setProjectStartDate: (iso: string) => void;
   startToday: () => void;
@@ -250,12 +250,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const addWeight = useCallback(
-    (kg?: number) => {
-      setState((s) => {
-        const last = s.weights.length ? s.weights[s.weights.length - 1].kg : s.profile.startWeight;
-        const value = kg ?? Math.round((last + 0.3) * 10) / 10;
-        return { ...s, weights: [...s.weights, { d: todayISO(), kg: value }] };
-      });
+    (kg: number) => {
+      // Mai fabriquem un pes: cal un valor real i vàlid.
+      if (!Number.isFinite(kg) || kg <= 0) return;
+      setState((s) => ({ ...s, weights: [...s.weights, { d: todayISO(), kg }] }));
       showToast('Pes registrat');
     },
     [showToast],

@@ -22,6 +22,9 @@ export const doneCount = (meals: ResolvedMeal[]): number => meals.filter((m) => 
 export const currentWeight = (weights: WeightEntry[]): number =>
   weights.length ? weights[weights.length - 1].kg : 0;
 
+/** Mínim de registres reals per considerar una tendència fiable. */
+export const MIN_FOR_TREND = 4;
+
 export function trendPerWeek(weights: WeightEntry[]): number {
   if (weights.length < 2) return 0;
   const first = weights[0];

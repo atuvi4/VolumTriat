@@ -6,15 +6,13 @@ import Button from '../components/Button';
 import Icon from '../components/Icon';
 import Badge from '../components/Badge';
 import InitialWeightSheet from '../components/sheets/InitialWeightSheet';
-import { currentWeight, trendPerWeek, nextMilestone } from '../utils/goals';
+import { currentWeight, trendPerWeek, nextMilestone, MIN_FOR_TREND } from '../utils/goals';
 import { fmt1, pct } from '../utils/format';
 import { shortDate, longDate } from '../utils/date';
 import { isStarted, realWeights, consistencyPct } from '../utils/project';
 
-const MIN_FOR_TREND = 4;
-
 export default function Evolution() {
-  const { state, addWeight, openSheet, showToast } = useApp();
+  const { state, openSheet, showToast } = useApp();
   const p = state.profile;
   const started = isStarted(p.projectStartDate);
   const startLabel = longDate(new Date(p.projectStartDate + 'T00:00:00'));
@@ -134,7 +132,7 @@ export default function Evolution() {
       </Card>
 
       <div className="flex flex-wrap gap-2.5">
-        <Button block variant="primary" icon="plus" onClick={() => (hasWeights ? addWeight() : openSheet(<InitialWeightSheet />))}>
+        <Button block variant="primary" icon="plus" onClick={() => openSheet(<InitialWeightSheet />)}>
           {hasWeights ? 'Afegir pes' : 'Registrar primer pes'}
         </Button>
         <Button block variant="ghost" icon="image" onClick={() => showToast('Aquí afegiries una foto de progrés')}>Afegir foto</Button>

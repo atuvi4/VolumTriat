@@ -1,6 +1,6 @@
 import type { AppState, Recommendation } from '../types';
 import { todayWorkout } from '../data/week';
-import { goalsFor, doneKcal, doneProt, doneCount, trendPerWeek } from './goals';
+import { goalsFor, doneKcal, doneProt, doneCount, trendPerWeek, MIN_FOR_TREND } from './goals';
 import { nf } from './format';
 
 export interface Directive {
@@ -82,7 +82,8 @@ export function getRecommendations(state: AppState): Recommendation[] {
   const dp = doneProt(state.meals);
   const left = g.kcal - dk;
   const w = todayWorkout();
-  const trend = trendPerWeek(state.weights);
+  const hasTrend = state.weights.length >= MIN_FOR_TREND;
+  const trend = hasTrend ? trendPerWeek(state.weights) : 0;
   const ci = state.checkin;
 
   // 1. Ànim baix → adaptar dificultat (NO és consell mèdic)
@@ -151,8 +152,8 @@ export function getRecommendations(state: AppState): Recommendation[] {
     });
   }
 
-  // 5. Pes no puja → afegir 150-250 kcal/dia
-  if (trend < 0.2) {
+  // 5. Pes no puja → afegir 150-250 kcal/dia (només amb tendència fiable)
+  if (hasTrend && trend < 0.2) {
     recs.push({
       id: 'stall',
       tone: 'info',
@@ -171,9 +172,13 @@ export function getRecommendations(state: AppState): Recommendation[] {
       id: 'ok',
       tone: 'accent',
       title: 'Vas ben encaminat',
-      body: 'Objectius del dia dins de rang i tendència a l’alça. Mantén la constància: és el que et porta a 75 kg.',
+      body: hasTrend
+        ? 'Objectius del dia dins de rang i tendència a l’alça. Mantén la constància: és el que et porta a 75 kg.'
+        : 'Objectius del dia dins de rang. Registra el pes uns quants dies i podré llegir la teva tendència real.',
       why: 'La regularitat setmanal pesa més que qualsevol dia perfecte aïllat.',
-      dataUsed: `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`,
+      dataUsed: hasTrend
+        ? `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`
+        : `Encara recopilant dades de pes (${state.weights.length}/${MIN_FOR_TREND} registres)`,
       confidence: 'medium',
     });
   }
