@@ -42,3 +42,16 @@ export async function searchUsda(query: string): Promise<FoodItem[]> {
     return [];
   }
 }
+
+/** Detall d'un aliment USDA ja normalitzat pel servidor (/api/food-details).
+ *  Retorna null si no hi ha clau o falla → el frontend usa la base local. */
+export async function getUsdaFoodDetails(fdcId: string): Promise<FoodItem | null> {
+  try {
+    const res = await fetch(`/api/food-details?source=usda&id=${encodeURIComponent(fdcId)}`);
+    if (!res.ok) throw new Error('usda_details_unavailable');
+    const data = (await res.json()) as { food?: FoodItem | null };
+    return data.food ?? null;
+  } catch {
+    return null;
+  }
+}

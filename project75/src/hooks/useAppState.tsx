@@ -17,11 +17,49 @@ import { todayISO } from '../utils/date';
 import { doneCount } from '../utils/goals';
 import { isStarted } from '../utils/project';
 import { detectReadOnly } from '../utils/readOnly';
+import { todayWorkout } from '../data/week';
+import { appendOutcome } from '../brain/brain';
+import type { MealOutcome, OutcomeAction, OutcomeSource } from '../brain/brainTypes';
 
 const KEY = 'project75_state_v3'; // v3: data d'inici + sense dades mock
 
 function buildDayMeals(): ResolvedMeal[] {
   return defaultDayRecipes().map((r) => resolveRecipe(r, { id: `day-${r.slot}`, done: false }));
+}
+
+/** Project75 Brain v1 — registra un outcome real amb el context actual. */
+function withOutcome(
+  s: AppState,
+  o: {
+    slot: MealOutcome['slot'];
+    mealName: string;
+    recipeId?: string;
+    action: OutcomeAction;
+    kcal?: number;
+    protein?: number;
+    source?: OutcomeSource;
+    confidence?: MealOutcome['confidence'];
+    reason?: string;
+  },
+): AppState {
+  const outcome: MealOutcome = {
+    id: `o-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    date: todayISO(),
+    timestamp: new Date().toISOString(),
+    slot: o.slot,
+    mealName: o.mealName,
+    recipeId: o.recipeId,
+    action: o.action,
+    kcal: o.kcal,
+    protein: o.protein,
+    source: o.source,
+    confidence: o.confidence,
+    appetite: s.checkin?.appetite,
+    dayMode: s.dayMode,
+    training: todayWorkout().type,
+    reason: o.reason,
+  };
+  return { ...s, outcomes: appendOutcome(s.outcomes ?? [], outcome) };
 }
 
 function freshState(): AppState {
@@ -38,6 +76,7 @@ function freshState(): AppState {
     weights: [], // cap pes inventat
     completedDates: [],
     prepDone: [],
+    outcomes: [],
     profile: { ...DEFAULT_PROFILE },
   };
 }
@@ -60,6 +99,7 @@ function loadState(): AppState {
     s.profile = { ...DEFAULT_PROFILE, ...s.profile };
     s.completedDates = s.completedDates ?? [];
     s.prepDone = s.prepDone ?? [];
+    s.outcomes = s.outcomes ?? []; // Brain v1: acumula entre dies (no es reinicia)
     // no barrejar mock: elimina pesos anteriors a la data d'inici
     s.weights = (s.weights ?? []).filter((w) => w.d >= s.profile.projectStartDate);
     return s;
@@ -146,12 +186,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const markMeal = useCallback(
     (id: string) => {
       setState((s) => {
+        const meal = s.meals.find((m) => m.id === id);
         const meals = s.meals.map((m) =>
           m.id === id
             ? { ...m, done: true, status: 'done' as const, logged: undefined, partialPct: undefined }
             : m,
         );
-        return bumpStreak({ ...s, meals });
+        let next = bumpStreak({ ...s, meals });
+        if (meal)
+          next = withOutcome(next, {
+            slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId, action: 'done',
+            kcal: meal.nutrition.kcal, protein: meal.nutrition.protein, source: 'recipe', confidence: meal.confidence,
+          });
+        return next;
       });
       showToast('Àpat fet');
     },
@@ -160,16 +207,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const changeMeal = useCallback(
     (id: string, data: ManualLog) => {
-      setState((s) =>
-        bumpStreak({
+      setState((s) => {
+        const meal = s.meals.find((m) => m.id === id);
+        let next = bumpStreak({
           ...s,
           meals: s.meals.map((m) =>
             m.id === id
               ? { ...m, done: false, status: 'changed' as const, logged: { ...data }, partialPct: undefined }
               : m,
           ),
-        }),
-      );
+        });
+        if (meal)
+          next = withOutcome(next, {
+            slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId, action: 'changed',
+            kcal: data.kcal, protein: data.protein, source: 'manual', confidence: 'low',
+          });
+        return next;
+      });
       showToast('Àpat canviat · dada manual');
     },
     [bumpStreak, showToast],
@@ -178,16 +232,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const partialMeal = useCallback(
     (id: string, pct: number) => {
       const p = Math.max(1, Math.min(100, Math.round(pct)));
-      setState((s) =>
-        bumpStreak({
+      setState((s) => {
+        const meal = s.meals.find((m) => m.id === id);
+        let next = bumpStreak({
           ...s,
           meals: s.meals.map((m) =>
             m.id === id
               ? { ...m, done: false, status: 'partial' as const, partialPct: p, logged: undefined }
               : m,
           ),
-        }),
-      );
+        });
+        if (meal) {
+          const f = p / 100;
+          next = withOutcome(next, {
+            slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId, action: 'partial',
+            kcal: Math.round(meal.nutrition.kcal * f), protein: Math.round(meal.nutrition.protein * f),
+            source: 'partial_estimate', confidence: meal.confidence, reason: `${p}%`,
+          });
+        }
+        return next;
+      });
       showToast(`Ració parcial · ${p}%`);
     },
     [bumpStreak, showToast],
@@ -195,14 +259,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const skipMeal = useCallback(
     (id: string) => {
-      setState((s) => ({
-        ...s,
-        meals: s.meals.map((m) =>
-          m.id === id
-            ? { ...m, done: false, status: 'skipped' as const, logged: undefined, partialPct: undefined }
-            : m,
-        ),
-      }));
+      setState((s) => {
+        const meal = s.meals.find((m) => m.id === id);
+        let next: AppState = {
+          ...s,
+          meals: s.meals.map((m) =>
+            m.id === id
+              ? { ...m, done: false, status: 'skipped' as const, logged: undefined, partialPct: undefined }
+              : m,
+          ),
+        };
+        if (meal)
+          next = withOutcome(next, {
+            slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId, action: 'skipped',
+          });
+        return next;
+      });
       showToast('Àpat saltat · sense culpa, recalculo');
     },
     [showToast],
@@ -246,7 +318,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sources: ['manual_estimate'],
         ingredients: [],
       };
-      setState((s) => bumpStreak({ ...s, meals: [...s.meals, extra] }));
+      setState((s) =>
+        withOutcome(bumpStreak({ ...s, meals: [...s.meals, extra] }), {
+          slot: 'snack', mealName: extra.name, action: 'extra',
+          kcal: data.kcal, protein: data.protein, source: 'manual', confidence: 'low',
+        }),
+      );
       showToast('Extra afegit · dada manual');
     },
     [bumpStreak, showToast],
@@ -268,7 +345,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         suggestedTiming: ctx.suggestedTiming,
         createdAt: new Date().toISOString(),
       };
-      setState((s) => bumpStreak({ ...s, meals: [...s.meals, extra] }));
+      setState((s) =>
+        withOutcome(bumpStreak({ ...s, meals: [...s.meals, extra] }), {
+          slot: base.slot, mealName: base.name, recipeId: base.recipeId, action: 'adjustment_added',
+          kcal: base.nutrition.kcal, protein: base.nutrition.protein, source: 'recipe', confidence: base.confidence,
+          reason: ctx.relatedMealStatus ?? ctx.suggestedTiming,
+        }),
+      );
       setTab('nutri');
       showToast('Ajust afegit · el pots treure quan vulguis');
     },
@@ -277,7 +360,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const removeExtra = useCallback(
     (id: string) => {
-      setState((s) => ({ ...s, meals: s.meals.filter((m) => m.id !== id) }));
+      setState((s) => {
+        const meal = s.meals.find((m) => m.id === id);
+        let next: AppState = { ...s, meals: s.meals.filter((m) => m.id !== id) };
+        if (meal?.isExtra && meal.extraOrigin === 'adjustment')
+          next = withOutcome(next, {
+            slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId,
+            action: 'adjustment_removed', reason: meal.relatedMealStatus,
+          });
+        return next;
+      });
       showToast('Extra eliminat');
     },
     [showToast],
@@ -301,7 +393,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const food = m?.ingredients[0]?.name ?? '';
         const dislikes = food && !s.dislikes.includes(food) ? [...s.dislikes, food] : s.dislikes;
         showToast(`Anotat — proposaré «${food.toLowerCase()}» menys sovint`);
-        return { ...s, dislikes };
+        let next: AppState = { ...s, dislikes };
+        if (m)
+          next = withOutcome(next, {
+            slot: m.slot, mealName: m.name, recipeId: m.recipeId, action: 'disliked', reason: food || undefined,
+          });
+        return next;
       });
     },
     [showToast],

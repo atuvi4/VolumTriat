@@ -3,6 +3,7 @@ import { useApp } from '../hooks/useAppState';
 import PageHead from '../components/PageHead';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import BrainInsightsCard from '../components/BrainInsightsCard';
 import { currentWeight } from '../utils/goals';
 import type { Ritme } from '../types';
 
@@ -147,6 +148,8 @@ export default function Settings() {
           </Button>
         </Field>
       </Group>
+
+      <BrainInsightsCard />
 
       <p className="text-[13px] text-muted text-center">Dades desades localment al navegador (localStorage)</p>
     </section>

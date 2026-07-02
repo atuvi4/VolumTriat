@@ -1,4 +1,5 @@
 import type { ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { MealOutcome } from '../brain/brainTypes';
 
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
@@ -47,6 +48,8 @@ export interface AppState {
   completedDates: string[];
   /** Ids de tasques de preparació marcades. */
   prepDone: string[];
+  /** Project75 Brain v1 — historial d'accions reals per aprendre (local). */
+  outcomes: MealOutcome[];
 }
 
 export interface Goals {
