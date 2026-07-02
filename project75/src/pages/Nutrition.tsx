@@ -29,8 +29,9 @@ export default function Nutrition() {
   const {
     state, markMeal, changeMeal, partialMeal, skipMeal, undoMeal,
     addExtra, addAdjustment, removeExtra,
-    openSheet, closeSheet, addShake, regenerateDay, toggleLowAppetite, setDayMode, showToast,
+    openSheet, closeSheet, addShake, regenerateDay, toggleLowAppetite, showToast,
   } = app;
+  const started = isStarted(state.profile.projectStartDate);
   const g = goalsFor(state);
   const dk = doneKcal(state.meals);
   const dp = doneProt(state.meals);
@@ -96,12 +97,12 @@ export default function Nutrition() {
 
   const adjust = nutritionAdjust(state);
 
-  const quick = [
-    { icon: 'x' as const, label: 'No tinc gana', run: () => { setDayMode('pocaGana'); showToast('Mode poca gana: prioritzo líquids'); } },
+  // Accions secundàries (dins «Més opcions»). Les principals són inline.
+  const moreActions = [
     { icon: 'store' as const, label: 'No vull cuinar', run: () => openSheet(<QuickOptionsSheet title="Sense cuinar" sub="Opcions ràpides sense fogons (calculades):" options={NOCOOK_RECIPES} />) },
     { icon: 'clock' as const, label: 'Menjo fora', run: () => openSheet(<QuickOptionsSheet title="Menjo fora" sub="Orientatiu (precisió baixa): què demanar per sumar calories i proteïna" options={OUTSIDE_RECIPES} />) },
-    { icon: 'cup' as const, label: 'Només vull batut', run: addShake },
     { icon: 'swap' as const, label: "Canvia'm el dia", run: regenerateDay },
+    { icon: 'plus' as const, label: 'Afegir extra', run: () => openSheet(<ManualEntrySheet title="Afegir extra" sub="Alguna cosa que has menjat fora del menú." submitLabel="Afegir extra" onSubmit={(d) => addExtra(d)} />) },
   ];
 
   return (
@@ -117,72 +118,38 @@ export default function Nutrition() {
         }
       />
 
-      {!isStarted(state.profile.projectStartDate) && (
+      {!started && (
         <div className="flex items-center gap-2 bg-warn-soft text-warn rounded-xl2 px-4 py-3 mb-3.5 text-[13.5px] font-semibold">
-          <Icon name="info" size={17} /> Fase de preparació: això és per planificar i triar què menjaràs, no per complir avui.
+          <Icon name="info" size={17} /> Preparació: planifica, no cal complir avui.
         </div>
       )}
 
-      {/* Objectiu calculat */}
-      <div className="relative overflow-hidden bg-surface border border-accent-line rounded-xl2 p-4 pl-[18px] mb-3.5">
-        <span className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
-        <div className="flex items-center gap-2 font-bold text-[12.5px] text-accent-strong mb-1.5">
-          <Icon name="target" size={16} /> Objectiu calculat
-        </div>
-        <p className="text-[14.5px] leading-relaxed m-0">{targets.explanation}</p>
-        <details className="mt-2 group">
-          <summary className="cursor-pointer text-[13px] font-semibold text-accent list-none flex items-center gap-1">
-            <Icon name="info" size={14} /> Per què aquest objectiu?
-          </summary>
-          <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-[13px]">
-            {[
-              ['BMR estimat', `${targets.bmr} kcal`],
-              ['Manteniment', `~${targets.tdeeMid} kcal`],
-              ['Proteïna', `${targets.proteinRange[0]}-${targets.proteinRange[1]} g`],
-              ['Greix mínim', `${targets.fatMin} g`],
-            ].map(([l, v]) => (
-              <div key={l} className="bg-surface2 border border-line rounded-xl px-3 py-2">
-                <div className="text-[11px] text-faint font-semibold">{l}</div>
-                <div className="font-bold">{v}</div>
-              </div>
-            ))}
-            <p className="col-span-2 md:col-span-4 text-muted m-0 mt-1">{targets.proteinNote}</p>
-            <p className="col-span-2 md:col-span-4 text-faint text-[12px] m-0">
-              Pujada objectiu: {targets.weeklyGain[0]}-{targets.weeklyGain[1]} kg/setmana. Estimacions amb factor d'activitat aproximat; no és consell mèdic.
-            </p>
-          </div>
-        </details>
-      </div>
-
-      {/* accions ràpides */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-3 -mx-[18px] px-[18px] md:mx-0 md:px-0 md:flex-wrap">
-        {quick.map((q) => (
-          <button
-            key={q.label}
-            onClick={q.run}
-            className="shrink-0 inline-flex items-center gap-2 bg-surface border border-line2 rounded-full px-3.5 py-2.5 text-[13px] font-semibold hover:border-faint"
-          >
-            <Icon name={q.icon} size={16} /> {q.label}
-          </button>
-        ))}
-      </div>
-
-      <Card title="Objectiu d'avui" className="mb-3.5">
+      {/* 1) Resum del dia — el primer que es veu */}
+      <Card title={started ? "Objectiu d'avui" : 'Objectiu de referència'} className="mb-3.5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
           {objs.map((o) => (
-            <div key={o.l} className={`rounded-[14px] p-3 border ${o.ok ? 'bg-accent-soft border-accent-line' : 'bg-surface2 border-line'}`}>
-              <div className={`text-[19px] font-extrabold tracking-[-0.02em] ${o.ok ? 'text-accent-strong' : ''}`}>{o.v}</div>
-              <div className={`text-[11.5px] font-semibold mt-0.5 ${o.ok ? 'text-accent-strong' : 'text-muted'}`}>{o.l}</div>
-              <div className="text-[11px] text-faint font-semibold">objectiu {o.gg}</div>
+            <div key={o.l} className={`rounded-[14px] p-3 border ${started && o.ok ? 'bg-accent-soft border-accent-line' : 'bg-surface2 border-line'}`}>
+              <div className={`text-[19px] font-extrabold tracking-[-0.02em] ${started && o.ok ? 'text-accent-strong' : ''}`}>
+                {started ? o.v : o.gg}
+              </div>
+              <div className={`text-[11.5px] font-semibold mt-0.5 ${started && o.ok ? 'text-accent-strong' : 'text-muted'}`}>{o.l}</div>
+              <div className="text-[11px] text-faint font-semibold">{started ? `objectiu ${o.gg}` : 'per dia'}</div>
             </div>
           ))}
         </div>
-        <div className="mt-4">
-          <ProgressBar big label="Calories" valueLabel={`${nf(dk)} / ${nf(g.kcal)} kcal`} value={dk} max={g.kcal} />
-        </div>
+        {started ? (
+          <div className="mt-4">
+            <ProgressBar big label="Calories" valueLabel={`${nf(dk)} / ${nf(g.kcal)} kcal`} value={dk} max={g.kcal} />
+          </div>
+        ) : (
+          <p className="text-[13px] text-muted mt-3 mb-0">
+            Objectius de referència. Quan comencis, aquí veuràs el que portes al dia.
+          </p>
+        )}
       </Card>
 
-      {isStarted(state.profile.projectStartDate) ? (
+      {/* 2) Següent moviment — «què faig ara» */}
+      {started ? (
         <div className="mb-3.5">
           <NutritionAdjustCard
             adjust={adjust}
@@ -197,12 +164,15 @@ export default function Nutrition() {
             <Icon name="cup" size={16} /> Preparació
           </div>
           <p className="text-[14.5px] leading-relaxed m-0">
-            Avui no cal complir calories. Deixa preparat un batut i 2 opcions fàcils per demà.
+            Avui no cal complir calories. Deixa preparat un batut i 2 opcions fàcils.
           </p>
         </div>
       )}
 
-      {/* àpats planificats · cada ajust relacionat es mostra just sota el seu àpat */}
+      {/* 3) Menú del dia · cada ajust relacionat es mostra just sota el seu àpat */}
+      <div className="text-[11px] uppercase tracking-[0.07em] text-faint font-bold mb-1 px-1">
+        {started ? "Menú d'avui" : 'Menú proposat'}
+      </div>
       <div>
         {plannedMeals.map((m) => {
           const onChange = (d: ManualLog) => applyThenMaybePrompt(m, () => changeMeal(m.id, d));

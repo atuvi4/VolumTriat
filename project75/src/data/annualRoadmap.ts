@@ -20,6 +20,9 @@ export interface RoadmapPhase {
   objectives: string[];
   nutritionFocus: string;
   trainingFocus: string;
+  /** Etiquetes curtes per a la vista compacta (pills). */
+  nutritionShort?: string;
+  trainingShort?: string;
   /** Advertiments: què NO forçar encara. */
   cautions: string[];
   /** Progressió d'entrada de bici/natació dins la fase (microdosi, no rígid). */
@@ -44,6 +47,8 @@ export const ANNUAL_ROADMAP: RoadmapPhase[] = [
     ],
     nutritionFocus: 'La nutrició mana: superàvit sostenible i proteïna alta cada dia.',
     trainingFocus: 'Gym 4-5 dies + running zona 2 opcional. Bici/natació entren aviat, en microdosi tècnica.',
+    nutritionShort: 'Nutrició mana',
+    trainingShort: 'Gym + running',
     cautions: [
       'Bici i natació en microdosi tècnica, no com a cardio dur.',
       'Busca constància, no rendiment aeròbic.',
@@ -76,6 +81,8 @@ export const ANNUAL_ROADMAP: RoadmapPhase[] = [
     ],
     nutritionFocus: 'Superàvit controlat i proteïna alta per seguir pujant amb qualitat.',
     trainingFocus: 'Gym prioritari + running 1-2 dies.',
+    nutritionShort: 'Superàvit',
+    trainingShort: 'Gym + running',
     cautions: ['Bici/natació només de contacte, sense pla.', 'No canviïs el focus a resistència encara.'],
   },
   {
@@ -93,6 +100,8 @@ export const ANNUAL_ROADMAP: RoadmapPhase[] = [
     ],
     nutritionFocus: 'Manteniment (o superàvit lleuger) amb proteïna alta per protegir el múscul.',
     trainingFocus: 'Gym + aeròbic progressiu (running/bici/natació suau).',
+    nutritionShort: 'Manteniment',
+    trainingShort: 'Gym + aeròbic',
     cautions: ['Introdueix bici/natació poc a poc.', 'Vigila no perdre massa muscular.'],
   },
   {
@@ -109,6 +118,8 @@ export const ANNUAL_ROADMAP: RoadmapPhase[] = [
     ],
     nutritionFocus: 'Prou hidrats per rendir, mantenint pes i proteïna.',
     trainingFocus: 'Càrrega específica de triatló; gym de manteniment.',
+    nutritionShort: 'Rendir + mantenir',
+    trainingShort: 'Triatló',
     cautions: ['El gym passa a manteniment, no a pujada.', 'Gestiona la fatiga acumulada.'],
   },
   {
@@ -126,6 +137,8 @@ export const ANNUAL_ROADMAP: RoadmapPhase[] = [
     ],
     nutritionFocus: 'Nutrició de rendiment ja provada; mantenir massa.',
     trainingFocus: 'Afinar i baixar volum abans de la prova (tapering).',
+    nutritionShort: 'Rendiment provat',
+    trainingShort: 'Tapering',
     cautions: ['No facis canvis radicals ara.', 'Evita la fatiga excessiva.'],
   },
 ];

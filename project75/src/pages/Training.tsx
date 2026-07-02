@@ -46,8 +46,7 @@ export default function Training() {
     return (
       <section>
         <PageHead title="Entrenament" sub="Encara no has començat" right={<Badge tone="warn">Preparació</Badge>} />
-        <RoadmapCard className="mb-3.5" />
-        <PhaseCard />
+        {/* A) Acció primer: què toca la primera setmana */}
         <Card title="Primera setmana proposta (adaptació)" className="mb-3.5">
           <div className="flex flex-col">
             {preview.map(({ iso, day }) => (
@@ -55,15 +54,13 @@ export default function Training() {
             ))}
           </div>
           <p className="text-[13px] text-muted mt-3 m-0">
-            No hi ha res "pendent" ni "fallat" abans de començar. Dilluns següent arrenca la setmana estructurada normal.
+            Setmana d'adaptació: prioritat a la nutrició i sessions suaus. Res "pendent" ni "fallat" abans de començar; dilluns arrenca la setmana normal.
           </p>
         </Card>
-        <Card>
-          <div className="flex items-center gap-2 text-muted">
-            <Icon name="info" size={18} className="text-info" />
-            <p className="m-0 text-[14.5px]">La primera setmana és d'adaptació: prioritat total a la nutrició i sessions suaus.</p>
-          </div>
-        </Card>
+        {/* B) Fase actual compacta · C) regles plegades */}
+        <PhaseCard />
+        {/* D) Roadmap compacte */}
+        <RoadmapCard className="mb-3.5" />
       </section>
     );
   }
@@ -76,8 +73,7 @@ export default function Training() {
     return (
       <section>
         <PageHead title="Entrenament" sub={`Setmana 0 · Adaptació · Dia ${projectDay(start)}`} right={<Badge>Adaptació</Badge>} />
-        <RoadmapCard className="mb-3.5" />
-        <PhaseCard />
+        {/* A) Acció primer */}
         <div className="grid md:grid-cols-[1.15fr_1fr] gap-3.5 items-start">
           <Card title="Setmana 0 · Adaptació">
             <div className="flex flex-col">
@@ -88,6 +84,11 @@ export default function Training() {
             <p className="text-[13px] text-muted mt-3 m-0">Dilluns comença la setmana estructurada normal.</p>
           </Card>
           <FocusCard w={w} done={state.gymDone} onMark={markGym} soft />
+        </div>
+        {/* B/C/D) Context després */}
+        <div className="mt-3.5">
+          <PhaseCard />
+          <RoadmapCard className="mb-3.5" />
         </div>
       </section>
     );
@@ -103,7 +104,7 @@ export default function Training() {
   return (
     <section>
       <PageHead title="Entrenament" sub="Gym base + running · triatló progressiu" />
-      <PhaseCard />
+      {/* A) Acció primer: planning + sessió d'avui */}
       <div className="grid md:grid-cols-[1.15fr_1fr] gap-3.5 items-start">
         <Card title="Planning de la setmana">
           <div className="flex flex-col">
@@ -131,6 +132,11 @@ export default function Training() {
           )}
         </div>
       </div>
+      {/* B/C/D) Context després */}
+      <div className="mt-3.5">
+        <PhaseCard />
+        <RoadmapCard className="mb-3.5" />
+      </div>
     </section>
   );
 }
@@ -150,27 +156,26 @@ function PhaseCard() {
         </div>
         <div>
           <b className="block text-[15px] font-bold">Base actual: gym + running</b>
-          <span className="text-[13px] text-muted">
-            Bici i natació entren aviat, en microdosi tècnica (contacte, no rendiment). Sense pressa ni sensació d'anar tard.
-          </span>
+          <span className="text-[13px] text-muted">Bici/natació: aviat, en microdosi. Contacte, no rendiment.</span>
         </div>
       </div>
 
-      <div className="mt-3.5 bg-surface2 border border-line rounded-xl p-3.5">
-        <p className="text-[13.5px] leading-relaxed m-0">
-          Pots combinar <b>gym + zona 2</b> el mateix dia si et va millor per horaris. Millor ajuntar
-          càrrega que escampar-la i no descansar mai.
+      <details className="mt-3 group">
+        <summary className="cursor-pointer text-[13px] font-semibold text-accent list-none flex items-center gap-1">
+          <Icon name="chev" size={14} /> Regles de combinació
+        </summary>
+        <p className="text-[13px] text-muted leading-relaxed mt-2 mb-2">
+          Gym + zona 2 el mateix dia és vàlid si et permet descansar millor.
         </p>
-      </div>
-
-      <ul className="mt-3 flex flex-col gap-2">
-        {combos.map((t) => (
-          <li key={t} className="flex items-start gap-2 text-[13.5px] leading-snug">
-            <span className="mt-[7px] w-[5px] h-[5px] rounded-full bg-accent shrink-0" />
-            <span>{t}</span>
-          </li>
-        ))}
-      </ul>
+        <ul className="flex flex-col gap-2">
+          {combos.map((t) => (
+            <li key={t} className="flex items-start gap-2 text-[13.5px] leading-snug">
+              <span className="mt-[7px] w-[5px] h-[5px] rounded-full bg-accent shrink-0" />
+              <span>{t}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
     </Card>
   );
 }
