@@ -27,14 +27,14 @@ const THEMES: Record<Theme, ThemeDef> = {
   pasta: { keywords: ['pasta', 'macarr', 'espagueti', 'tallarin', 'fideu', 'noodle', 'lasany', 'canelo'], foodIds: ['pasta_cooked'], warn: 'strong', label: 'pasta', suggest: 'arròs, patata o ous' },
   rice: { keywords: ['arros', 'rice', 'risotto', 'sushi'], foodIds: ['rice_cooked', 'rice_ready'], warn: 'soft', label: 'arròs', suggest: 'pasta, patata o llegums' },
   potato: { keywords: ['patata', 'potato'], foodIds: ['potato_cooked', 'potato_ready'], warn: 'soft', label: 'patata', suggest: 'arròs, pasta o llegums' },
-  bread: { keywords: ['pa', 'pan', 'bread', 'entrepa', 'bocata', 'sandwich', 'torrada', 'tostada', 'baguet'], foodIds: ['bread'], warn: 'strong', label: 'pa', suggest: 'civada o fruita' },
+  bread: { keywords: ['pa', 'pan', 'bread', 'entrepa', 'bocata', 'bocadillo', 'sandwich', 'torrad', 'tostad', 'baguet'], foodIds: ['bread'], warn: 'strong', label: 'pa', suggest: 'civada o fruita' },
   oats: { keywords: ['civada', 'oats', 'avena', 'porridge'], foodIds: ['oats'], warn: 'soft', label: 'civada', suggest: 'pa o fruita' },
   yogurt: { keywords: ['iogurt', 'yogur', 'yogurt', 'grec', 'griego', 'greek'], foodIds: ['greek_yogurt', 'protein_yogurt'], warn: 'soft', label: 'iogurt', suggest: 'ous o fruita' },
   shake: { keywords: ['batut', 'shake', 'batido', 'smoothie', 'whey'], foodIds: ['protein_shake', 'whey'], warn: 'soft', label: 'batut', suggest: 'un àpat sòlid' },
   milk: { keywords: ['llet', 'leche', 'milk'], foodIds: ['milk_whole', 'milk'], warn: 'soft', label: 'llet', suggest: 'aigua o iogurt' },
   tuna: { keywords: ['tonyina', 'atun', 'tuna'], foodIds: ['tuna_can'], warn: 'soft', label: 'tonyina', suggest: 'pollastre o ous' },
   chicken: { keywords: ['pollastre', 'pollo', 'chicken', 'pechuga'], foodIds: ['chicken_breast', 'chicken_ready'], warn: 'soft', label: 'pollastre', suggest: 'tonyina, ous o llegums' },
-  egg: { keywords: ['ou', 'ous', 'huevo', 'egg', 'truita', 'tortilla'], foodIds: ['egg', 'eggs_boiled'], warn: 'soft', label: 'ous', suggest: 'tonyina o pollastre' },
+  egg: { keywords: ['ou', 'ous', 'huevo', 'egg', 'eggs', 'truita', 'tortilla'], foodIds: ['egg', 'eggs_boiled'], warn: 'soft', label: 'ous', suggest: 'tonyina o pollastre' },
   legumes: { keywords: ['llenti', 'lenteja', 'lentil', 'cigro', 'garbanzo', 'chickpea', 'mongeta', 'judia', 'llegum', 'fesol'], foodIds: ['lentils_cooked', 'chickpeas_cooked', 'lentils_can'], warn: 'soft', label: 'llegums', suggest: 'pollastre o peix' },
   salmon: { keywords: ['salmo', 'salmon'], foodIds: ['salmon'], warn: 'soft', label: 'salmó', suggest: 'pollastre o ous' },
   nuts: { keywords: ['fruits secs', 'frutos secos', 'nuts', 'ametll', 'anacard', 'avellan', 'festuc'], foodIds: ['nuts'], warn: 'none', label: 'fruits secs', suggest: 'fruita' },
@@ -50,20 +50,43 @@ const SLOT_NOUN: Record<MealSlot, string> = {
 const DIACRITICS = new RegExp('[\\u0300-\\u036f]', 'g');
 const strip = (s: string) => s.toLowerCase().normalize('NFD').replace(DIACRITICS, '');
 
-function hasKeyword(text: string, kw: string): boolean {
-  if (kw.length <= 3) return new RegExp(`(^|[^a-z])${kw}([^a-z]|$)`).test(text); // paraula sencera (evita 'pa' dins 'pasta')
-  return text.includes(kw);
+/** Normalitza a text sense accents/signes i el trosseja en tokens (paraules). */
+function tokenize(text: string): { tokens: string[]; norm: string } {
+  const norm = strip(text).replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return { tokens: norm ? norm.split(' ') : [], norm };
 }
+
+/** Match d'una keyword contra tokens:
+ *  - multiparaula ("fruits secs") → includes controlat sobre el text normalitzat
+ *  - curta (<5) → NOMÉS token exacte (així "pa" no casa dins "pasta"/"patata")
+ *  - llarga (>=5) → token exacte o prefix (cobreix plurals: "torrad"→"torrades") */
+function matchKeyword(kw: string, tokens: string[], norm: string): boolean {
+  if (kw.includes(' ')) return norm.includes(kw);
+  for (const tk of tokens) {
+    if (tk === kw) return true;
+    if (kw.length >= 5 && tk.startsWith(kw)) return true;
+  }
+  return false;
+}
+
+/* -----------------------------------------------------------------------------
+   Casos manuals esperats (detectThemes per text):
+     "Pasta tricolor amb pollastre" → ['pasta','chicken']   (mai 'bread')
+     "Pa + formatge + fruits secs"  → ['bread','nuts']
+     "Patata + ous"                 → ['potato','egg']      (mai 'bread')
+     "Entrepà de tonyina"           → ['bread','tuna']
+     "Torrades amb ous"             → ['bread','egg']
+   ----------------------------------------------------------------------------- */
 
 /** Detecta temes a partir de text lliure i/o ids d'aliment. */
 export function detectThemes(input: { text?: string; foodIds?: (string | undefined)[] }): Theme[] {
-  const text = strip(input.text ?? '');
+  const { tokens, norm } = tokenize(input.text ?? '');
   const ids = (input.foodIds ?? []).filter(Boolean) as string[];
   const out: Theme[] = [];
   for (const t of THEME_LIST) {
     const def = THEMES[t];
     const byId = ids.some((id) => def.foodIds.includes(id));
-    const byText = text ? def.keywords.some((k) => hasKeyword(text, k)) : false;
+    const byText = tokens.length ? def.keywords.some((k) => matchKeyword(k, tokens, norm)) : false;
     if (byId || byText) out.push(t);
   }
   return out;
