@@ -106,6 +106,8 @@ export interface ResolvedIngredient {
   foodId: string;
   name: string;
   grams: number;
+  /** Pes de COMPRA (amb pell/os) si difereix del comestible. Les macros van sobre `grams`. */
+  purchaseGrams?: number;
   portionLabel?: PortionLabel;
   precision: Precision;
   source: NutritionSource;
@@ -140,6 +142,9 @@ export interface ResolvedMeal {
   suggestedTiming?: string;
   /** ISO de creació (per ordenar). */
   createdAt?: string;
+  /** Origen quan la proposta s'ha substituït per una opció externa (p. ex. «Compra IA · Mercadona»).
+   *  És metadada de procedència; NO implica que l'àpat estigui menjat. */
+  originNote?: string;
   tags: RecipeTag[];
   nutrition: CalculatedNutrition;
   precision: Precision; // pitjor precisió dels ingredients

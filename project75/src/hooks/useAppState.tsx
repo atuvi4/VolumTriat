@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { AppState, CheckIn, Profile, Tab } from '../types';
 import type { AdjustContext, ManualLog, MealRecipe, ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
 import { defaultDayRecipes, RECIPE_POOL, SHAKE_RECIPES } from '../nutrition/mealPlans';
 import { resolveRecipe } from '../nutrition/mealBuilder';
@@ -128,6 +129,9 @@ interface Ctx {
   addAdjustment: (ctx: AdjustContext, recipe?: MealRecipe) => void;
   removeExtra: (id: string) => void;
   swapMeal: (id: string, recipe: MealRecipe) => void;
+  /** Substitueix la proposta de l'àpat per una opció de compra (IA), mantenint-lo
+   *  PENDENT. No compta calories fins que es marqui «Fet». No registra outcome. */
+  replaceMealWithPurchaseOption: (id: string, snap: PurchaseMealSnapshot) => void;
   dislikeMeal: (id: string) => void;
   addRecipe: (recipe: MealRecipe) => void;
   regenerateDay: () => void;
@@ -386,6 +390,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast],
   );
 
+  const replaceMealWithPurchaseOption = useCallback(
+    (id: string, snap: PurchaseMealSnapshot) => {
+      setState((s) => ({
+        ...s,
+        meals: s.meals.map((m) =>
+          m.id === id
+            ? {
+                ...m,
+                name: snap.name,
+                recipeId: undefined,
+                nutrition: snap.nutrition,
+                confidence: snap.confidence,
+                precision: snap.precision,
+                sources: snap.sources,
+                tags: snap.tags,
+                ingredients: snap.ingredients,
+                originNote: snap.originNote,
+                // Segueix PENDENT: no menjat, no suma fins «Fet».
+                status: 'pending' as const,
+                done: false,
+                logged: undefined,
+                partialPct: undefined,
+              }
+            : m,
+        ),
+      }));
+      // Cap outcome: substituir la proposta no és una acció menjada (Brain intacte).
+      showToast('Proposta substituïda · encara no compta fins que marquis «Fet»');
+    },
+    [showToast],
+  );
+
   const dislikeMeal = useCallback(
     (id: string) => {
       setState((s) => {
@@ -557,6 +593,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addAdjustment: guard(addAdjustment),
       removeExtra: guard(removeExtra),
       swapMeal: guard(swapMeal),
+      replaceMealWithPurchaseOption: guard(replaceMealWithPurchaseOption),
       dislikeMeal: guard(dislikeMeal),
       addRecipe: guard(addRecipe),
       regenerateDay: guard(regenerateDay),
@@ -575,7 +612,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
-    skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, dislikeMeal,
+    skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
     submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll,
   ]);

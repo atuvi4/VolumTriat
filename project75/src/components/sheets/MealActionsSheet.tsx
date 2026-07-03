@@ -3,6 +3,8 @@ import { SheetHeader, SheetOption } from '../Sheet';
 import ManualEntrySheet from './ManualEntrySheet';
 import PartialSheet from './PartialSheet';
 import SwapSheet from './SwapSheet';
+import MealPurchaseSheet from './MealPurchaseSheet';
+import CorrectPurchaseSheet from './CorrectPurchaseSheet';
 import type { ManualLog, ResolvedMeal } from '../../nutrition/nutritionTypes';
 
 interface Props {
@@ -45,6 +47,18 @@ export default function MealActionsSheet({ meal, onChange, onPartial, onSkip }: 
 
       <div className="my-2 border-t border-line" />
 
+      <SheetOption
+        label="Comprar per aquest àpat"
+        meta="IA de compra"
+        onClick={() => openSheet(<MealPurchaseSheet meal={meal} onChange={onChange} />)}
+      />
+      {meal.originNote?.includes('Compra IA') && (
+        <SheetOption
+          label="Corregir productes"
+          meta="compra real"
+          onClick={() => openSheet(<CorrectPurchaseSheet meal={meal} onChange={onChange} />)}
+        />
+      )}
       <SheetOption
         label="Canviar la recepta proposada"
         onClick={() => openSheet(<SwapSheet meal={meal} />)}

@@ -1,6 +1,9 @@
 import type { ResolvedMeal } from '../nutrition/nutritionTypes';
 import { SOURCE_META, precisionSummary } from '../nutrition/nutritionSources';
 import { mealStatus, mealEaten } from '../utils/goals';
+import {
+  sourceLabelForMeal, requiresUserCheck, isSuspiciousPurchaseSnapshot,
+} from '../nutrition/nutritionConfidencePolicy';
 import Icon from './Icon';
 
 interface Props {
@@ -43,7 +46,7 @@ export default function MealCard({ meal, onMarkDone, onOpenOptions, onUndo, onEd
         <div>
           <div className="text-[11px] uppercase tracking-[0.07em] text-faint font-bold">{meal.slot}</div>
           <div className={`font-bold text-[15.5px] mt-[3px] ${!pending ? 'text-muted' : ''} ${skipped ? 'line-through' : ''}`}>
-            {meal.name}
+            {status === 'changed' && meal.logged?.name ? meal.logged.name : meal.name}
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -71,11 +74,18 @@ export default function MealCard({ meal, onMarkDone, onOpenOptions, onUndo, onEd
         </div>
       )}
 
+      {/* Origen de la proposta (només mentre és proposta: pending/done, NO changed manual) */}
+      {!skipped && meal.originNote && status !== 'changed' && (
+        <div className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-info">
+          <Icon name="store" size={13} /> {meal.originNote} · estimació
+        </div>
+      )}
+
       {/* Transparència de dades */}
       {!skipped &&
         (status === 'changed' ? (
           <div className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-muted">
-            <Icon name="edit" size={13} /> Dada manual · introduïda per tu
+            <Icon name="edit" size={13} /> {sourceLabelForMeal(meal, status)}
           </div>
         ) : status === 'partial' ? (
           <div className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold text-muted">
@@ -91,6 +101,22 @@ export default function MealCard({ meal, onMarkDone, onOpenOptions, onUndo, onEd
             <span className="text-accent">· Veure càlcul</span>
           </button>
         ))}
+
+      {/* Avís de seguretat: confiança baixa quan la proteïna importa */}
+      {!skipped && requiresUserCheck(meal, status) && (
+        <div className="flex items-start gap-1.5 mt-2 text-[11.5px] font-semibold text-warn bg-warn-soft rounded-lg px-2.5 py-1.5">
+          <Icon name="alert" size={13} className="shrink-0 mt-0.5" />
+          Estimació baixa: revisa l'etiqueta si aquest àpat és important per proteïna.
+        </div>
+      )}
+
+      {/* Avís: proposta de compra possiblement d'una versió antiga */}
+      {!skipped && isSuspiciousPurchaseSnapshot(meal) && (
+        <div className="flex items-start gap-1.5 mt-2 text-[11.5px] font-semibold text-warn bg-warn-soft rounded-lg px-2.5 py-1.5">
+          <Icon name="alert" size={13} className="shrink-0 mt-0.5" />
+          Aquesta proposta pot venir d'una versió antiga. A «Opcions» pots corregir productes o tornar a generar la compra.
+        </div>
+      )}
 
       {meal.logged?.note && (
         <div className="mt-1.5 text-[12px] text-faint italic">«{meal.logged.note}»</div>
