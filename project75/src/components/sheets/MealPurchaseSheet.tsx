@@ -11,6 +11,7 @@ import {
   type PurchaseOption,
   type PurchaseStore,
 } from '../../nutrition/mealPurchaseAI';
+import { eatenThemesToday } from '../../nutrition/dailyVariety';
 import type { ManualLog, ResolvedMeal } from '../../nutrition/nutritionTypes';
 
 interface Props {
@@ -51,6 +52,7 @@ export default function MealPurchaseSheet({ meal, onChange }: Props) {
       appetite: state.checkin?.appetite,
       dislikes: state.dislikes,
       recentMeals: state.meals.filter((m) => !m.isExtra).map((m) => m.name),
+      eatenThemes: [...eatenThemesToday(state.meals)],
       outcomes: state.outcomes ?? [],
       maxOptions: 4,
     })

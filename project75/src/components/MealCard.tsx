@@ -4,15 +4,20 @@ import { mealStatus, mealEaten } from '../utils/goals';
 import {
   sourceLabelForMeal, requiresUserCheck, isSuspiciousPurchaseSnapshot,
 } from '../nutrition/nutritionConfidencePolicy';
+import { varietySuggestionForMeal } from '../nutrition/dailyVariety';
 import Icon from './Icon';
 
 interface Props {
   meal: ResolvedMeal;
+  /** Tots els àpats del dia (per detectar repeticions d'aliment base). */
+  dayMeals?: ResolvedMeal[];
   onMarkDone: () => void;
   onOpenOptions: () => void;
   onUndo: () => void;
   onEdit: () => void;
   onViewCalc: () => void;
+  /** Obrir alternatives (SwapSheet) des de l'avís de varietat. */
+  onSwap?: () => void;
 }
 
 const STATUS_BADGE: Record<
@@ -25,11 +30,13 @@ const STATUS_BADGE: Record<
   skipped: { label: 'Saltat', cls: 'text-muted bg-surface2', icon: 'x' },
 };
 
-export default function MealCard({ meal, onMarkDone, onOpenOptions, onUndo, onEdit, onViewCalc }: Props) {
+export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, onUndo, onEdit, onViewCalc, onSwap }: Props) {
   const status = mealStatus(meal);
   const eaten = mealEaten(meal);
   const pending = status === 'pending';
   const skipped = status === 'skipped';
+  // Varietat diària: només per àpats PENDENTS (no toquem els ja menjats/canviats).
+  const variety = pending && dayMeals ? varietySuggestionForMeal(meal, dayMeals) : null;
   const badge = status === 'pending' ? null : STATUS_BADGE[status];
   const sources = meal.sources.map((s) => SOURCE_META[s].short).join(' · ');
 
@@ -120,6 +127,21 @@ export default function MealCard({ meal, onMarkDone, onOpenOptions, onUndo, onEd
 
       {meal.logged?.note && (
         <div className="mt-1.5 text-[12px] text-faint italic">«{meal.logged.note}»</div>
+      )}
+
+      {/* Varietat diària: avís suau si repeteix un aliment base ja menjat avui */}
+      {variety && (
+        <div className="flex items-start gap-2 mt-2 text-[12px] bg-info-soft text-info rounded-lg px-3 py-2">
+          <Icon name="swap" size={14} className="shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="font-semibold">{variety.message}</span>
+            {onSwap && (
+              <button onClick={onSwap} className="ml-1.5 font-bold underline underline-offset-2 hover:text-info/80">
+                Canviar opció
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Accions */}

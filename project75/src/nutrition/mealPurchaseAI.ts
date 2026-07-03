@@ -10,6 +10,7 @@ import {
   type ExpectedProfile, type ResolvedProduct,
 } from './productResolver';
 import { HIGH_PROTEIN_MIN_PER100, isVerifiedSource } from './nutritionConfidencePolicy';
+import { detectThemesFromFoodIds, varietyThemePenalty, type Theme } from './dailyVariety';
 
 /* =========================================================
    Meal Purchase AI v1 — IA de compra per àpat (LOCAL, sense OpenAI).
@@ -310,6 +311,8 @@ export interface PurchaseAIInput {
   appetite?: 'alta' | 'norm' | 'poca';
   dislikes?: string[];
   recentMeals?: string[];
+  /** Temes d'aliment base ja menjats avui (per no repetir: pasta, arròs, làctics…). */
+  eatenThemes?: string[];
   outcomes?: MealOutcome[];
   maxOptions?: number;
 }
@@ -509,8 +512,9 @@ export async function generatePurchaseOptionsAI(input: PurchaseAIInput): Promise
     slot, targetKcal, targetProtein,
     currentDayProtein, targetDayProtein,
     store = 'mercadona', context, dayMode, appetite,
-    dislikes = [], recentMeals = [], outcomes = [], maxOptions = 4,
+    dislikes = [], recentMeals = [], eatenThemes = [], outcomes = [], maxOptions = 4,
   } = input;
+  const eatenThemeSet = new Set<Theme>(eatenThemes as Theme[]);
 
   const lowApp = dayMode === 'pocaGana' || appetite === 'poca' || context === 'low_appetite';
   const atWork = context === 'at_work';
@@ -625,6 +629,14 @@ export async function generatePurchaseOptionsAI(input: PurchaseAIInput): Promise
     const conf = worstConfidence(c.parts.map((pt) => resolvedOf(pt.block, R).confidence));
     s += conf === 'high' ? 0.6 : conf === 'medium' ? 0.3 : 0;
     if (conf === 'low' && c.protein >= protTarget) s -= 1.5; // no fingir que cobreix proteïna
+    // 11) varietat diària: baixa (sense eliminar) el que repeteix un aliment ja menjat avui.
+    if (eatenThemeSet.size) {
+      for (const pt of c.parts) {
+        for (const th of detectThemesFromFoodIds([pt.block.id])) {
+          if (eatenThemeSet.has(th)) s -= varietyThemePenalty(th);
+        }
+      }
+    }
     return s;
   };
 

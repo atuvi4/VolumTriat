@@ -13,6 +13,7 @@ import CalcSheet from '../components/sheets/CalcSheet';
 import ManualEntrySheet from '../components/sheets/ManualEntrySheet';
 import PartialSheet from '../components/sheets/PartialSheet';
 import MealActionsSheet from '../components/sheets/MealActionsSheet';
+import SwapSheet from '../components/sheets/SwapSheet';
 import RelatedAdjustSheet from '../components/sheets/RelatedAdjustSheet';
 import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, mealStatus } from '../utils/goals';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
@@ -182,6 +183,8 @@ export default function Nutrition() {
             <div key={m.id}>
               <MealCard
                 meal={m}
+                dayMeals={state.meals}
+                onSwap={() => openSheet(<SwapSheet meal={m} />)}
                 onMarkDone={() => applyThenMaybePrompt(m, () => markMeal(m.id))}
                 onOpenOptions={() =>
                   openSheet(

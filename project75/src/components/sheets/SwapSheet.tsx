@@ -6,7 +6,8 @@ import { swapOptionsFor } from '../../nutrition/mealPlans';
 import { rankSwapOptions } from '../../brain/brain';
 import { previewNutrition } from '../../nutrition/mealBuilder';
 import { generateMealOptionsPro } from '../../nutrition/proMealGenerator';
-import type { MealSlot, ResolvedMeal } from '../../nutrition/nutritionTypes';
+import { eatenThemesToday, detectThemes, varietyRepeatScore } from '../../nutrition/dailyVariety';
+import type { MealRecipe, MealSlot, ResolvedMeal } from '../../nutrition/nutritionTypes';
 
 const SLOT_PREP: Record<MealSlot, string> = {
   esmorzar: "d'esmorzar",
@@ -26,24 +27,36 @@ export default function SwapSheet({ meal }: { meal: ResolvedMeal }) {
   const [showAll, setShowAll] = useState(false);
   const [showMorePro, setShowMorePro] = useState(false);
 
-  // Alternatives locals (per slot, evita dislikes) + priorització apresa (Brain v1).
-  const all = rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []);
+  // Varietat diària: baixa (sense eliminar) les opcions que repeteixen un aliment
+  // base ja menjat avui. Ordre estable: manté la priorització de sota dins l'empat.
+  const eatenThemes = eatenThemesToday(state.meals);
+  const recipeThemes = (r: MealRecipe) => detectThemes({ text: r.name, foodIds: r.ingredients.map((i) => i.foodId) });
+  const byVariety = (list: MealRecipe[]) =>
+    list
+      .map((r, i) => ({ r, i, p: varietyRepeatScore(recipeThemes(r), eatenThemes) }))
+      .sort((a, b) => a.p - b.p || a.i - b.i)
+      .map((x) => x.r);
+
+  // Alternatives locals (per slot, evita dislikes) + Brain + varietat diària.
+  const all = byVariety(rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []));
   const shown = showAll ? all : all.slice(0, INITIAL);
 
   // Opcions PRO: generades pel sistema (plantilles + target + preferències),
   // amb macros calculades pel Nutrition Engine. Local i instantani; si no
   // hi ha res, simplement no es mostra (mai error agressiu).
-  const proAll = generateMealOptionsPro({
-    slot: meal.slot,
-    targetKcal: meal.nutrition.kcal,
-    targetProtein: meal.nutrition.protein,
-    dayMode: state.dayMode,
-    appetite: state.checkin?.appetite,
-    dislikes: state.dislikes,
-    recentMeals: state.meals.filter((m) => !m.isExtra).map((m) => m.name),
-    outcomes: state.outcomes ?? [],
-    maxOptions: 6,
-  }).filter((r) => r.name !== meal.name);
+  const proAll = byVariety(
+    generateMealOptionsPro({
+      slot: meal.slot,
+      targetKcal: meal.nutrition.kcal,
+      targetProtein: meal.nutrition.protein,
+      dayMode: state.dayMode,
+      appetite: state.checkin?.appetite,
+      dislikes: state.dislikes,
+      recentMeals: state.meals.filter((m) => !m.isExtra).map((m) => m.name),
+      outcomes: state.outcomes ?? [],
+      maxOptions: 6,
+    }).filter((r) => r.name !== meal.name),
+  );
   const proShown = showMorePro ? proAll : proAll.slice(0, PRO_INITIAL);
 
   return (
