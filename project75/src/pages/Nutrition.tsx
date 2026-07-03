@@ -14,6 +14,7 @@ import ManualEntrySheet from '../components/sheets/ManualEntrySheet';
 import PartialSheet from '../components/sheets/PartialSheet';
 import MealActionsSheet from '../components/sheets/MealActionsSheet';
 import SwapSheet from '../components/sheets/SwapSheet';
+import SupplementsCard from '../components/SupplementsCard';
 import RelatedAdjustSheet from '../components/sheets/RelatedAdjustSheet';
 import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, mealStatus } from '../utils/goals';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
@@ -267,6 +268,9 @@ export default function Nutrition() {
           </div>
         </details>
       </Card>
+
+      {/* Suplements: creatina + Anabolic Master (a part dels batuts) */}
+      {started && <SupplementsCard />}
 
       {/* 5) Objectiu calculat (plegat) */}
       <Card className="mt-3.5">

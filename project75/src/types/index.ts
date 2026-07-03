@@ -32,6 +32,15 @@ export interface Profile {
   projectStartDate: string;
 }
 
+/** Suplements (a part dels batuts de menjar): creatina com a hàbit diari i
+ *  Anabolic Master amb les dades reals de l'etiqueta (introduïdes per l'usuari). */
+export interface SupplementsState {
+  /** Dies (ISO) en què s'ha pres creatina. */
+  creatineDates: string[];
+  /** Macros per cassó de l'Anabolic Master, tal com les posa l'etiqueta. */
+  anabolicServing?: { kcal: number; protein: number };
+}
+
 export interface AppState {
   version: number;
   date: string;
@@ -50,6 +59,8 @@ export interface AppState {
   prepDone: string[];
   /** Project75 Brain v1 — historial d'accions reals per aprendre (local). */
   outcomes: MealOutcome[];
+  /** Suplements (creatina + Anabolic Master), a part dels batuts de menjar. */
+  supplements: SupplementsState;
 }
 
 export interface Goals {

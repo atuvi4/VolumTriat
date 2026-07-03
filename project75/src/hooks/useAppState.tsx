@@ -80,6 +80,7 @@ function freshState(): AppState {
     completedDates: [],
     prepDone: [],
     outcomes: [],
+    supplements: { creatineDates: [] },
     profile: { ...DEFAULT_PROFILE },
   };
 }
@@ -115,6 +116,8 @@ function normalizeState(s: AppState): AppState {
   s.lastComplete = s.lastComplete ?? null;
   s.gymDone = s.gymDone ?? false;
   s.checkin = s.checkin ?? null;
+  s.supplements = s.supplements ?? { creatineDates: [] };
+  s.supplements.creatineDates = s.supplements.creatineDates ?? [];
   return s;
 }
 
@@ -141,6 +144,8 @@ function loadState(): AppState {
     s.completedDates = s.completedDates ?? [];
     s.prepDone = s.prepDone ?? [];
     s.outcomes = s.outcomes ?? []; // Brain v1: acumula entre dies (no es reinicia)
+    s.supplements = s.supplements ?? { creatineDates: [] };
+    s.supplements.creatineDates = s.supplements.creatineDates ?? [];
     // no barrejar mock: elimina pesos anteriors a la data d'inici
     s.weights = (s.weights ?? []).filter((w) => w.d >= s.profile.projectStartDate);
     return s;
@@ -189,6 +194,10 @@ interface Ctx {
   resetAll: () => void;
   /** Data Safety: importa/restaura un estat complet (fitxer o backup local). */
   importState: (next: AppState) => void;
+  /** Suplements: marca/desmarca la creatina d'avui. */
+  toggleCreatine: () => void;
+  /** Suplements: desa les macros per cassó de l'Anabolic Master (etiqueta). */
+  saveAnabolicServing: (kcal: number, protein: number) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -606,6 +615,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  // ---------- Suplements ----------
+  const toggleCreatine = useCallback(() => {
+    setState((s) => {
+      const dates = s.supplements?.creatineDates ?? [];
+      const has = dates.includes(todayISO());
+      const next = has ? dates.filter((d) => d !== todayISO()) : [...dates, todayISO()];
+      showToast(has ? 'Creatina desmarcada' : 'Creatina anotada · feta avui');
+      return { ...s, supplements: { ...s.supplements, creatineDates: next } };
+    });
+  }, [showToast]);
+
+  /** Desa les macros per cassó de l'Anabolic Master (dades de l'etiqueta). */
+  const saveAnabolicServing = useCallback(
+    (kcal: number, protein: number) => {
+      setState((s) => ({
+        ...s,
+        supplements: { ...s.supplements, anabolicServing: { kcal: Math.round(kcal), protein: Math.round(protein) } },
+      }));
+      showToast('Anabolic Master · dades de l’etiqueta desades');
+    },
+    [showToast],
+  );
+
   const resetAll = useCallback(() => {
     writeLocalBackup(state); // desa el que hi havia: recuperable amb «Restaurar últim backup»
     localStorage.removeItem(KEY);
@@ -664,12 +696,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       togglePrep: guard(togglePrep),
       resetAll: guard(resetAll),
       importState: guard(importState),
+      toggleCreatine: guard(toggleCreatine),
+      saveAnabolicServing: guard(saveAnabolicServing),
     };
   }, [
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
     submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll, importState,
+    toggleCreatine, saveAnabolicServing,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
