@@ -12,7 +12,7 @@ import { goalsFor, doneKcal, doneProt, doneCount } from '../utils/goals';
 import { getDirective, getCoachLine } from '../utils/coach';
 import { greetName, longDate } from '../utils/date';
 import { nf } from '../utils/format';
-import { todayWorkout } from '../data/week';
+import { resolveTodayTraining } from '../data/week';
 import { isStarted, projectDay } from '../utils/project';
 import PrepDashboard from '../components/PrepDashboard';
 
@@ -24,7 +24,8 @@ export default function Today() {
   const day = projectDay(state.profile.projectStartDate);
   const g = goalsFor(state);
   const dir = getDirective(state);
-  const w = todayWorkout();
+  const t = resolveTodayTraining(state.profile.projectStartDate);
+  const w = t.workout;
   const dk = doneKcal(state.meals);
   const dp = doneProt(state.meals);
   const dc = doneCount(state.meals);
@@ -82,6 +83,11 @@ export default function Today() {
             </div>
             <CategoryTag type={w.type} />
           </div>
+          {t.soft && (
+            <p className="text-[12px] text-muted mt-2.5 mb-0">
+              {t.nutritionPriority ? 'Opcional i suau: avui el que compta és la nutrició.' : 'Sense pressió: suau i curt.'}
+            </p>
+          )}
         </Card>
 
         <div className={`relative overflow-hidden bg-surface border rounded-xl2 p-4 pl-[18px] ${hard ? 'border-[#EAD8C2]' : 'border-accent-line'}`}>

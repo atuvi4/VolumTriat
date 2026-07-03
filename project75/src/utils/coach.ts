@@ -1,5 +1,5 @@
 import type { AppState, Recommendation } from '../types';
-import { todayWorkout } from '../data/week';
+import { resolveTodayTraining } from '../data/week';
 import { goalsFor, doneKcal, doneProt, doneCount, trendPerWeek, MIN_FOR_TREND } from './goals';
 import { nf } from './format';
 
@@ -22,7 +22,8 @@ export function getDirective(state: AppState): Directive {
   const g = goalsFor(state);
   const left = g.kcal - doneKcal(state.meals);
   const dp = doneProt(state.meals);
-  const w = todayWorkout();
+  const t = resolveTodayTraining(state.profile.projectStartDate);
+  const w = t.workout;
 
   if (state.dayMode === 'dificil')
     return {
@@ -36,6 +37,13 @@ export function getDirective(state: AppState): Directive {
       sub: 'Dia de poca gana: un batut ara suma molt sense esforç de masticar.',
       cta: 'batut',
     };
+  // Setmana d'adaptació amb focus nutrició (p. ex. Dia 1): mai cardio com a prioritat.
+  if (t.nutritionPriority)
+    return {
+      title: 'Primer dia: nutrició abans que entrenament',
+      sub: "Objectiu real d'avui: completar el dia menjant. Si entrenes, que sigui suau i curt.",
+      cta: 'nutri',
+    };
   if (doneCount(state.meals) === 0)
     return {
       title: 'Obre el dia amb proteïna',
@@ -48,7 +56,7 @@ export function getDirective(state: AppState): Directive {
       sub: `Vas per ${dp}/${g.prot} g. Reparteix-la i tanca amb una ingesta post-entreno.`,
       cta: 'nutri',
     };
-  if (w.type === 'run' || w.type === 'bike' || w.type === 'swim')
+  if (!t.adaptation && (w.type === 'run' || w.type === 'bike' || w.type === 'swim'))
     return {
       title: 'Suma hidrats al voltant del cardio',
       sub: 'Sessió suau (zona 2), compatible amb gym. Un batut evita frenar el volum.',
@@ -78,12 +86,15 @@ export function getCoachLine(state: AppState): string {
   const g = goalsFor(state);
   const left = g.kcal - doneKcal(state.meals);
   const dp = doneProt(state.meals);
-  const w = todayWorkout();
+  const t = resolveTodayTraining(state.profile.projectStartDate);
+  const w = t.workout;
 
   if (state.dayMode === 'dificil')
     return 'Dia difícil, sense culpa. Objectiu mínim: 1 batut ara + una ingesta fàcil. Amb això el dia ja compta.';
   if (state.dayMode === 'pocaGana')
     return 'Poca gana avui. Passem a calories líquides: un batut suma sense esforç. Empenyem el resultat, no el cos.';
+  if (t.nutritionPriority)
+    return "Primer dia: el que compta és completar el dia menjant. Si entrenes, que sigui suau i curt.";
   if (doneCount(state.meals) === 0)
     return `Primer moviment del dia: una ingesta amb proteïna (batut + iogurt grec, ≈40 g). Objectiu: ${g.prot} g.`;
   if (w.type === 'gym' && dp < g.prot)
@@ -102,7 +113,8 @@ export function getRecommendations(state: AppState): Recommendation[] {
   const dk = doneKcal(state.meals);
   const dp = doneProt(state.meals);
   const left = g.kcal - dk;
-  const w = todayWorkout();
+  const t = resolveTodayTraining(state.profile.projectStartDate);
+  const w = t.workout;
   const hasTrend = state.weights.length >= MIN_FOR_TREND;
   const trend = hasTrend ? trendPerWeek(state.weights) : 0;
   const ci = state.checkin;
@@ -197,8 +209,8 @@ export function getRecommendations(state: AppState): Recommendation[] {
     });
   }
 
-  // 4. Entrenament de força → proteïna repartida
-  if (w.type === 'gym' && dp < g.prot) {
+  // 4. Entrenament de força → proteïna repartida (no durant l'adaptació: focus nutrició)
+  if (!t.adaptation && w.type === 'gym' && dp < g.prot) {
     items.push({
       p: 5,
       rec: {
@@ -212,7 +224,7 @@ export function getRecommendations(state: AppState): Recommendation[] {
         action: { label: 'Obrir nutrició', kind: 'openNutrition' },
       },
     });
-  } else if (w.type === 'run' && left > 0) {
+  } else if (!t.adaptation && w.type === 'run' && left > 0) {
     // Running en zona 2 → hidrats i compatibilitat amb el gym
     items.push({
       p: 6,

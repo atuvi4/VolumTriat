@@ -7,16 +7,11 @@ import RoadmapCard from '../components/RoadmapCard';
 import CategoryTag from '../components/CategoryTag';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
-import { WEEK, WEEK_ORDER, DAY_ABBR, CAT_LABEL, todayWorkout } from '../data/week';
+import { WEEK, WEEK_ORDER, DAY_ABBR, CAT_LABEL, ADAPT, todayWorkout, resolveTodayTraining } from '../data/week';
 import { isStarted, inAdaptationWeek, startWeekSundayISO, projectDay } from '../utils/project';
 import { todayISO, toLocalISO } from '../utils/date';
 import type { WorkoutDay } from '../types';
 
-const ADAPT: WorkoutDay[] = [
-  { label: 'Sessió suau + primer dia de nutrició', type: 'gym', focus: "El focus real d'avui és la nutrició: primer dia complet. L'entrenament, suau." },
-  { label: 'Gym o running zona 2 · 30-40 min', type: 'run', focus: 'Tu tries: gym de base o un running suau. Sense intensitat.' },
-  { label: 'Descans o caminada', type: 'rest', focus: 'Dia lleuger. Opcional: bici només si ve de gust, mai per obligació.' },
-];
 const abbrOf = (iso: string) => DAY_ABBR[new Date(iso + 'T00:00:00').getDay()];
 const ddmm = (iso: string) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
 
@@ -68,8 +63,7 @@ export default function Training() {
   // ---------- SETMANA D'ADAPTACIÓ (parcial) ----------
   if (inAdaptationWeek(start)) {
     const days = adaptationDays(start);
-    const idx = Math.min(projectDay(start) - 1, ADAPT.length - 1);
-    const w = ADAPT[idx];
+    const w = resolveTodayTraining(start).workout;
     return (
       <section>
         <PageHead title="Entrenament" sub={`Setmana 0 · Adaptació · Dia ${projectDay(start)}`} right={<Badge>Adaptació</Badge>} />
