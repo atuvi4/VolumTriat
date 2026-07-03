@@ -26,6 +26,9 @@ import { writeLocalBackup, writePreviousBackup } from '../utils/dataSafety';
 
 const KEY = STATE_KEY; // v3: data d'inici + sense dades mock
 
+// AMIX Anabolic Masster — presa de 50 g amb aigua (etiqueta: 366 kcal / 45 g prot per 100 g).
+const DEFAULT_ANABOLIC = { kcal: 183, protein: 23 };
+
 function buildDayMeals(): ResolvedMeal[] {
   return defaultDayRecipes().map((r) => resolveRecipe(r, { id: `day-${r.slot}`, done: false }));
 }
@@ -80,7 +83,7 @@ function freshState(): AppState {
     completedDates: [],
     prepDone: [],
     outcomes: [],
-    supplements: { creatineDates: [] },
+    supplements: { creatineDates: [], anabolicServing: { ...DEFAULT_ANABOLIC } },
     profile: { ...DEFAULT_PROFILE },
   };
 }
@@ -118,6 +121,7 @@ function normalizeState(s: AppState): AppState {
   s.checkin = s.checkin ?? null;
   s.supplements = s.supplements ?? { creatineDates: [] };
   s.supplements.creatineDates = s.supplements.creatineDates ?? [];
+  s.supplements.anabolicServing = s.supplements.anabolicServing ?? { ...DEFAULT_ANABOLIC };
   return s;
 }
 
@@ -146,6 +150,7 @@ function loadState(): AppState {
     s.outcomes = s.outcomes ?? []; // Brain v1: acumula entre dies (no es reinicia)
     s.supplements = s.supplements ?? { creatineDates: [] };
     s.supplements.creatineDates = s.supplements.creatineDates ?? [];
+    s.supplements.anabolicServing = s.supplements.anabolicServing ?? { ...DEFAULT_ANABOLIC };
     // no barrejar mock: elimina pesos anteriors a la data d'inici
     s.weights = (s.weights ?? []).filter((w) => w.d >= s.profile.projectStartDate);
     return s;
