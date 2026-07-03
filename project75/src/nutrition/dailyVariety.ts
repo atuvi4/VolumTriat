@@ -94,9 +94,17 @@ export function detectThemes(input: { text?: string; foodIds?: (string | undefin
 
 /** Temes d'un àpat (nom + dada manual + ingredients). */
 export function detectMealThemes(meal: ResolvedMeal): Theme[] {
-  const text = [meal.name, meal.logged?.name, meal.logged?.note, ...meal.ingredients.map((i) => i.name)]
-    .filter(Boolean)
-    .join(' · ');
+  // Dada MANUAL (canviat o extra amb nom): el que s'ha menjat de veritat és el
+  // text que has registrat, NO la recepta original. El nom i els ingredients de
+  // la proposta queden obsolets i no s'han de comptar (p. ex. «Torrades» → pa
+  // encara que hagis registrat un iogurt).
+  const isManual = mealStatus(meal) === 'changed' || (meal.isExtra && !!meal.logged);
+  if (isManual) {
+    const text = [meal.logged?.name, meal.logged?.note].filter(Boolean).join(' · ');
+    return text ? detectThemes({ text }) : [];
+  }
+  // Proposta/menjat segons recepta (pending/done/partial): nom + ingredients.
+  const text = [meal.name, ...meal.ingredients.map((i) => i.name)].filter(Boolean).join(' · ');
   return detectThemes({ text, foodIds: meal.ingredients.map((i) => i.foodId) });
 }
 
