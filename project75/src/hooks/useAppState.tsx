@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppState, CheckIn, Profile, Tab } from '../types';
-import type { AdjustContext, ManualLog, MealRecipe, ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
 import { defaultDayRecipes, RECIPE_POOL, SHAKE_RECIPES } from '../nutrition/mealPlans';
@@ -84,11 +84,25 @@ function freshState(): AppState {
   };
 }
 
+const DAY_SLOTS: MealSlot[] = ['esmorzar', 'dinar', 'berenar', 'sopar', 'snack'];
+
+/** Repara el slot d'un àpat planificat a partir del seu id `day-<slot>`. Corregeix
+ *  dades antigues on canviar la recepta va sobreescriure el slot (p. ex. un sopar
+ *  que va quedar marcat com «dinar»). No toca extres. */
+function repairMealSlots(meals: ResolvedMeal[]): ResolvedMeal[] {
+  return meals.map((m) => {
+    if (!m || m.isExtra || typeof m.id !== 'string' || !m.id.startsWith('day-')) return m;
+    const slot = m.id.slice(4) as MealSlot;
+    return DAY_SLOTS.includes(slot) && m.slot !== slot ? { ...m, slot } : m;
+  });
+}
+
 /** Normalitza un estat (importat o carregat) sense esborrar dades: omple camps
  *  nous, arregla àpats invàlids i garanteix arrays. No fa reset per canvi de dia. */
 function normalizeState(s: AppState): AppState {
   s.profile = { ...DEFAULT_PROFILE, ...s.profile };
   if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) s.meals = buildDayMeals();
+  s.meals = repairMealSlots(s.meals);
   s.completedDates = s.completedDates ?? [];
   s.prepDone = s.prepDone ?? [];
   s.outcomes = s.outcomes ?? [];
@@ -122,6 +136,7 @@ function loadState(): AppState {
     if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) {
       s.meals = buildDayMeals();
     }
+    s.meals = repairMealSlots(s.meals); // corregeix slots antics (sopar marcat com dinar, etc.)
     s.profile = { ...DEFAULT_PROFILE, ...s.profile };
     s.completedDates = s.completedDates ?? [];
     s.prepDone = s.prepDone ?? [];
