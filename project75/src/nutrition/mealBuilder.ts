@@ -3,6 +3,7 @@ import type {
   Confidence,
   MealIngredient,
   MealRecipe,
+  MealSlot,
   NutritionSource,
   PortionLabel,
   Precision,
@@ -39,7 +40,7 @@ function resolveIngredient(ing: MealIngredient): ResolvedIngredient | null {
 }
 
 /** Resol una recepta a un àpat amb nutrició CALCULADA (mai escrita a mà). */
-export function resolveRecipe(recipe: MealRecipe, opts?: { id?: string; done?: boolean }): ResolvedMeal {
+export function resolveRecipe(recipe: MealRecipe, opts?: { id?: string; done?: boolean; slot?: MealSlot }): ResolvedMeal {
   const ingredients = recipe.ingredients
     .map(resolveIngredient)
     .filter((x): x is ResolvedIngredient => x !== null);
@@ -56,7 +57,9 @@ export function resolveRecipe(recipe: MealRecipe, opts?: { id?: string; done?: b
   return {
     id: opts?.id ?? `${recipe.id}-${Date.now()}`,
     recipeId: recipe.id,
-    slot: recipe.slot,
+    // Manté el slot de l'àpat que se substitueix; una alternativa de dinar oferta
+    // per al sopar no ha de convertir el sopar en «dinar».
+    slot: opts?.slot ?? recipe.slot,
     name: recipe.name,
     done: opts?.done ?? false,
     tags: recipe.tags,

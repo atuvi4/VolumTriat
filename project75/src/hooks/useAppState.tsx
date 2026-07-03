@@ -411,7 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (id: string, recipe: MealRecipe) => {
       setState((s) => ({
         ...s,
-        meals: s.meals.map((m) => (m.id === id ? resolveRecipe(recipe, { id: m.id, done: m.done }) : m)),
+        meals: s.meals.map((m) => (m.id === id ? resolveRecipe(recipe, { id: m.id, done: m.done, slot: m.slot }) : m)),
       }));
       showToast('Àpat canviat');
     },
