@@ -21,8 +21,10 @@ import { detectReadOnly } from '../utils/readOnly';
 import { todayWorkout } from '../data/week';
 import { appendOutcome } from '../brain/brain';
 import type { MealOutcome, OutcomeAction, OutcomeSource } from '../brain/brainTypes';
+import { STATE_KEY } from '../utils/storageKeys';
+import { writeLocalBackup, writePreviousBackup } from '../utils/dataSafety';
 
-const KEY = 'project75_state_v3'; // v3: data d'inici + sense dades mock
+const KEY = STATE_KEY; // v3: data d'inici + sense dades mock
 
 function buildDayMeals(): ResolvedMeal[] {
   return defaultDayRecipes().map((r) => resolveRecipe(r, { id: `day-${r.slot}`, done: false }));
@@ -82,11 +84,34 @@ function freshState(): AppState {
   };
 }
 
+/** Normalitza un estat (importat o carregat) sense esborrar dades: omple camps
+ *  nous, arregla àpats invàlids i garanteix arrays. No fa reset per canvi de dia. */
+function normalizeState(s: AppState): AppState {
+  s.profile = { ...DEFAULT_PROFILE, ...s.profile };
+  if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) s.meals = buildDayMeals();
+  s.completedDates = s.completedDates ?? [];
+  s.prepDone = s.prepDone ?? [];
+  s.outcomes = s.outcomes ?? [];
+  s.dislikes = s.dislikes ?? [];
+  s.weights = s.weights ?? [];
+  s.version = s.version ?? 3;
+  s.date = s.date ?? todayISO();
+  s.dayMode = s.dayMode ?? 'normal';
+  s.streak = s.streak ?? 0;
+  s.lastComplete = s.lastComplete ?? null;
+  s.gymDone = s.gymDone ?? false;
+  s.checkin = s.checkin ?? null;
+  return s;
+}
+
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return freshState();
     const s = JSON.parse(raw) as AppState;
+    // Data Safety: desa una còpia crua ABANS de migrar (xarxa de seguretat si
+    // una migració/deploy trenca l'estat). No escriure en mode visita.
+    if (!detectReadOnly()) writePreviousBackup(s);
     if (s.date !== todayISO()) {
       s.date = todayISO();
       s.meals = buildDayMeals();
@@ -147,6 +172,8 @@ interface Ctx {
   startToday: () => void;
   togglePrep: (id: string) => void;
   resetAll: () => void;
+  /** Data Safety: importa/restaura un estat complet (fitxer o backup local). */
+  importState: (next: AppState) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -163,6 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // En mode visita no escrivim res: no toquem les dades del dispositiu.
     if (isReadOnly) return;
     localStorage.setItem(KEY, JSON.stringify(state));
+    writeLocalBackup(state); // còpia «última» a cada desada (Data Safety)
   }, [state, isReadOnly]);
 
   const showToast = useCallback((m: string) => {
@@ -564,11 +592,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetAll = useCallback(() => {
+    writeLocalBackup(state); // desa el que hi havia: recuperable amb «Restaurar últim backup»
     localStorage.removeItem(KEY);
     setState(freshState());
     setTab('avui');
-    showToast('Projecte reiniciat · dades netes');
-  }, [showToast]);
+    showToast('Projecte reiniciat · backup guardat, es pot restaurar');
+  }, [showToast, state]);
+
+  /** Importa/Restaura un estat (des de fitxer o backup local). Normalitza sense
+   *  esborrar dades i desa una còpia del que hi havia abans. */
+  const importState = useCallback((next: AppState) => {
+    writeLocalBackup(state); // backup del que hi havia abans d'importar
+    const norm = normalizeState({ ...next });
+    setState(norm);
+    setTab('avui');
+    showToast('Dades importades · guardades en aquest navegador');
+  }, [showToast, state]);
 
   const value = useMemo<Ctx>(() => {
     // Punt únic de bloqueig: en mode visita, cap acció d'edició s'executa.
@@ -609,12 +648,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       startToday: guard(startToday),
       togglePrep: guard(togglePrep),
       resetAll: guard(resetAll),
+      importState: guard(importState),
     };
   }, [
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
-    submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll,
+    submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll, importState,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

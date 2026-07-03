@@ -5,6 +5,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import BrainInsightsCard from '../components/BrainInsightsCard';
 import FoodSearchProCard from '../components/FoodSearchProCard';
+import DataSafetyCard from '../components/DataSafetyCard';
 import { currentWeight } from '../utils/goals';
 import type { Ritme } from '../types';
 
@@ -77,7 +78,12 @@ export default function Settings() {
             size="sm"
             icon="alert"
             onClick={() => {
-              if (confirm('Reiniciar el projecte i esborrar totes les dades (mock incloses)?')) resetAll();
+              if (
+                confirm(
+                  "Això esborrarà les dades locals d'aquest navegador. Se'n desa un backup automàtic (restaurable a «Seguretat de dades»). Continuar?",
+                )
+              )
+                resetAll();
             }}
           >
             Reiniciar projecte
@@ -136,23 +142,11 @@ export default function Settings() {
         <Button variant="primary" className="flex-1" icon="check" onClick={save}>Desar canvis</Button>
       </div>
 
-      <Group title="Dades">
-        <Field label="Reiniciar dades del prototip">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (confirm('Esborrar totes les dades i tornar a començar?')) resetAll();
-            }}
-          >
-            Reiniciar
-          </Button>
-        </Field>
-      </Group>
-
       <FoodSearchProCard />
 
       <BrainInsightsCard />
+
+      <DataSafetyCard />
 
       <p className="text-[13px] text-muted text-center">Dades desades localment al navegador (localStorage)</p>
     </section>
