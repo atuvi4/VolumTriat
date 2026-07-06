@@ -1,4 +1,7 @@
 import { AppProvider, useApp } from './hooks/useAppState';
+import { useAuth } from './auth/useAuth';
+import { detectReadOnly } from './utils/readOnly';
+import AuthGate from './auth/AuthGate';
 import AppLayout from './components/AppLayout';
 import Today from './pages/Today';
 import Nutrition from './pages/Nutrition';
@@ -23,8 +26,26 @@ function Shell() {
 }
 
 export default function App() {
+  const { status, user } = useAuth();
+  const demo = detectReadOnly();
+
+  // Mode demo o Supabase no configurat → app local/demo com sempre.
+  if (demo || status === 'disabled') {
+    return (
+      <AppProvider>
+        <Shell />
+      </AppProvider>
+    );
+  }
+  if (status === 'loading') {
+    return <div className="min-h-screen flex items-center justify-center text-muted">Carregant…</div>;
+  }
+  if (status === 'signed_out' || status === 'error' || !user) {
+    return <AuthGate />;
+  }
+  // signed_in → estat per usuari, remuntat per key.
   return (
-    <AppProvider>
+    <AppProvider key={user.id}>
       <Shell />
     </AppProvider>
   );
