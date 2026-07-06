@@ -1,8 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../lib/supabase', () => ({
+  isSupabaseConfigured: () => false,
+  getSupabaseClient: () => null,
+}));
+
 import { isAuthConfigured, getCurrentUser } from './authService';
 
-describe('authService sense Supabase', () => {
-  it('no està configurat sense env vars', () => {
+describe('authService sense client Supabase', () => {
+  it('no està configurat quan no hi ha client', () => {
     expect(isAuthConfigured()).toBe(false);
   });
   it('getCurrentUser retorna null sense client', async () => {
