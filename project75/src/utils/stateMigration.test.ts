@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { pickInitialRaw, type KVStore } from './stateMigration';
 import { STATE_KEY_LEGACY, stateKeyFor } from './storageKeys';
 
