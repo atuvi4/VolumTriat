@@ -23,6 +23,7 @@ import { appendOutcome } from '../brain/brain';
 import type { MealOutcome, OutcomeAction, OutcomeSource } from '../brain/brainTypes';
 import { STATE_KEY } from '../utils/storageKeys';
 import { writeLocalBackup, writePreviousBackup } from '../utils/dataSafety';
+import { useCloud, type CloudSlice } from '../cloud/useCloud';
 
 const KEY = STATE_KEY; // v3: data d'inici + sense dades mock
 
@@ -159,7 +160,7 @@ function loadState(): AppState {
   }
 }
 
-interface Ctx {
+interface Ctx extends CloudSlice {
   state: AppState;
   tab: Tab;
   setTab: (t: Tab) => void;
@@ -661,6 +662,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showToast('Dades importades · guardades en aquest navegador');
   }, [showToast, state]);
 
+  // Cloud Sync v1 — slice aïllat (Auth + estat remot per usuari). No trenca res:
+  // localStorage segueix sent la font immediata; el núvol és sync + backup remot.
+  const cloud = useCloud({ state, importState, isReadOnly, showToast });
+
   const value = useMemo<Ctx>(() => {
     // Punt únic de bloqueig: en mode visita, cap acció d'edició s'executa.
     function guard<A extends unknown[]>(fn: (...a: A) => void) {
@@ -673,6 +678,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
     }
     return {
+      ...cloud,
       state, tab, setTab, toast, showToast, sheet, openSheet, closeSheet, isReadOnly,
       // navegació i visualització no es bloquegen
       markMeal: guard(markMeal),
@@ -709,7 +715,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
     submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll, importState,
-    toggleCreatine, saveAnabolicServing,
+    toggleCreatine, saveAnabolicServing, cloud,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

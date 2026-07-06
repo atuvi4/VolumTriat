@@ -62,3 +62,32 @@ create table if not exists api_food_cache (
   payload jsonb,
   created_at timestamptz default now()
 );
+
+-- ==========================================================
+-- Cloud Sync v1 — estat complet de l'app per usuari (AppState en jsonb).
+-- Una fila per usuari. RLS: cada usuari només veu i toca la seva fila.
+-- ==========================================================
+create table if not exists project75_states (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  app_state jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table project75_states enable row level security;
+
+-- Cada usuari només pot llegir/escriure la seva pròpia fila (auth.uid() = user_id).
+drop policy if exists "select own state" on project75_states;
+create policy "select own state" on project75_states
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "insert own state" on project75_states;
+create policy "insert own state" on project75_states
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "update own state" on project75_states;
+create policy "update own state" on project75_states
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "delete own state" on project75_states;
+create policy "delete own state" on project75_states
+  for delete using (auth.uid() = user_id);

@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import BrainInsightsCard from '../components/BrainInsightsCard';
 import FoodSearchProCard from '../components/FoodSearchProCard';
 import DataSafetyCard from '../components/DataSafetyCard';
+import CloudSyncCard from '../components/CloudSyncCard';
 import { currentWeight } from '../utils/goals';
 import type { Ritme } from '../types';
 
@@ -145,6 +146,8 @@ export default function Settings() {
       <FoodSearchProCard />
 
       <BrainInsightsCard />
+
+      <CloudSyncCard />
 
       <DataSafetyCard />
 
