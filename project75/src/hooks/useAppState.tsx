@@ -21,11 +21,12 @@ import { detectReadOnly } from '../utils/readOnly';
 import { todayWorkout } from '../data/week';
 import { appendOutcome } from '../brain/brain';
 import type { MealOutcome, OutcomeAction, OutcomeSource } from '../brain/brainTypes';
-import { STATE_KEY } from '../utils/storageKeys';
+import { stateKeyFor } from '../utils/storageKeys';
+import { pickInitialRaw } from '../utils/stateMigration';
+import { emptyState } from '../data/emptyState';
+import { useAuth } from '../auth/useAuth';
 import { writeLocalBackup, writePreviousBackup } from '../utils/dataSafety';
 import { useCloud, type CloudSlice } from '../cloud/useCloud';
-
-const KEY = STATE_KEY; // v3: data d'inici + sense dades mock
 
 // AMIX Anabolic Masster — presa de 50 g amb aigua (etiqueta: 366 kcal / 45 g prot per 100 g).
 const DEFAULT_ANABOLIC = { kcal: 183, protein: 23 };
@@ -126,10 +127,10 @@ function normalizeState(s: AppState): AppState {
   return s;
 }
 
-function loadState(): AppState {
+function loadState(userId: string | null): AppState {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return freshState();
+    const raw = pickInitialRaw(userId, localStorage);
+    if (!raw) return userId ? emptyState() : freshState();
     const s = JSON.parse(raw) as AppState;
     // Data Safety: desa una còpia crua ABANS de migrar (xarxa de seguretat si
     // una migració/deploy trenca l'estat). No escriure en mode visita.
@@ -156,7 +157,7 @@ function loadState(): AppState {
     s.weights = (s.weights ?? []).filter((w) => w.d >= s.profile.projectStartDate);
     return s;
   } catch {
-    return freshState();
+    return userId ? emptyState() : freshState();
   }
 }
 
@@ -209,7 +210,9 @@ interface Ctx extends CloudSlice {
 const AppCtx = createContext<Ctx | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(loadState);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const [state, setState] = useState<AppState>(() => loadState(userId));
   const [tab, setTab] = useState<Tab>('avui');
   const [toast, setToast] = useState<string | null>(null);
   const [sheet, setSheet] = useState<ReactNode | null>(null);
@@ -219,9 +222,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // En mode visita no escrivim res: no toquem les dades del dispositiu.
     if (isReadOnly) return;
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(stateKeyFor(userId), JSON.stringify(state));
     writeLocalBackup(state); // còpia «última» a cada desada (Data Safety)
-  }, [state, isReadOnly]);
+  }, [state, isReadOnly, userId]);
 
   const showToast = useCallback((m: string) => {
     setToast(m);
@@ -646,11 +649,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetAll = useCallback(() => {
     writeLocalBackup(state); // desa el que hi havia: recuperable amb «Restaurar últim backup»
-    localStorage.removeItem(KEY);
-    setState(freshState());
+    localStorage.removeItem(stateKeyFor(userId));
+    setState(userId ? emptyState() : freshState());
     setTab('avui');
     showToast('Projecte reiniciat · backup guardat, es pot restaurar');
-  }, [showToast, state]);
+  }, [showToast, state, userId]);
 
   /** Importa/Restaura un estat (des de fitxer o backup local). Normalitza sense
    *  esborrar dades i desa una còpia del que hi havia abans. */
@@ -664,7 +667,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Cloud Sync v1 — slice aïllat (Auth + estat remot per usuari). No trenca res:
   // localStorage segueix sent la font immediata; el núvol és sync + backup remot.
-  const cloud = useCloud({ state, importState, isReadOnly, showToast });
+  const cloud = useCloud({ state, importState, isReadOnly, showToast, user });
 
   const value = useMemo<Ctx>(() => {
     // Punt únic de bloqueig: en mode visita, cap acció d'edició s'executa.
