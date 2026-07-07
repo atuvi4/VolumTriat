@@ -34,4 +34,17 @@ describe('pickInitialRaw', () => {
     const s = memStore({ [STATE_KEY_LEGACY]: '{"demo":1}' });
     expect(pickInitialRaw(null, s)).toBe('{"demo":1}');
   });
+
+  it('un segon usuari NO hereta el legacy ja reclamat pel primer', () => {
+    const s = memStore({ [STATE_KEY_LEGACY]: '{"tuvi":1}' });
+    pickInitialRaw('u1', s); // u1 adopta i reclama el legacy
+    expect(pickInitialRaw('u2', s)).toBeNull(); // u2 (compte nou) comença buit
+    expect(stateKeyFor('u2') in s.data).toBe(false); // no s'ha copiat res a u2
+  });
+
+  it('un usuari existent amb dades pròpies reclama el legacy del dispositiu', () => {
+    const s = memStore({ [stateKeyFor('u1')]: '{"a":1}', [STATE_KEY_LEGACY]: '{"tuvi":1}' });
+    pickInitialRaw('u1', s); // té clau pròpia → reclama el legacy
+    expect(pickInitialRaw('u2', s)).toBeNull(); // un compte nou no hereta res
+  });
 });
