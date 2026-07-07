@@ -2,6 +2,7 @@ import type { MealRecipe, MealSlot, ResolvedMeal } from './nutritionTypes';
 import { PLANNER_POOL } from './plannerRecipes';
 import { slotMatchesRecipe } from './mealPlans';
 import { resolveRecipe } from './mealBuilder';
+import { getFood } from './foodDatabase';
 import { toLocalISO } from '../utils/date';
 
 /* =========================================================
@@ -248,6 +249,13 @@ export function buildDayMealsFromPlan(week: WeeklyMenu | undefined, dateISO: str
     if (r) meals.push(resolveRecipe(r, { id: `day-${m.slot}`, done: false, slot: m.slot }));
   }
   return meals.length ? meals : null;
+}
+
+/** Ingredients (nom + grams) d'un àpat planificat, per mostrar les quantitats. */
+export function plannedMealItems(recipeId: string): { name: string; grams: number }[] {
+  const r = PLANNER_BY_ID[recipeId];
+  if (!r) return [];
+  return r.ingredients.map((ing) => ({ name: getFood(ing.foodId)?.name ?? ing.foodId, grams: ing.grams }));
 }
 
 export { PLANNER_BY_ID, carbBaseOf, proteinOf };

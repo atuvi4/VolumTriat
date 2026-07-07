@@ -5,6 +5,7 @@ import Button from './Button';
 import Icon from './Icon';
 import type { MealSlot } from '../nutrition/nutritionTypes';
 import { shoppingListFromWeeklyMenu, weeklyPrepSuggestions, batchCookingNotes } from '../nutrition/mealPrep';
+import { plannedMealItems } from '../nutrition/weeklyPlanner';
 import { shortDate } from '../utils/date';
 
 const WEEKDAY = ['Diumenge', 'Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres', 'Dissabte'];
@@ -90,12 +91,15 @@ export default function WeeklyPlannerCard() {
                         {isOpen && (
                           <div className="divide-y divide-line">
                             {day.meals.map((m) => (
-                              <div key={m.slot} className="flex items-center justify-between px-3.5 py-2">
-                                <div>
+                              <div key={m.slot} className="flex items-start justify-between gap-3 px-3.5 py-2">
+                                <div className="min-w-0">
                                   <div className="text-[11px] text-faint font-semibold uppercase tracking-wide">{SLOT_LABEL[m.slot]}</div>
                                   <div className="text-[13.5px] font-semibold">{m.name}</div>
+                                  <div className="text-[11.5px] text-muted mt-0.5">
+                                    {plannedMealItems(m.recipeId).map((it) => `${it.name} ${it.grams} g`).join(' · ')}
+                                  </div>
                                 </div>
-                                <div className="text-right text-[12px] text-muted font-semibold">
+                                <div className="text-right text-[12px] text-muted font-semibold shrink-0">
                                   {m.kcal} kcal<div className="text-[11px] text-faint">{m.protein} g P</div>
                                 </div>
                               </div>
