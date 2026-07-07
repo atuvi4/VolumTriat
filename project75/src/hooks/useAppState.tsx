@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { AppState, CheckIn, Profile, Tab } from '../types';
+import type { AppState, CheckIn, Goal, Profile, Ritme, Tab } from '../types';
+import { computeTargets } from '../nutrition/nutritionTargets';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
@@ -161,6 +162,17 @@ function loadState(userId: string | null): AppState {
   }
 }
 
+/** Dades que recull la configuració inicial (onboarding) d'un usuari nou. */
+export interface OnboardingInput {
+  name?: string;
+  sex: 'male' | 'female';
+  age: number;
+  heightCm: number;
+  startWeight: number;
+  goal: Goal;
+  ritme: Ritme;
+}
+
 interface Ctx extends CloudSlice {
   state: AppState;
   tab: Tab;
@@ -195,6 +207,8 @@ interface Ctx extends CloudSlice {
   submitCheckin: (c: Omit<CheckIn, 'at'>) => void;
   addWeight: (kg: number) => void;
   updateProfile: (p: Partial<Profile>) => void;
+  /** Configuració inicial: calcula i desa els objectius de l'usuari i marca onboarded. */
+  completeOnboarding: (input: OnboardingInput) => void;
   setProjectStartDate: (iso: string) => void;
   startToday: () => void;
   togglePrep: (id: string) => void;
@@ -603,6 +617,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast],
   );
 
+  const completeOnboarding = useCallback(
+    (input: OnboardingInput) => {
+      const t = computeTargets({
+        sex: input.sex,
+        age: input.age,
+        heightCm: input.heightCm,
+        weightKg: input.startWeight,
+        ritme: input.ritme,
+        goal: input.goal,
+      });
+      setState((s) => ({
+        ...s,
+        profile: {
+          ...s.profile,
+          name: input.name?.trim() || s.profile.name,
+          sex: input.sex,
+          age: input.age,
+          heightCm: input.heightCm,
+          startWeight: input.startWeight,
+          ritme: input.ritme,
+          goal: input.goal,
+          kcalGoal: t.kcalStart,
+          protGoal: Math.max(t.proteinGrams, 120),
+          target1: input.startWeight,
+          target2: input.startWeight,
+          onboarded: true,
+        },
+        // Registra el pes inicial si encara no n'hi ha cap.
+        weights: s.weights.length ? s.weights : [{ d: todayISO(), kg: input.startWeight }],
+      }));
+      setTab('avui');
+      showToast('Perfil configurat · objectius calculats');
+    },
+    [showToast],
+  );
+
   const setProjectStartDate = useCallback(
     (iso: string) => {
       setState((s) => ({ ...s, profile: { ...s.profile, projectStartDate: iso } }));
@@ -705,6 +755,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       submitCheckin: guard(submitCheckin),
       addWeight: guard(addWeight),
       updateProfile: guard(updateProfile),
+      completeOnboarding: guard(completeOnboarding),
       setProjectStartDate: guard(setProjectStartDate),
       startToday: guard(startToday),
       togglePrep: guard(togglePrep),
@@ -717,8 +768,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
-    submitCheckin, addWeight, updateProfile, setProjectStartDate, startToday, togglePrep, resetAll, importState,
-    toggleCreatine, saveAnabolicServing, cloud,
+    submitCheckin, addWeight, updateProfile, completeOnboarding, setProjectStartDate, startToday, togglePrep, resetAll,
+    importState, toggleCreatine, saveAnabolicServing, cloud,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
