@@ -165,7 +165,7 @@ export default async function handler(req: any, res: any) {
         : '';
       const offTerms = esify(query); // català→castellà per a OFF Espanya
       const url =
-        'https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=16' +
+        'https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=40' +
         `&search_terms=${encodeURIComponent(offTerms)}${storeFilter}`;
       const r = await fetch(url, { headers: { 'User-Agent': 'Project75/1.0' } });
       if (r.ok) {

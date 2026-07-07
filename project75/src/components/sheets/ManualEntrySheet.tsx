@@ -50,7 +50,11 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
     setSearching(true);
     setSearched(true);
     const items = store === 'all' ? await searchFoodPro(q, 'all') : await searchFoodPro(q, 'off', store);
-    setResults(items.filter((i) => i.kcalPer100g > 0).slice(0, 10));
+    const rank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+    const clean = items
+      .filter((i) => i.kcalPer100g > 0)
+      .sort((a, b) => (rank[a.confidence] ?? 3) - (rank[b.confidence] ?? 3)); // millors dades primer
+    setResults(clean.slice(0, 25));
     setSearching(false);
   };
 
