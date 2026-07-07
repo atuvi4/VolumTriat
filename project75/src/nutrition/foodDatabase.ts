@@ -252,6 +252,128 @@ export const FOODS: FoodItem[] = [
     source: 'local_verified', confidence: 'low',
     portions: { petit: 20, normal: 30, gran: 50, 'molt gran': 80 },
   },
+
+  /* ---- Més proteïnes ---- */
+  {
+    id: 'chicken_thigh', name: 'Cuixa de pollastre (cuita)', category: 'protein',
+    kcalPer100g: 209, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 11,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'beef_steak', name: 'Vedella (filet, cuit)', category: 'protein',
+    kcalPer100g: 217, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 12,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'prawns', name: 'Gambes / marisc', category: 'protein',
+    kcalPer100g: 99, proteinPer100g: 24, carbsPer100g: 0.2, fatPer100g: 0.3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 80, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+  {
+    id: 'sardines', name: 'Sardines', category: 'protein',
+    kcalPer100g: 208, proteinPer100g: 25, carbsPer100g: 0, fatPer100g: 11,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 80, normal: 120, gran: 160, 'molt gran': 200 },
+  },
+  {
+    id: 'egg_white', name: "Clares d'ou", category: 'protein',
+    kcalPer100g: 52, proteinPer100g: 11, carbsPer100g: 0.7, fatPer100g: 0.2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 60, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+
+  /* ---- Més hidrats ---- */
+  {
+    id: 'sweet_potato', name: 'Moniato (cuit)', category: 'carb',
+    kcalPer100g: 90, proteinPer100g: 2, carbsPer100g: 21, fatPer100g: 0.1, fiberPer100g: 3.3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'quinoa', name: 'Quinoa cuita', category: 'carb',
+    kcalPer100g: 120, proteinPer100g: 4.4, carbsPer100g: 21, fatPer100g: 1.9, fiberPer100g: 2.8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 220, gran: 300, 'molt gran': 380 },
+  },
+  {
+    id: 'bread_whole', name: 'Pa integral', category: 'carb',
+    kcalPer100g: 247, proteinPer100g: 13, carbsPer100g: 41, fatPer100g: 3.4, fiberPer100g: 7,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 40, normal: 80, gran: 120, 'molt gran': 160 },
+  },
+  {
+    id: 'corn', name: 'Blat de moro', category: 'carb',
+    kcalPer100g: 96, proteinPer100g: 3.4, carbsPer100g: 21, fatPer100g: 1.5, fiberPer100g: 2.4,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 80, normal: 140, gran: 200, 'molt gran': 260 },
+  },
+  {
+    id: 'white_beans', name: 'Mongetes cuites', category: 'legume',
+    kcalPer100g: 139, proteinPer100g: 9, carbsPer100g: 25, fatPer100g: 0.5, fiberPer100g: 6,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+
+  /* ---- Més làctics ---- */
+  {
+    id: 'mozzarella', name: 'Mozzarella', category: 'dairy',
+    kcalPer100g: 280, proteinPer100g: 22, carbsPer100g: 2.2, fatPer100g: 21,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 30, normal: 50, gran: 80, 'molt gran': 125 },
+  },
+  {
+    id: 'cured_cheese', name: 'Formatge curat', category: 'dairy',
+    kcalPer100g: 390, proteinPer100g: 26, carbsPer100g: 1.5, fatPer100g: 32,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 20, normal: 30, gran: 50, 'molt gran': 70 },
+  },
+
+  /* ---- Més fruita / verdura ---- */
+  {
+    id: 'orange', name: 'Taronja', category: 'fruit',
+    kcalPer100g: 47, proteinPer100g: 0.9, carbsPer100g: 12, fatPer100g: 0.1, fiberPer100g: 2.4,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 130, normal: 180, gran: 230, 'molt gran': 280 },
+  },
+  {
+    id: 'strawberries', name: 'Maduixes', category: 'fruit',
+    kcalPer100g: 32, proteinPer100g: 0.7, carbsPer100g: 7.7, fatPer100g: 0.3, fiberPer100g: 2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'grapes', name: 'Raïm', category: 'fruit',
+    kcalPer100g: 69, proteinPer100g: 0.7, carbsPer100g: 18, fatPer100g: 0.2, fiberPer100g: 0.9,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 80, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+  {
+    id: 'broccoli', name: 'Bròquil', category: 'fruit',
+    kcalPer100g: 34, proteinPer100g: 2.8, carbsPer100g: 7, fatPer100g: 0.4, fiberPer100g: 2.6,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'spinach', name: 'Espinacs', category: 'fruit',
+    kcalPer100g: 23, proteinPer100g: 2.9, carbsPer100g: 3.6, fatPer100g: 0.4, fiberPer100g: 2.2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 80, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+  {
+    id: 'carrot', name: 'Pastanaga', category: 'fruit',
+    kcalPer100g: 41, proteinPer100g: 0.9, carbsPer100g: 10, fatPer100g: 0.2, fiberPer100g: 2.8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 80, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+  {
+    id: 'avocado', name: 'Alvocat', category: 'fat',
+    kcalPer100g: 160, proteinPer100g: 2, carbsPer100g: 9, fatPer100g: 15, fiberPer100g: 7,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 70, normal: 100, gran: 150, 'molt gran': 200 },
+  },
 ];
 
 export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
