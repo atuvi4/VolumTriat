@@ -180,6 +180,78 @@ export const FOODS: FoodItem[] = [
     source: 'local_verified', confidence: 'medium',
     portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
   },
+  {
+    id: 'fries', name: 'Patates fregides', category: 'carb',
+    kcalPer100g: 312, proteinPer100g: 3.4, carbsPer100g: 41, fatPer100g: 15, fiberPer100g: 3.8,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 100, normal: 150, gran: 250, 'molt gran': 350 },
+  },
+  {
+    id: 'ham_cooked', name: 'Pernil dolç', category: 'protein',
+    kcalPer100g: 110, proteinPer100g: 18, carbsPer100g: 1, fatPer100g: 3.5,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 40, normal: 60, gran: 90, 'molt gran': 120 },
+  },
+  {
+    id: 'ham_cured', name: 'Pernil serrà', category: 'protein',
+    kcalPer100g: 240, proteinPer100g: 31, carbsPer100g: 0, fatPer100g: 13,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 30, normal: 50, gran: 80, 'molt gran': 110 },
+  },
+  {
+    id: 'pork_loin', name: 'Llom de porc (cuit)', category: 'protein',
+    kcalPer100g: 210, proteinPer100g: 27, carbsPer100g: 0, fatPer100g: 11,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'sausage', name: 'Salsitxa / frankfurt', category: 'protein',
+    kcalPer100g: 270, proteinPer100g: 12, carbsPer100g: 3, fatPer100g: 23,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 50, normal: 100, gran: 150, 'molt gran': 200 },
+  },
+  {
+    id: 'white_fish', name: 'Peix blanc (lluç, bacallà)', category: 'protein',
+    kcalPer100g: 90, proteinPer100g: 18, carbsPer100g: 0, fatPer100g: 1.5,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'cottage_cheese', name: 'Formatge fresc / cottage', category: 'dairy',
+    kcalPer100g: 98, proteinPer100g: 11, carbsPer100g: 3.4, fatPer100g: 4.3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'plain_yogurt', name: 'Iogurt natural', category: 'dairy',
+    kcalPer100g: 61, proteinPer100g: 3.5, carbsPer100g: 4.7, fatPer100g: 3.3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 125, normal: 200, gran: 300, 'molt gran': 400 },
+  },
+  {
+    id: 'apple', name: 'Poma', category: 'fruit',
+    kcalPer100g: 52, proteinPer100g: 0.3, carbsPer100g: 14, fatPer100g: 0.2, fiberPer100g: 2.4,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 130, normal: 180, gran: 220, 'molt gran': 260 },
+  },
+  {
+    id: 'tomato', name: 'Tomàquet', category: 'fruit',
+    kcalPer100g: 18, proteinPer100g: 0.9, carbsPer100g: 3.9, fatPer100g: 0.2, fiberPer100g: 1.2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'pizza', name: 'Pizza', category: 'carb',
+    kcalPer100g: 266, proteinPer100g: 11, carbsPer100g: 33, fatPer100g: 10,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'chocolate', name: 'Xocolata', category: 'other',
+    kcalPer100g: 546, proteinPer100g: 5, carbsPer100g: 61, fatPer100g: 31,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 20, normal: 30, gran: 50, 'molt gran': 80 },
+  },
 ];
 
 export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
