@@ -1,5 +1,7 @@
 import type { AppState } from '../types';
 import type { MealOutcome } from '../brain/brainTypes';
+import { doneKcal, doneProt, doneCount, mealStatus } from './goals';
+import { todayISO } from './date';
 
 /* Historial diari derivat dels outcomes del Brain (accions reals) + pesos +
    dies completats. Aproximació de control (V1): suma les accions que compten
@@ -41,6 +43,15 @@ export function dailyHistory(state: AppState, maxDays = 30): DayHistory[] {
   }
   for (const wgt of state.weights ?? []) get(wgt.d).weight = wgt.kg; // últim del dia guanya
   for (const d of state.completedDates ?? []) get(d).completed = true;
+
+  // AVUI: font de veritat = l'estat viu (state.meals), igual que la pantalla
+  // «Avui». Evita el doble comptatge dels outcomes si has fet i desfet àpats.
+  const today = todayISO();
+  const th = get(today);
+  th.kcal = doneKcal(state.meals);
+  th.protein = doneProt(state.meals);
+  th.logged = doneCount(state.meals);
+  th.skipped = state.meals.filter((m) => !m.isExtra && mealStatus(m) === 'skipped').length;
 
   return [...map.values()]
     .filter((h) => h.logged > 0 || h.skipped > 0 || h.weight != null)
