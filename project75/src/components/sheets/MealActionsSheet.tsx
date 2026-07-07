@@ -17,7 +17,9 @@ interface Props {
 
 /** Menú d'opcions d'un àpat planificat: adaptar-lo a la realitat sense sortir del pla. */
 export default function MealActionsSheet({ meal, onChange, onPartial, onSkip }: Props) {
-  const { openSheet, closeSheet, dislikeMeal } = useApp();
+  const { openSheet, closeSheet, dislikeMeal, undoMeal } = useApp();
+  // Àpats afegits (batut, extra, recepta): el seu id no comença per 'day-'.
+  const isAdded = !meal.id.startsWith('day-');
 
   return (
     <div>
@@ -71,6 +73,20 @@ export default function MealActionsSheet({ meal, onChange, onPartial, onSkip }: 
           closeSheet();
         }}
       />
+
+      {isAdded && (
+        <>
+          <div className="my-2 border-t border-line" />
+          <SheetOption
+            label="Treure aquest àpat"
+            meta="afegit · s'elimina"
+            onClick={() => {
+              undoMeal(meal.id);
+              closeSheet();
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -411,9 +411,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const undoMeal = useCallback(
     (id: string) => {
+      // Àpats AFEGITS (extra, batut, recepta extra: id que no comença per 'day-')
+      // es treuen del tot. Els planificats del dia tornen a pendent.
+      const added = !id.startsWith('day-');
       setState((s) => {
         const m = s.meals.find((x) => x.id === id);
-        if (m?.isExtra) return { ...s, meals: s.meals.filter((x) => x.id !== id) };
+        if (m && (m.isExtra || added)) return { ...s, meals: s.meals.filter((x) => x.id !== id) };
         return {
           ...s,
           meals: s.meals.map((x) =>
@@ -423,7 +426,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
-      showToast('Estat esborrat');
+      showToast(added ? 'Àpat tret' : 'Estat esborrat');
     },
     [showToast],
   );
