@@ -14,6 +14,8 @@ export const STARTER_PROFILE: Profile = {
   kcalGoal: 2200,
   protGoal: 140,
   ritme: 'moderat',
+  goal: 'maintain', // per defecte; l'onboarding el sobreescriu
+  onboarded: false, // usuari nou → passa per la configuració inicial
   projectStartDate: todayISO(),
 };
 

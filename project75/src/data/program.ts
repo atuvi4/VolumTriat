@@ -11,5 +11,7 @@ export const DEFAULT_PROFILE: Profile = {
   kcalGoal: 3000,
   protGoal: 150,
   ritme: 'agressiu',
+  goal: 'bulk',
+  onboarded: true, // usuaris existents no passen per l'onboarding
   projectStartDate: '2026-07-03', // divendres 3/7
 };

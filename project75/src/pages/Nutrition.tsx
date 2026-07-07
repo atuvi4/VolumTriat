@@ -83,6 +83,7 @@ export default function Nutrition() {
     heightCm: state.profile.heightCm,
     weightKg,
     ritme: state.profile.ritme,
+    goal: state.profile.goal,
   });
   const adj = weeklyAdjustment({
     weights: state.weights,

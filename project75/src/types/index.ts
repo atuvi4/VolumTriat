@@ -3,6 +3,8 @@ import type { MealOutcome } from '../brain/brainTypes';
 
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
+/** Objectiu corporal de l'usuari — determina dèficit/manteniment/superàvit. */
+export type Goal = 'cut' | 'maintain' | 'bulk';
 export type WorkoutType = 'gym' | 'run' | 'bike' | 'swim' | 'rest';
 
 export interface WeightEntry {
@@ -28,6 +30,10 @@ export interface Profile {
   kcalGoal: number;
   protGoal: number;
   ritme: Ritme;
+  /** Objectiu corporal: dirigeix el càlcul d'objectius nutricionals. */
+  goal: Goal;
+  /** Configuració inicial (onboarding) completada. Usuari nou → false. */
+  onboarded: boolean;
   /** Data real d'inici del projecte (ISO). Abans d'això → mode preparació. */
   projectStartDate: string;
 }

@@ -1,4 +1,5 @@
 import type { NutritionTargets } from './nutritionTypes';
+import type { Goal } from '../types';
 import { bmrMifflin, tdeeRange } from './nutritionCalculator';
 
 export interface TargetInput {
@@ -7,51 +8,91 @@ export interface TargetInput {
   heightCm: number;
   weightKg: number;
   ritme: 'moderat' | 'agressiu';
+  /** Objectiu corporal. Per defecte 'bulk' (compat amb el comportament anterior). */
+  goal?: Goal;
 }
 
 const round50 = (n: number) => Math.round(n / 50) * 50;
 
+interface Adj {
+  lo: number;
+  hi: number;
+  start: number;
+}
+
+/** Ajust de kcal sobre el manteniment (TDEE mig), segons objectiu i ritme. */
+function goalAdjustment(goal: Goal, ritme: 'moderat' | 'agressiu'): Adj {
+  if (goal === 'cut') {
+    return ritme === 'agressiu' ? { lo: -600, hi: -400, start: -500 } : { lo: -400, hi: -200, start: -300 };
+  }
+  if (goal === 'maintain') {
+    return { lo: -100, hi: 100, start: 0 };
+  }
+  return ritme === 'agressiu' ? { lo: 250, hi: 450, start: 250 } : { lo: 100, hi: 250, start: 150 };
+}
+
 /**
- * Càlcul d'objectius nutricionals a partir del perfil.
+ * Càlcul d'objectius nutricionals a partir del perfil i l'objectiu corporal.
  * Tot és una ESTIMACIÓ (factors d'activitat aproximats). La UI ho ha d'explicar.
  */
 export function computeTargets(input: TargetInput): NutritionTargets {
   const { sex, age, heightCm, weightKg, ritme } = input;
+  const goal = input.goal ?? 'bulk';
 
   const bmr = Math.round(bmrMifflin(sex, weightKg, heightCm, age));
   const { low, mid, high } = tdeeRange(bmr);
 
-  // Superàvit segons ritme (volum sostenible vs agressiu sostenible).
-  // 'start' s'alinea amb el límit baix del rang perquè l'objectiu inicial coincideixi
-  // amb el configurat (evita mostrar una xifra intermèdia òrfena tipus 3050).
-  const surplus = ritme === 'agressiu' ? { lo: 250, hi: 450, start: 250 } : { lo: 100, hi: 250, start: 150 };
+  const adj = goalAdjustment(goal, ritme);
+  const bmrFloor = round50(bmr); // mai per sota del BMR (sobretot en dèficit)
 
-  const kcalRange: [number, number] = [round50(mid + surplus.lo), round50(mid + surplus.hi)];
-  const kcalStart = round50(mid + surplus.start);
+  const kcalRange: [number, number] = [
+    Math.max(round50(mid + adj.lo), bmrFloor),
+    Math.max(round50(mid + adj.hi), bmrFloor),
+  ];
+  const kcalStart = Math.max(round50(mid + adj.start), bmrFloor);
 
-  // Proteïna 1,6-2,2 g/kg per volum/força
+  // Proteïna 1,6-2,2 g/kg; objectiu pràctic ~2 g/kg
   const proteinRange: [number, number] = [Math.round(weightKg * 1.6), Math.round(weightKg * 2.2)];
   const proteinPerKg = 2.0;
-  const proteinGrams = Math.round(weightKg * proteinPerKg); // objectiu pràctic ~2 g/kg
+  const proteinGrams = Math.round(weightKg * proteinPerKg);
 
-  // Greixos mínims 0,8 g/kg
+  // Greixos mínims 0,8 g/kg; carbs com a resta de l'energia inicial
   const fatMin = Math.round(weightKg * 0.8);
-
-  // Carbohidrats com a resta de l'energia inicial
   const carbs = Math.max(0, Math.round((kcalStart - proteinGrams * 4 - fatMin * 9) / 4));
 
-  // Pujada setmanal recomanada (~0,3-0,6% del pes)
-  const weeklyGain: [number, number] = ritme === 'agressiu' ? [0.35, 0.6] : [0.2, 0.4];
+  // Canvi de pes setmanal recomanat (% del pes), segons objectiu.
+  const weeklyGain: [number, number] =
+    goal === 'cut'
+      ? ritme === 'agressiu'
+        ? [-0.75, -0.5]
+        : [-0.5, -0.3]
+      : goal === 'maintain'
+        ? [-0.1, 0.1]
+        : ritme === 'agressiu'
+          ? [0.35, 0.6]
+          : [0.2, 0.4];
+
+  const goalWord = goal === 'cut' ? 'perdre greix' : goal === 'maintain' ? 'mantenir el pes' : 'pujar pes';
+  const mech =
+    goal === 'cut'
+      ? 'el dèficit és el que fa baixar el greix'
+      : goal === 'maintain'
+        ? 'l’equilibri manté el pes'
+        : 'el superàvit és el que fa créixer';
 
   const explanation =
     `Objectiu calculat: ${kcalRange[0]}-${kcalRange[1]} kcal/dia. Comencem a ${kcalStart} kcal perquè el teu objectiu ` +
-    `és pujar pes de manera ${ritme === 'agressiu' ? 'agressiva però sostenible' : 'moderada'}, amb gym 4-5 dies/setmana ` +
-    `i introducció progressiva de cardio. Manteniment estimat ~${mid} kcal (rang ${low}-${high}); el superàvit és el que fa créixer.`;
+    `és ${goalWord} de manera ${ritme === 'agressiu' ? 'agressiva però sostenible' : 'moderada'}. ` +
+    `Manteniment estimat ~${mid} kcal (rang ${low}-${high}); ${mech}.`;
 
   const proteinNote =
     `Proteïna recomanada: ${proteinRange[0]}-${proteinRange[1]} g/dia (1,6-2,2 g/kg). ` +
-    `L'objectiu de ${Math.max(proteinGrams, 150)} g és una xifra alta pràctica i arrodonida, no un dogma: ` +
-    `per sobre del mínim, més proteïna no fa mal i simplifica les decisions.`;
+    `L'objectiu de ${Math.max(proteinGrams, 120)} g és una xifra pràctica i arrodonida: ` +
+    `${
+      goal === 'cut'
+        ? 'en dèficit, prioritzar proteïna preserva múscul'
+        : 'per sobre del mínim, més proteïna no fa mal i simplifica les decisions'
+    }.`;
 
   return {
     bmr,
