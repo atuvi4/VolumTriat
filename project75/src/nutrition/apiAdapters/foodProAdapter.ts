@@ -16,12 +16,14 @@ export interface ProFoodItem {
 
 export type FoodSource = 'usda' | 'off' | 'all';
 
-/** Cerca d'aliments (USDA genèrics + Open Food Facts comercials). */
-export async function searchFoodPro(query: string, source: FoodSource = 'all'): Promise<ProFoodItem[]> {
+/** Cerca d'aliments (USDA genèrics + Open Food Facts comercials).
+ *  `store` (opcional) filtra Open Food Facts per supermercat (p. ex. 'mercadona'). */
+export async function searchFoodPro(query: string, source: FoodSource = 'all', store?: string): Promise<ProFoodItem[]> {
   const q = query.trim();
   if (!q) return [];
   try {
-    const res = await fetch(`/api/food/search?source=${source}&query=${encodeURIComponent(q)}`);
+    const storeParam = store ? `&store=${encodeURIComponent(store)}` : '';
+    const res = await fetch(`/api/food/search?source=${source}&query=${encodeURIComponent(q)}${storeParam}`);
     if (!res.ok) return [];
     const data = (await res.json()) as { items?: ProFoodItem[] };
     return data.items ?? [];

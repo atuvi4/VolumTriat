@@ -107,15 +107,17 @@ async function cacheSet(cacheKey: string, source: string, query: string, items: 
 export default async function handler(req: any, res: any) {
   const query = String(req.query?.query ?? req.query?.q ?? '').trim();
   const source = String(req.query?.source ?? 'all').toLowerCase();
+  const store = String(req.query?.store ?? '').trim().toLowerCase(); // p. ex. 'mercadona'
   if (!query) return res.status(200).json({ items: [] });
 
-  const cacheKey = `${source}:${query.toLowerCase()}`;
+  const cacheKey = `${source}:${store}:${query.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.status(200).json({ items: cached, cached: true });
 
   const items: ProItem[] = [];
   try {
-    if (source === 'usda' || source === 'all') {
+    // USDA són aliments genèrics dels EUA: no té sentit filtrar-los per súper d'aquí.
+    if ((source === 'usda' || source === 'all') && !store) {
       const key = process.env.USDA_API_KEY;
       if (key) {
         const url =
@@ -133,9 +135,12 @@ export default async function handler(req: any, res: any) {
     }
 
     if (source === 'off' || source === 'all') {
+      const storeFilter = store
+        ? `&tagtype_0=stores&tag_contains_0=contains&tag_0=${encodeURIComponent(store)}`
+        : '';
       const url =
-        'https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=8' +
-        `&search_terms=${encodeURIComponent(query)}`;
+        'https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=12' +
+        `&search_terms=${encodeURIComponent(query)}${storeFilter}`;
       const r = await fetch(url, { headers: { 'User-Agent': 'Project75/1.0' } });
       if (r.ok) {
         const d: any = await r.json();

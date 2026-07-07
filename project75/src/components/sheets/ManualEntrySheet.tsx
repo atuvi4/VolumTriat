@@ -42,14 +42,15 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   const [searched, setSearched] = useState(false);
   const [picked, setPicked] = useState<ProFoodItem | null>(null);
   const [grams, setGrams] = useState('100');
+  const [store, setStore] = useState<string>('all');
 
   const runSearch = async () => {
     const q = query.trim();
     if (!q) return;
     setSearching(true);
     setSearched(true);
-    const items = await searchFoodPro(q, 'all');
-    setResults(items.filter((i) => i.kcalPer100g > 0).slice(0, 8));
+    const items = store === 'all' ? await searchFoodPro(q, 'all') : await searchFoodPro(q, 'off', store);
+    setResults(items.filter((i) => i.kcalPer100g > 0).slice(0, 10));
     setSearching(false);
   };
 
@@ -112,6 +113,24 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
       {/* Cerca de productes reals (Open Food Facts) */}
       <div className="mt-3">
         <div className="text-[12px] font-semibold text-muted mb-1.5">Cerca un producte real</div>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {[
+            { v: 'all', label: 'Tots' },
+            { v: 'mercadona', label: 'Mercadona' },
+            { v: 'carrefour', label: 'Carrefour' },
+            { v: 'lidl', label: 'Lidl' },
+          ].map((s) => (
+            <button
+              key={s.v}
+              onClick={() => setStore(s.v)}
+              className={`text-[12px] font-semibold rounded-full px-3 py-1.5 border ${
+                store === s.v ? 'bg-accent text-white border-accent' : 'bg-surface2 text-muted border-line2'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
         <div className="flex gap-2">
           <input
             className={inputCls}
