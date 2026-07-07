@@ -5,7 +5,10 @@ import Button from '../Button';
 import Icon from '../Icon';
 import { searchFoodPro, type ProFoodItem } from '../../nutrition/apiAdapters/foodProAdapter';
 import { CONFIDENCE_LABEL } from '../../nutrition/nutritionSources';
+import { FOODS, getFood } from '../../nutrition/foodDatabase';
 import type { ManualLog } from '../../nutrition/nutritionTypes';
+
+const stripAccents = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
 interface Props {
   title: string;
@@ -72,6 +75,48 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   const onGrams = (v: string) => {
     setGrams(v);
     if (picked) applyProduct(picked, Number(v) || 0);
+  };
+
+  // Compositor per ingredients (base local): p. ex. pollastre 150 g + patata 300 g.
+  const [ingredients, setIngredients] = useState<{ foodId: string; grams: number }[]>([]);
+  const [ingQuery, setIngQuery] = useState('');
+  const foodMatches =
+    stripAccents(ingQuery).length >= 2
+      ? FOODS.filter((f) => stripAccents(f.name).includes(stripAccents(ingQuery))).slice(0, 8)
+      : [];
+
+  const syncFromIngredients = (list: { foodId: string; grams: number }[]) => {
+    let kc = 0;
+    let pr = 0;
+    for (const ing of list) {
+      const food = getFood(ing.foodId);
+      if (!food) continue;
+      const f = ing.grams / 100;
+      kc += food.kcalPer100g * f;
+      pr += food.proteinPer100g * f;
+    }
+    setKcal(String(Math.round(kc)));
+    setProtein(String(Math.round(pr)));
+    if (list.length) setName(list.map((i) => getFood(i.foodId)?.name ?? '').filter(Boolean).join(' + '));
+  };
+  const addIngredient = (foodId: string) => {
+    const food = getFood(foodId);
+    const grams = food?.portions?.normal ?? 100;
+    const next = [...ingredients, { foodId, grams }];
+    setIngredients(next);
+    setIngQuery('');
+    syncFromIngredients(next);
+  };
+  const setIngGrams = (idx: number, v: string) => {
+    const g = Math.max(0, Number(v) || 0);
+    const next = ingredients.map((it, i) => (i === idx ? { ...it, grams: g } : it));
+    setIngredients(next);
+    syncFromIngredients(next);
+  };
+  const removeIngredient = (idx: number) => {
+    const next = ingredients.filter((_, i) => i !== idx);
+    setIngredients(next);
+    syncFromIngredients(next);
   };
 
   const kcalN = Number(kcal);
@@ -189,6 +234,67 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
             />
             <span className="text-[11.5px] text-faint">macros escalades sota</span>
           </div>
+        )}
+      </div>
+
+      {/* Compon un àpat per ingredients (base local) */}
+      <div className="mt-3 border-t border-line pt-3">
+        <div className="text-[12px] font-semibold text-muted mb-1.5">Compon per ingredients (calcula sol)</div>
+        <input
+          className={inputCls}
+          placeholder="Afegeix un ingredient: pollastre, patata, arròs…"
+          value={ingQuery}
+          onChange={(e) => setIngQuery(e.target.value)}
+        />
+        {foodMatches.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {foodMatches.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => addIngredient(f.id)}
+                className="text-[12.5px] font-semibold bg-surface2 border border-line2 rounded-full px-3 py-1.5 hover:border-accent"
+              >
+                + {f.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {ingredients.length > 0 && (
+          <div className="mt-2 border border-line rounded-[12px] divide-y divide-line">
+            {ingredients.map((ing, idx) => {
+              const food = getFood(ing.foodId);
+              if (!food) return null;
+              const f = ing.grams / 100;
+              return (
+                <div key={idx} className="flex items-center gap-2 px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13.5px] font-semibold truncate">{food.name}</div>
+                    <div className="text-[11px] text-faint">
+                      {Math.round(food.kcalPer100g * f)} kcal · {Math.round(food.proteinPer100g * f)} g P
+                    </div>
+                  </div>
+                  <input
+                    className="w-[78px] bg-surface2 border border-line2 rounded-[10px] px-2.5 py-1.5 text-[13px] font-semibold text-right focus:outline-none focus:border-accent"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={ing.grams}
+                    onChange={(e) => setIngGrams(idx, e.target.value)}
+                  />
+                  <span className="text-[11px] text-faint">g</span>
+                  <button onClick={() => removeIngredient(idx)} className="text-faint hover:text-warn p-1">
+                    <Icon name="x" size={15} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {ingredients.length > 0 && (
+          <p className="text-[11.5px] text-faint mt-1.5 mb-0">
+            Total calculat des dels ingredients (base local). Ajusta els grams i ja tens les kcal i la proteïna a sota.
+          </p>
         )}
       </div>
 
