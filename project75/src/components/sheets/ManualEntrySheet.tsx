@@ -7,6 +7,7 @@ import { searchFoodPro, type ProFoodItem } from '../../nutrition/apiAdapters/foo
 import { CONFIDENCE_LABEL } from '../../nutrition/nutritionSources';
 import { FOODS, getFood } from '../../nutrition/foodDatabase';
 import { goalsFor, doneKcal, doneProt } from '../../utils/goals';
+import { sumIngredients } from '../../nutrition/mealCalc';
 import type { ManualLog } from '../../nutrition/nutritionTypes';
 
 const stripAccents = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -53,18 +54,14 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   // ---------- Compositor per ingredients (local + Open Food Facts) ----------
   const [ingredients, setIngredients] = useState<CompIngredient[]>([]);
 
+  const fin = (n: number) => (Number.isFinite(n) ? n : 0);
   const syncFromIngredients = (list: CompIngredient[]) => {
-    let kc = 0;
-    let pr = 0;
-    for (const ing of list) {
-      const f = ing.grams / 100;
-      kc += ing.kcalPer100g * f;
-      pr += ing.proteinPer100g * f;
-    }
-    setKcal(String(Math.round(kc)));
-    setProtein(String(Math.round(pr)));
+    const t = sumIngredients(list); // càlcul fiable i testejat
+    setKcal(String(t.kcal));
+    setProtein(String(t.protein));
     if (list.length) setName(list.map((i) => i.name).join(' + '));
   };
+  const compTotal = sumIngredients(ingredients);
   const addIngredient = (ci: CompIngredient) => {
     const next = [...ingredients, ci];
     setIngredients(next);
@@ -168,7 +165,10 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
       for (const i of protIdx) grams[i] *= scale;
     }
 
-    const next = ingredients.map((ci, i) => ({ ...ci, grams: Math.max(0, Math.round(grams[i] / 5) * 5) }));
+    const next = ingredients.map((ci, i) => ({
+      ...ci,
+      grams: Math.min(800, Math.max(0, Math.round(fin(grams[i]) / 5) * 5)), // mai absurd
+    }));
     setIngredients(next);
     syncFromIngredients(next);
   };
@@ -326,6 +326,15 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {ingredients.length > 0 && (
+          <div className="mt-2 flex items-center justify-between bg-surface2 border border-line rounded-[10px] px-3.5 py-2">
+            <span className="text-[12.5px] font-bold text-muted">Total calculat</span>
+            <span className="text-[14px] font-extrabold">
+              {compTotal.kcal} kcal · {compTotal.protein} g P
+            </span>
           </div>
         )}
       </div>
