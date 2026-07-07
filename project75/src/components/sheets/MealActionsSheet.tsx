@@ -36,6 +36,7 @@ export default function MealActionsSheet({ meal, onChange, onPartial, onSkip }: 
               submitLabel="Desar canvi"
               closeOnSubmit={false}
               target={{ kcal: meal.nutrition.kcal, protein: meal.nutrition.protein }}
+              allowPending
               onSubmit={onChange}
             />,
           )

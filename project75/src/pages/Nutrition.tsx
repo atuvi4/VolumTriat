@@ -215,6 +215,7 @@ export default function Nutrition() {
                           initial={m.logged}
                           closeOnSubmit={false}
                           target={{ kcal: m.nutrition.kcal, protein: m.nutrition.protein }}
+                          allowPending
                           onSubmit={onChange}
                         />,
                       )

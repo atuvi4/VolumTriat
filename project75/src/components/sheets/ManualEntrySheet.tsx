@@ -20,6 +20,8 @@ interface Props {
   closeOnSubmit?: boolean;
   /** Objectiu de l'àpat (kcal/proteïna) per al recomanador de grams. */
   target?: { kcal: number; protein: number };
+  /** Mostra l'interruptor «Ja ho he menjat» (per canviar un àpat sense marcar-lo fet). */
+  allowPending?: boolean;
   onSubmit: (data: ManualLog) => void;
 }
 
@@ -35,13 +37,16 @@ interface CompIngredient {
   grams: number;
 }
 
-export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, onSubmit }: Props) {
+export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, allowPending, onSubmit }: Props) {
   const { state, closeSheet, savePersonalIngredient } = useApp();
   const [name, setName] = useState(initial?.name ?? '');
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '');
   const [protein, setProtein] = useState(initial ? String(initial.protein) : '');
   const [note, setNote] = useState(initial?.note ?? '');
   const [asShake, setAsShake] = useState(false);
+  // Editar un àpat ja registrat (té initial) → per defecte segueix menjat; canviar
+  // un àpat de zero → per defecte PENDENT (no el marca fet fins que ho confirmis).
+  const [asEaten, setAsEaten] = useState(allowPending ? !!initial : true);
 
   const kcalN = Number(kcal);
   const protN = Number(protein);
@@ -203,6 +208,7 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
       protein: Math.round(protN),
       note: note.trim() || undefined,
       isShake: asShake || undefined,
+      eaten: allowPending ? asEaten : undefined,
     });
     if (closeOnSubmit) closeSheet();
   };
@@ -455,6 +461,22 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
         <Icon name="info" size={15} className="text-info shrink-0 mt-0.5" />
         <span>Dada teva, de la base local o d'Open Food Facts (pot variar segons marca/etiqueta). Confirma els números.</span>
       </div>
+
+      {allowPending && (
+        <button
+          type="button"
+          onClick={() => setAsEaten((v) => !v)}
+          className="mt-3 w-full flex items-center justify-between border border-line rounded-xl px-3.5 py-2.5"
+        >
+          <span className="text-[13px] font-semibold flex items-center gap-1.5">
+            <Icon name="check" size={16} className="text-muted" /> Ja ho he menjat
+            <span className="text-[11px] text-faint font-medium">{asEaten ? '(compta ara)' : '(queda pendent)'}</span>
+          </span>
+          <span className={`w-9 h-5 rounded-full relative transition-colors ${asEaten ? 'bg-accent' : 'bg-line2'}`}>
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${asEaten ? 'left-[18px]' : 'left-0.5'}`} />
+          </span>
+        </button>
+      )}
 
       <button
         type="button"

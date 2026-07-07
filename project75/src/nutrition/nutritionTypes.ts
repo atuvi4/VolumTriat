@@ -90,6 +90,8 @@ export interface ManualLog {
   note?: string;
   /** L'usuari marca que aquesta ingesta és un batut (compta per l'objectiu de batuts). */
   isShake?: boolean;
+  /** Ja s'ha menjat (compta ara). Si és false, l'àpat es deixa PENDENT. */
+  eaten?: boolean;
 }
 
 /** Origen d'un extra: manual (l'afegeix l'usuari lliurement) o ajust recomanat. */

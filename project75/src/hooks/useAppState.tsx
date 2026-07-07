@@ -337,20 +337,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const changeMeal = useCallback(
     (id: string, data: ManualLog) => {
+      const keepPending = data.eaten === false; // no marcar-lo com a menjat encara
       setState((s) => {
         const meal = s.meals.find((m) => m.id === id);
+        const withTags = (m: ResolvedMeal) =>
+          data.isShake ? Array.from(new Set([...m.tags, 'liquid_calories' as const])) : m.tags;
+
+        if (keepPending) {
+          // Actualitza el CONTINGUT de l'àpat i el deixa PENDENT: no suma ni compta
+          // fins que marquis «Fet». Sense outcome (encara no s'ha menjat).
+          return {
+            ...s,
+            meals: s.meals.map((m) =>
+              m.id === id
+                ? {
+                    ...m,
+                    name: data.name?.trim() || m.name,
+                    recipeId: undefined,
+                    nutrition: { kcal: data.kcal, protein: data.protein, carbs: 0, fat: 0, fiber: 0 },
+                    precision: 'manual_estimate' as const,
+                    confidence: 'low' as const,
+                    sources: ['manual_estimate' as const],
+                    ingredients: [],
+                    tags: withTags(m),
+                    status: 'pending' as const,
+                    done: false,
+                    logged: undefined,
+                    partialPct: undefined,
+                  }
+                : m,
+            ),
+          };
+        }
+
         let next = bumpStreak({
           ...s,
           meals: s.meals.map((m) =>
             m.id === id
-              ? {
-                  ...m,
-                  done: false,
-                  status: 'changed' as const,
-                  logged: { ...data },
-                  partialPct: undefined,
-                  tags: data.isShake ? Array.from(new Set([...m.tags, 'liquid_calories' as const])) : m.tags,
-                }
+              ? { ...m, done: false, status: 'changed' as const, logged: { ...data }, partialPct: undefined, tags: withTags(m) }
               : m,
           ),
           personalItems: rememberPersonal(s.personalItems, data, meal?.slot),
@@ -362,7 +386,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
         return next;
       });
-      showToast('Àpat canviat · dada manual');
+      showToast(keepPending ? 'Àpat actualitzat · marca «Fet» quan te’l mengis' : 'Àpat canviat · dada manual');
     },
     [bumpStreak, showToast],
   );
