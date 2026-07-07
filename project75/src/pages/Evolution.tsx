@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import Icon from '../components/Icon';
 import Badge from '../components/Badge';
 import InitialWeightSheet from '../components/sheets/InitialWeightSheet';
+import HistoryCard from '../components/HistoryCard';
 import { currentWeight, trendPerWeek, nextMilestone, MIN_FOR_TREND } from '../utils/goals';
 import { fmt1, pct } from '../utils/format';
 import { shortDate, longDate } from '../utils/date';
@@ -115,6 +116,8 @@ export default function Evolution() {
           </div>
         )}
       </Card>
+
+      <HistoryCard />
 
       <Card title="Fotos de progrés" className="mb-3.5">
         <div className="flex gap-2.5">
