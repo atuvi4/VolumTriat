@@ -343,7 +343,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ...s,
           meals: s.meals.map((m) =>
             m.id === id
-              ? { ...m, done: false, status: 'changed' as const, logged: { ...data }, partialPct: undefined }
+              ? {
+                  ...m,
+                  done: false,
+                  status: 'changed' as const,
+                  logged: { ...data },
+                  partialPct: undefined,
+                  tags: data.isShake ? Array.from(new Set([...m.tags, 'liquid_calories' as const])) : m.tags,
+                }
               : m,
           ),
           personalItems: rememberPersonal(s.personalItems, data, meal?.slot),
@@ -445,7 +452,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         extraOrigin: 'manual',
         createdAt: new Date().toISOString(),
         logged: { ...data },
-        tags: [],
+        tags: data.isShake ? ['liquid_calories'] : [],
         nutrition: { kcal: data.kcal, protein: data.protein, carbs: 0, fat: 0, fiber: 0 },
         precision: 'manual_estimate',
         confidence: 'low',

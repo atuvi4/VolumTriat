@@ -88,6 +88,8 @@ export interface ManualLog {
   kcal: number;
   protein: number;
   note?: string;
+  /** L'usuari marca que aquesta ingesta és un batut (compta per l'objectiu de batuts). */
+  isShake?: boolean;
 }
 
 /** Origen d'un extra: manual (l'afegeix l'usuari lliurement) o ajust recomanat. */

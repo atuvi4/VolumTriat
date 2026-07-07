@@ -39,7 +39,12 @@ export default function Nutrition() {
   const dk = doneKcal(state.meals);
   const dp = doneProt(state.meals);
   const dc = doneCount(state.meals);
-  const shakes = state.meals.filter((m) => m.done && m.tags.includes('liquid_calories')).length;
+  // Un àpat compta com a batut si s'ha menjat (fet/canviat/parcial) i és líquid:
+  // per etiqueta (liquid_calories) o pel nom (batut/shake/whey).
+  const isShakeMeal = (m: ResolvedMeal) =>
+    ['done', 'changed', 'partial'].includes(mealStatus(m)) &&
+    (m.tags.includes('liquid_calories') || /batut|shake|whey/i.test([m.name, m.logged?.name].filter(Boolean).join(' ')));
+  const shakes = state.meals.filter(isShakeMeal).length;
   const plannedMeals = state.meals.filter((m) => !m.isExtra);
   const extras = state.meals.filter((m) => m.isExtra);
 

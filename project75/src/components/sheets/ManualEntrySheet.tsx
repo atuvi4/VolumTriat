@@ -41,6 +41,7 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '');
   const [protein, setProtein] = useState(initial ? String(initial.protein) : '');
   const [note, setNote] = useState(initial?.note ?? '');
+  const [asShake, setAsShake] = useState(false);
 
   const kcalN = Number(kcal);
   const protN = Number(protein);
@@ -201,6 +202,7 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
       kcal: Math.round(kcalN),
       protein: Math.round(protN),
       note: note.trim() || undefined,
+      isShake: asShake || undefined,
     });
     if (closeOnSubmit) closeSheet();
   };
@@ -454,7 +456,20 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
         <span>Dada teva, de la base local o d'Open Food Facts (pot variar segons marca/etiqueta). Confirma els números.</span>
       </div>
 
-      <Button variant="primary" className="w-full mt-4" icon="check" disabled={!valid} onClick={save}>
+      <button
+        type="button"
+        onClick={() => setAsShake((v) => !v)}
+        className="mt-3 w-full flex items-center justify-between border border-line rounded-xl px-3.5 py-2.5"
+      >
+        <span className="text-[13px] font-semibold flex items-center gap-1.5">
+          <Icon name="cup" size={16} className="text-muted" /> Compta com a batut
+        </span>
+        <span className={`w-9 h-5 rounded-full relative transition-colors ${asShake ? 'bg-accent' : 'bg-line2'}`}>
+          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${asShake ? 'left-[18px]' : 'left-0.5'}`} />
+        </span>
+      </button>
+
+      <Button variant="primary" className="w-full mt-3" icon="check" disabled={!valid} onClick={save}>
         {submitLabel}
       </Button>
     </div>
