@@ -17,7 +17,7 @@ const SLOT_PREP: Record<MealSlot, string> = {
   snack: 'de snack',
 };
 
-const INITIAL = 5;
+const INITIAL = 8; // prou per mostrar totes les alternatives d'un slot (inclosos batuts, que són slot secundari) sense amagar-les
 const PRO_INITIAL = 3;
 
 /** Substitueix la recepta proposada del pla per una altra equivalent del mateix
