@@ -2,6 +2,7 @@ import { AppProvider, useApp } from './hooks/useAppState';
 import { useAuth } from './auth/useAuth';
 import { detectReadOnly } from './utils/readOnly';
 import AuthGate from './auth/AuthGate';
+import Onboarding from './onboarding/Onboarding';
 import AppLayout from './components/AppLayout';
 import Today from './pages/Today';
 import Nutrition from './pages/Nutrition';
@@ -21,7 +22,15 @@ const PAGES: Record<Tab, JSX.Element> = {
 };
 
 function Shell() {
-  const { tab } = useApp();
+  const { tab, state, isReadOnly, cloudStatus } = useApp();
+  if (!isReadOnly && !state.profile.onboarded) {
+    // Espera que la sincronització inicial acabi abans de decidir: així un usuari
+    // EXISTENT en un dispositiu nou (que arrenca buit) no veu l'onboarding mentre
+    // les seves dades baixen del núvol.
+    const settled = cloudStatus === 'synced' || cloudStatus === 'error' || cloudStatus === 'disabled';
+    if (!settled) return <div className="min-h-screen flex items-center justify-center text-muted">Carregant…</div>;
+    return <Onboarding />;
+  }
   return <AppLayout>{PAGES[tab]}</AppLayout>;
 }
 
