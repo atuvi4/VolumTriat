@@ -3,6 +3,8 @@ import { useApp } from '../../hooks/useAppState';
 import { SheetHeader } from '../Sheet';
 import Button from '../Button';
 import Icon from '../Icon';
+import { searchFoodPro, type ProFoodItem } from '../../nutrition/apiAdapters/foodProAdapter';
+import { CONFIDENCE_LABEL } from '../../nutrition/nutritionSources';
 import type { ManualLog } from '../../nutrition/nutritionTypes';
 
 interface Props {
@@ -32,6 +34,40 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   const habituals = [...(state.personalItems ?? [])]
     .sort((a, b) => b.count - a.count || (a.lastUsedAt < b.lastUsedAt ? 1 : -1))
     .slice(0, 6);
+
+  // Cerca de productes reals (Open Food Facts / USDA) via /api/food/search.
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<ProFoodItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [picked, setPicked] = useState<ProFoodItem | null>(null);
+  const [grams, setGrams] = useState('100');
+
+  const runSearch = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    setSearched(true);
+    const items = await searchFoodPro(q, 'all');
+    setResults(items.filter((i) => i.kcalPer100g > 0).slice(0, 8));
+    setSearching(false);
+  };
+
+  const applyProduct = (it: ProFoodItem, g: number) => {
+    const f = (Number.isFinite(g) ? g : 0) / 100;
+    setName(it.brand ? `${it.name} (${it.brand})` : it.name);
+    setKcal(String(Math.round(it.kcalPer100g * f)));
+    setProtein(String(Math.round(it.proteinPer100g * f)));
+  };
+  const pick = (it: ProFoodItem) => {
+    setPicked(it);
+    setResults([]);
+    applyProduct(it, Number(grams) || 100);
+  };
+  const onGrams = (v: string) => {
+    setGrams(v);
+    if (picked) applyProduct(picked, Number(v) || 0);
+  };
 
   const kcalN = Number(kcal);
   const protN = Number(protein);
@@ -72,6 +108,66 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
           </div>
         </div>
       )}
+
+      {/* Cerca de productes reals (Open Food Facts) */}
+      <div className="mt-3">
+        <div className="text-[12px] font-semibold text-muted mb-1.5">Cerca un producte real</div>
+        <div className="flex gap-2">
+          <input
+            className={inputCls}
+            placeholder="Ex: iogurt proteïnes, pa de motlle…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearch();
+              }
+            }}
+          />
+          <Button variant="ghost" size="sm" icon="database" disabled={searching || !query.trim()} onClick={runSearch}>
+            {searching ? '…' : 'Cercar'}
+          </Button>
+        </div>
+
+        {results.length > 0 && (
+          <div className="mt-2 border border-line rounded-[12px] divide-y divide-line max-h-[34vh] overflow-y-auto">
+            {results.map((it) => (
+              <button
+                key={it.externalId}
+                onClick={() => pick(it)}
+                className="w-full text-left px-3.5 py-2.5 hover:bg-surface2"
+              >
+                <div className="text-[13.5px] font-semibold">
+                  {it.name} {it.brand && <span className="text-faint font-medium">· {it.brand}</span>}
+                </div>
+                <div className="text-[11.5px] text-muted">
+                  {Math.round(it.kcalPer100g)} kcal · {Math.round(it.proteinPer100g)} g prot /100 g · confiança{' '}
+                  {CONFIDENCE_LABEL[it.confidence]}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        {searched && !searching && results.length === 0 && (
+          <p className="text-[12.5px] text-muted mt-2 mb-0">Cap resultat. Prova un altre terme o omple les dades a mà.</p>
+        )}
+
+        {picked && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-[12.5px] font-semibold text-muted">Grams:</span>
+            <input
+              className="w-[110px] bg-surface2 border border-line2 rounded-[10px] px-3 py-2 text-[14px] font-semibold focus:outline-none focus:border-accent"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={grams}
+              onChange={(e) => onGrams(e.target.value)}
+            />
+            <span className="text-[11.5px] text-faint">macros escalades sota</span>
+          </div>
+        )}
+      </div>
 
       <label className="block mt-3 text-[12.5px] font-semibold text-muted">
         Nom <span className="text-faint font-medium">(opcional)</span>
@@ -126,7 +222,10 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
 
       <div className="mt-3 flex items-start gap-2 text-[12px] text-muted bg-info-soft rounded-xl px-3.5 py-2.5">
         <Icon name="info" size={15} className="text-info shrink-0 mt-0.5" />
-        <span>Dada manual: la introdueixes tu i no és verificada. No en calculem macros.</span>
+        <span>
+          Dada teva o d'un producte d'Open Food Facts (pot variar segons marca/etiqueta). Ajusta els grams i confirma
+          els números.
+        </span>
       </div>
 
       <Button variant="primary" className="w-full mt-4" icon="check" disabled={!valid} onClick={save}>
