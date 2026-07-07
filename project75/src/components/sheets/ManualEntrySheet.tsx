@@ -6,6 +6,7 @@ import Icon from '../Icon';
 import { searchFoodPro, type ProFoodItem } from '../../nutrition/apiAdapters/foodProAdapter';
 import { CONFIDENCE_LABEL } from '../../nutrition/nutritionSources';
 import { FOODS, getFood } from '../../nutrition/foodDatabase';
+import { goalsFor, doneKcal, doneProt } from '../../utils/goals';
 import type { ManualLog } from '../../nutrition/nutritionTypes';
 
 const stripAccents = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -17,6 +18,9 @@ interface Props {
   submitLabel?: string;
   /** Si és false, no tanca el sheet en desar (el callback decideix què fer després). */
   closeOnSubmit?: boolean;
+  /** Objectiu de l'àpat (kcal/proteïna) per al recomanador de grams. Si falta,
+   *  s'usa el que queda del dia. */
+  target?: { kcal: number; protein: number };
   onSubmit: (data: ManualLog) => void;
 }
 
@@ -26,7 +30,7 @@ const inputCls =
 /** Formulari manual reutilitzat per «Àpat canviat» i «Extra».
  *  Calories i proteïna són obligatòries; nom i nota, opcionals.
  *  Deixem clar que és una dada introduïda per l'usuari, no verificada. */
-export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, onSubmit }: Props) {
+export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, onSubmit }: Props) {
   const { state, closeSheet } = useApp();
   const [name, setName] = useState(initial?.name ?? '');
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '');
@@ -115,6 +119,53 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   };
   const removeIngredient = (idx: number) => {
     const next = ingredients.filter((_, i) => i !== idx);
+    setIngredients(next);
+    syncFromIngredients(next);
+  };
+
+  // Objectiu per al recomanador: el de l'àpat (si el rebem) o el que queda del dia.
+  const g = goalsFor(state);
+  const effectiveTarget = target ?? {
+    kcal: Math.max(250, g.kcal - doneKcal(state.meals)),
+    protein: Math.max(20, g.prot - doneProt(state.meals)),
+  };
+
+  /** Recomana grams de cada ingredient per acostar-se a l'objectiu de l'àpat:
+   *  les proteïnes cobreixen la proteïna; la resta omple les kcal restants. */
+  const recommendGrams = () => {
+    if (!ingredients.length) return;
+    const infos = ingredients.map((ing) => getFood(ing.foodId));
+    const isProt = (i: number) => {
+      const f = infos[i];
+      return !!f && (f.category === 'protein' || f.category === 'legume');
+    };
+    const protIdx = ingredients.map((_, i) => i).filter(isProt);
+    const enerIdx = ingredients.map((_, i) => i).filter((i) => infos[i] && !isProt(i));
+    const grams = ingredients.map(() => 0);
+
+    let protKcal = 0;
+    if (protIdx.length) {
+      const perProt = effectiveTarget.protein / protIdx.length;
+      for (const i of protIdx) {
+        const f = infos[i]!;
+        const gg = f.proteinPer100g > 0 ? (perProt / f.proteinPer100g) * 100 : 0;
+        grams[i] = gg;
+        protKcal += (f.kcalPer100g * gg) / 100;
+      }
+    }
+    const remKcal = Math.max(0, effectiveTarget.kcal - protKcal);
+    if (enerIdx.length) {
+      const perKcal = remKcal / enerIdx.length;
+      for (const i of enerIdx) {
+        const f = infos[i]!;
+        grams[i] = f.kcalPer100g > 0 ? (perKcal / f.kcalPer100g) * 100 : 0;
+      }
+    } else if (protIdx.length && protKcal > 0 && protKcal < effectiveTarget.kcal) {
+      const scale = effectiveTarget.kcal / protKcal;
+      for (const i of protIdx) grams[i] *= scale;
+    }
+
+    const next = ingredients.map((ing, i) => ({ foodId: ing.foodId, grams: Math.max(0, Math.round(grams[i] / 5) * 5) }));
     setIngredients(next);
     syncFromIngredients(next);
   };
@@ -258,6 +309,16 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
               </button>
             ))}
           </div>
+        )}
+
+        {ingredients.length > 0 && (
+          <button
+            onClick={recommendGrams}
+            className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold text-accent border border-accent-line bg-accent-soft rounded-[10px] py-2"
+          >
+            <Icon name="target" size={15} /> Recomana'm els grams (~{Math.round(effectiveTarget.kcal)} kcal ·{' '}
+            {Math.round(effectiveTarget.protein)} g)
+          </button>
         )}
 
         {ingredients.length > 0 && (

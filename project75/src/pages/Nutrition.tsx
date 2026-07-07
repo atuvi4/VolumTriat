@@ -209,6 +209,7 @@ export default function Nutrition() {
                           submitLabel="Desar canvi"
                           initial={m.logged}
                           closeOnSubmit={false}
+                          target={{ kcal: m.nutrition.kcal, protein: m.nutrition.protein }}
                           onSubmit={onChange}
                         />,
                       )

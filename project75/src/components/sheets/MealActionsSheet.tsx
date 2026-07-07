@@ -33,6 +33,7 @@ export default function MealActionsSheet({ meal, onChange, onPartial, onSkip }: 
               sub="Anota el que has menjat en lloc d'aquest àpat."
               submitLabel="Desar canvi"
               closeOnSubmit={false}
+              target={{ kcal: meal.nutrition.kcal, protein: meal.nutrition.protein }}
               onSubmit={onChange}
             />,
           )
