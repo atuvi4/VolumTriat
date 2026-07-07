@@ -21,6 +21,30 @@ type ProItem = {
 
 const num = (v: any) => (typeof v === 'number' && isFinite(v) ? v : 0);
 
+/* Filtre per supermercat a Open Food Facts. La marca pròpia està molt millor
+   etiquetada que el tag de botiga (p. ex. Mercadona → Hacendado). */
+const STORE_FILTER: Record<string, { type: 'brands' | 'stores'; tag: string }> = {
+  mercadona: { type: 'brands', tag: 'hacendado' },
+  carrefour: { type: 'brands', tag: 'carrefour' },
+  lidl: { type: 'stores', tag: 'lidl' },
+};
+
+/* Traducció mínima de termes d'aliment català→castellà (OFF Espanya és en
+   castellà). Substitueix paraules senceres; la resta es deixa igual. */
+const CA_ES: Record<string, string> = {
+  iogurt: 'yogur', pollastre: 'pollo', formatge: 'queso', ou: 'huevo', ous: 'huevos',
+  llet: 'leche', pa: 'pan', tonyina: 'atun', gall: 'pavo', cigrons: 'garbanzos',
+  llenties: 'lentejas', arros: 'arroz', civada: 'avena', platan: 'platano', cacauet: 'cacahuete',
+  vedella: 'ternera', gambes: 'gambas', proteic: 'proteinas', proteica: 'proteinas',
+};
+const strip = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+function esify(q: string): string {
+  return q
+    .split(/\s+/)
+    .map((w) => CA_ES[strip(w)] ?? w)
+    .join(' ');
+}
+
 function usdaNutrient(fn: any[], match: string): number {
   const hit = (fn || []).find((n: any) =>
     (n?.nutrientName ?? n?.nutrient?.name ?? '').toLowerCase().includes(match),
@@ -135,12 +159,14 @@ export default async function handler(req: any, res: any) {
     }
 
     if (source === 'off' || source === 'all') {
-      const storeFilter = store
-        ? `&tagtype_0=stores&tag_contains_0=contains&tag_0=${encodeURIComponent(store)}`
+      const sf = store ? (STORE_FILTER[store] ?? { type: 'stores' as const, tag: store }) : null;
+      const storeFilter = sf
+        ? `&tagtype_0=${sf.type}&tag_contains_0=contains&tag_0=${encodeURIComponent(sf.tag)}`
         : '';
+      const offTerms = esify(query); // català→castellà per a OFF Espanya
       const url =
-        'https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=12' +
-        `&search_terms=${encodeURIComponent(query)}${storeFilter}`;
+        'https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=16' +
+        `&search_terms=${encodeURIComponent(offTerms)}${storeFilter}`;
       const r = await fetch(url, { headers: { 'User-Agent': 'Project75/1.0' } });
       if (r.ok) {
         const d: any = await r.json();
