@@ -144,6 +144,36 @@ export const FOODS: FoodItem[] = [
     source: 'local_verified', confidence: 'medium',
     portions: { petit: 20, normal: 30, gran: 40, 'molt gran': 50 },
   },
+  {
+    id: 'couscous_cooked', name: 'Cuscús cuit', category: 'carb',
+    kcalPer100g: 112, proteinPer100g: 3.8, carbsPer100g: 23, fatPer100g: 0.2, fiberPer100g: 1.4,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 220, gran: 300, 'molt gran': 380 },
+  },
+  {
+    id: 'turkey_breast', name: 'Gall dindi (pit, cuit)', category: 'protein',
+    kcalPer100g: 135, proteinPer100g: 30, carbsPer100g: 0, fatPer100g: 1,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'beef_mince_cooked', name: 'Carn picada (cuita)', category: 'protein',
+    kcalPer100g: 250, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 17,
+    source: 'local_verified', confidence: 'low', // varia molt pel % de greix
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
+  {
+    id: 'protein_yogurt', name: 'Iogurt proteic (skyr)', category: 'dairy',
+    kcalPer100g: 60, proteinPer100g: 10, carbsPer100g: 4, fatPer100g: 0.2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 200, gran: 300, 'molt gran': 400 },
+  },
+  {
+    id: 'olives', name: 'Olives', category: 'fat',
+    kcalPer100g: 145, proteinPer100g: 1, carbsPer100g: 4, fatPer100g: 15, fiberPer100g: 3,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 20, normal: 30, gran: 50, 'molt gran': 70 },
+  },
 ];
 
 export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));

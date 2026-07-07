@@ -15,6 +15,7 @@ import PartialSheet from '../components/sheets/PartialSheet';
 import MealActionsSheet from '../components/sheets/MealActionsSheet';
 import SwapSheet from '../components/sheets/SwapSheet';
 import SupplementsCard from '../components/SupplementsCard';
+import WeeklyPlannerCard from '../components/WeeklyPlannerCard';
 import RelatedAdjustSheet from '../components/sheets/RelatedAdjustSheet';
 import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, mealStatus } from '../utils/goals';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
@@ -327,6 +328,10 @@ export default function Nutrition() {
       </Card>
 
       {/* Productes / API */}
+      <div className="mt-4">
+        <WeeklyPlannerCard />
+      </div>
+
       <Card className="mt-3.5 border-dashed">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 font-semibold text-[14px]">

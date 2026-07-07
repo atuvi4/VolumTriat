@@ -1,5 +1,6 @@
 import type { ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { MealOutcome } from '../brain/brainTypes';
+import type { WeeklyMenu } from '../nutrition/weeklyPlanner';
 
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
@@ -67,6 +68,9 @@ export interface AppState {
   outcomes: MealOutcome[];
   /** Suplements (creatina + Anabolic Master), a part dels batuts de menjar. */
   supplements: SupplementsState;
+  /** Weekly Nutrition Planner v1 — menú setmanal per organitzar compra i cuina.
+   *  Independent del menú d'avui (state.meals): planificar no toca els registres. */
+  weeklyPlan?: WeeklyMenu;
 }
 
 export interface Goals {

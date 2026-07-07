@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { AppState, CheckIn, Goal, Profile, Ritme, Tab } from '../types';
 import { computeTargets } from '../nutrition/nutritionTargets';
+import { generateWeeklyMenu, regenerateDayInWeek } from '../nutrition/weeklyPlanner';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
@@ -219,6 +220,9 @@ interface Ctx extends CloudSlice {
   toggleCreatine: () => void;
   /** Suplements: desa les macros per cassó de l'Anabolic Master (etiqueta). */
   saveAnabolicServing: (kcal: number, protein: number) => void;
+  /** Weekly Planner: genera/regenera el menú setmanal (no toca el menú d'avui). */
+  generateWeek: () => void;
+  regenerateWeekDay: (dateISO: string) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -697,6 +701,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast],
   );
 
+  // ---------- Weekly Planner ----------
+  const generateWeek = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      weeklyPlan: generateWeeklyMenu({
+        startDate: todayISO(),
+        dislikes: s.dislikes,
+        targetKcal: s.profile.kcalGoal,
+        targetProtein: s.profile.protGoal,
+      }),
+    }));
+    showToast('Menú setmanal generat');
+  }, [showToast]);
+
+  const regenerateWeekDay = useCallback(
+    (dateISO: string) => {
+      setState((s) => {
+        if (!s.weeklyPlan) return s;
+        return {
+          ...s,
+          weeklyPlan: regenerateDayInWeek(s.weeklyPlan, dateISO, {
+            dislikes: s.dislikes,
+            targetKcal: s.profile.kcalGoal,
+            targetProtein: s.profile.protGoal,
+          }),
+        };
+      });
+      showToast('Dia regenerat');
+    },
+    [showToast],
+  );
+
   const resetAll = useCallback(() => {
     writeLocalBackup(state); // desa el que hi havia: recuperable amb «Restaurar últim backup»
     localStorage.removeItem(stateKeyFor(userId));
@@ -763,13 +799,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importState: guard(importState),
       toggleCreatine: guard(toggleCreatine),
       saveAnabolicServing: guard(saveAnabolicServing),
+      generateWeek: guard(generateWeek),
+      regenerateWeekDay: guard(regenerateWeekDay),
     };
   }, [
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
     submitCheckin, addWeight, updateProfile, completeOnboarding, setProjectStartDate, startToday, togglePrep, resetAll,
-    importState, toggleCreatine, saveAnabolicServing, cloud,
+    importState, toggleCreatine, saveAnabolicServing, generateWeek, regenerateWeekDay, cloud,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
