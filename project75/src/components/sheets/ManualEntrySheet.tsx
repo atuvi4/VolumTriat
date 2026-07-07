@@ -22,11 +22,16 @@ const inputCls =
  *  Calories i proteïna són obligatòries; nom i nota, opcionals.
  *  Deixem clar que és una dada introduïda per l'usuari, no verificada. */
 export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, onSubmit }: Props) {
-  const { closeSheet } = useApp();
+  const { state, closeSheet } = useApp();
   const [name, setName] = useState(initial?.name ?? '');
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '');
   const [protein, setProtein] = useState(initial ? String(initial.protein) : '');
   const [note, setNote] = useState(initial?.note ?? '');
+
+  // Catàleg personal: el que sols registrar a mà, per omplir amb un toc.
+  const habituals = [...(state.personalItems ?? [])]
+    .sort((a, b) => b.count - a.count || (a.lastUsedAt < b.lastUsedAt ? 1 : -1))
+    .slice(0, 6);
 
   const kcalN = Number(kcal);
   const protN = Number(protein);
@@ -46,6 +51,27 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   return (
     <div>
       <SheetHeader title={title} sub={sub} />
+
+      {habituals.length > 0 && (
+        <div className="mt-3">
+          <div className="text-[12px] font-semibold text-muted mb-1.5">El que sols menjar</div>
+          <div className="flex flex-wrap gap-2">
+            {habituals.map((it) => (
+              <button
+                key={it.id}
+                onClick={() => {
+                  setName(it.name);
+                  setKcal(String(it.kcal));
+                  setProtein(String(it.protein));
+                }}
+                className="text-[12.5px] font-semibold bg-surface2 border border-line2 rounded-full px-3 py-1.5 hover:border-accent"
+              >
+                {it.name} <span className="text-faint">· {it.kcal} kcal · {it.protein}g</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <label className="block mt-3 text-[12.5px] font-semibold text-muted">
         Nom <span className="text-faint font-medium">(opcional)</span>

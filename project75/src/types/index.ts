@@ -1,6 +1,18 @@
-import type { ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { MealOutcome } from '../brain/brainTypes';
 import type { WeeklyMenu } from '../nutrition/weeklyPlanner';
+
+/** Àpat/producte que l'usuari registra a mà i es desa com a «habitual» seu
+ *  (catàleg personal que aprèn del que menja de veritat). */
+export interface PersonalItem {
+  id: string;
+  name: string;
+  kcal: number;
+  protein: number;
+  slot?: MealSlot;
+  count: number; // cops registrat
+  lastUsedAt: string; // ISO
+}
 
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
@@ -71,6 +83,8 @@ export interface AppState {
   /** Weekly Nutrition Planner v1 — menú setmanal per organitzar compra i cuina.
    *  Independent del menú d'avui (state.meals): planificar no toca els registres. */
   weeklyPlan?: WeeklyMenu;
+  /** Catàleg personal: àpats manuals habituals de l'usuari (aprèn del que menja). */
+  personalItems?: PersonalItem[];
 }
 
 export interface Goals {

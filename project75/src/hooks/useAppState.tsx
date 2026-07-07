@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { AppState, CheckIn, Goal, Profile, Ritme, Tab } from '../types';
+import type { AppState, CheckIn, Goal, PersonalItem, Profile, Ritme, Tab } from '../types';
 import { computeTargets } from '../nutrition/nutritionTargets';
 import { generateWeeklyMenu, regenerateDayInWeek, buildDayMealsFromPlan, type WeeklyMenu } from '../nutrition/weeklyPlanner';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
@@ -113,6 +113,31 @@ function freshState(): AppState {
 }
 
 const DAY_SLOTS: MealSlot[] = ['esmorzar', 'dinar', 'berenar', 'sopar', 'snack'];
+
+/** Control de plausibilitat d'una dada manual abans de desar-la com a habitual. */
+function isPlausibleManual(kcal: number, protein: number): boolean {
+  if (!Number.isFinite(kcal) || kcal <= 0 || kcal > 2500) return false;
+  if (!Number.isFinite(protein) || protein < 0 || protein > 250) return false;
+  if (protein * 4 > kcal * 1.15 + 25) return false; // la proteïna no pot superar les kcal
+  return true;
+}
+
+/** Catàleg personal: desa/actualitza un àpat manual amb nom com a «habitual».
+ *  Només si té nom i passa el control de plausibilitat (mai desa soroll). */
+function rememberPersonal(items: PersonalItem[] = [], data: ManualLog, slot?: MealSlot): PersonalItem[] {
+  const name = (data.name ?? '').trim();
+  if (name.length < 2 || !isPlausibleManual(data.kcal, data.protein)) return items;
+  const key = name.toLowerCase();
+  const now = new Date().toISOString();
+  const idx = items.findIndex((it) => it.name.toLowerCase() === key);
+  if (idx >= 0) {
+    const next = items.slice();
+    next[idx] = { ...next[idx], kcal: data.kcal, protein: data.protein, slot: slot ?? next[idx].slot, count: next[idx].count + 1, lastUsedAt: now };
+    return next;
+  }
+  const item: PersonalItem = { id: `pi-${Date.now()}`, name, kcal: data.kcal, protein: data.protein, slot, count: 1, lastUsedAt: now };
+  return [...items, item].slice(-50); // límit raonable
+}
 
 /** Repara el slot d'un àpat planificat a partir del seu id `day-<slot>`. Corregeix
  *  dades antigues on canviar la recepta va sobreescriure el slot (p. ex. un sopar
@@ -319,6 +344,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               ? { ...m, done: false, status: 'changed' as const, logged: { ...data }, partialPct: undefined }
               : m,
           ),
+          personalItems: rememberPersonal(s.personalItems, data, meal?.slot),
         });
         if (meal)
           next = withOutcome(next, {
@@ -422,10 +448,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ingredients: [],
       };
       setState((s) =>
-        withOutcome(bumpStreak({ ...s, meals: [...s.meals, extra] }), {
-          slot: 'snack', mealName: extra.name, action: 'extra',
-          kcal: data.kcal, protein: data.protein, source: 'manual', confidence: 'low',
-        }),
+        withOutcome(
+          bumpStreak({ ...s, meals: [...s.meals, extra], personalItems: rememberPersonal(s.personalItems, data, 'snack') }),
+          {
+            slot: 'snack', mealName: extra.name, action: 'extra',
+            kcal: data.kcal, protein: data.protein, source: 'manual', confidence: 'low',
+          },
+        ),
       );
       showToast('Extra afegit · dada manual');
     },
