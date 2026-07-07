@@ -90,7 +90,10 @@ interface DayState {
   usedRecipes: Set<string>;
   carbs: Set<string>;
   proteins: Set<string>;
+  liquid: boolean; // ja hi ha un batut/àpat líquid avui
 }
+
+const isLiquid = (r: MealRecipe): boolean => r.tags.includes('liquid_calories');
 
 function register(st: DayState, r: MealRecipe): void {
   st.usedRecipes.add(r.id);
@@ -98,6 +101,7 @@ function register(st: DayState, r: MealRecipe): void {
   const ps = proteinOf(r);
   if (cb) st.carbs.add(cb);
   if (ps) st.proteins.add(ps);
+  if (isLiquid(r)) st.liquid = true;
 }
 
 function pickMeal(
@@ -117,6 +121,7 @@ function pickMeal(
     if (cb && st.carbs.has(cb)) s += cb === 'pasta' || cb === 'pa' ? 3 : 2; // repetir base al mateix dia
     if (ps && st.proteins.has(ps)) s += 1; // repetir proteïna al mateix dia
     if (cb && prevCarbBySlot[slot] === cb) s += 1; // mateixa base al mateix àpat ahir
+    if (isLiquid(r) && st.liquid) s += 4; // màxim un batut/líquid al dia
     s += Math.random() * 0.9; // desempat amb varietat
     if (s < bestScore) {
       bestScore = s;
@@ -133,7 +138,7 @@ function generateDay(
 ): PlannedDay {
   const dislikes = input.dislikes ?? [];
   const targetKcal = input.targetKcal ?? DEFAULT_TARGET_KCAL;
-  const st: DayState = { usedRecipes: new Set(), carbs: new Set(), proteins: new Set() };
+  const st: DayState = { usedRecipes: new Set(), carbs: new Set(), proteins: new Set(), liquid: false };
   const meals: PlannedMeal[] = [];
   let kcal = 0;
   let protein = 0;
@@ -159,6 +164,7 @@ function generateDay(
     const ps = proteinOf(r);
     if (cb && st.carbs.has(cb)) err += 60;
     if (ps && st.proteins.has(ps)) err += 30;
+    if (isLiquid(r) && st.liquid) err += 400; // no un segon batut si ja n'hi ha un
     if (err < bestErr) {
       bestErr = err;
       bestSnack = r;

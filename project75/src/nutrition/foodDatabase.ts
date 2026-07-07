@@ -174,6 +174,12 @@ export const FOODS: FoodItem[] = [
     source: 'local_verified', confidence: 'low',
     portions: { petit: 20, normal: 30, gran: 50, 'molt gran': 70 },
   },
+  {
+    id: 'vegetables', name: 'Verdura (mescla)', category: 'fruit', // s'agrupa a "Fruita / verdura"
+    kcalPer100g: 45, proteinPer100g: 2.5, carbsPer100g: 7, fatPer100g: 0.5, fiberPer100g: 3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 250 },
+  },
 ];
 
 export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));

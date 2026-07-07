@@ -2,6 +2,7 @@ import type { MealRecipe } from './nutritionTypes';
 
 /* Pool de receptes del Weekly Planner — supermercat, fàcils, pensades per volum
    (~3000 kcal/dia, 150 g proteïna) amb varietat de bases i proteïnes.
+   Els plats principals (dinar/sopar) porten verdura: plat equilibrat de veritat.
    Definides per ingredients (grams); la nutrició la calcula el motor. */
 
 const P = 'estimated_portion' as const;
@@ -51,116 +52,120 @@ export const PLANNER_POOL: MealRecipe[] = [
     ],
   },
 
-  /* ---------------- DINARS / SOPARS ---------------- */
+  /* ---------------- DINARS / SOPARS (plat equilibrat amb verdura) ---------------- */
   {
-    id: 'w-arros-pollastre', slot: 'dinar', slots: ['sopar'], name: 'Arròs + pollastre + oli', tags: ['high_protein', 'post_workout'],
+    id: 'w-arros-pollastre', slot: 'dinar', slots: ['sopar'], name: 'Arròs + pollastre + verdura', tags: ['high_protein', 'post_workout'],
     ingredients: [
       { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
       { foodId: 'chicken_breast', grams: 160, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
       { foodId: 'olive_oil', grams: 15, portionLabel: 'normal', precision: P },
     ],
   },
   {
-    id: 'w-pasta-tonyina', slot: 'dinar', slots: ['sopar'], name: 'Pasta + tonyina + formatge', tags: ['high_protein', 'homemade'],
+    id: 'w-pasta-tonyina', slot: 'dinar', slots: ['sopar'], name: 'Pasta + tonyina + verdura', tags: ['high_protein', 'homemade'],
     ingredients: [
       { foodId: 'pasta_cooked', grams: 250, portionLabel: 'normal', precision: P },
       { foodId: 'tuna_can', grams: 120, portionLabel: 'gran', precision: P },
-      { foodId: 'cheese', grams: 30, portionLabel: 'normal', precision: P },
-    ],
-  },
-  {
-    id: 'w-cuscus-pollastre', slot: 'dinar', slots: ['sopar'], name: 'Cuscús + pollastre + olives', tags: ['high_protein', 'homemade'],
-    ingredients: [
-      { foodId: 'couscous_cooked', grams: 220, portionLabel: 'normal', precision: P },
-      { foodId: 'chicken_breast', grams: 160, portionLabel: 'normal', precision: P },
-      { foodId: 'olives', grams: 30, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
       { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
     ],
   },
   {
-    id: 'w-patata-ous-tonyina', slot: 'dinar', slots: ['sopar'], name: 'Patata + ous + tonyina', tags: ['high_protein', 'homemade'],
+    id: 'w-cuscus-pollastre', slot: 'dinar', slots: ['sopar'], name: 'Cuscús + pollastre + verdura i olives', tags: ['high_protein', 'homemade'],
+    ingredients: [
+      { foodId: 'couscous_cooked', grams: 220, portionLabel: 'normal', precision: P },
+      { foodId: 'chicken_breast', grams: 160, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'olives', grams: 30, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'w-patata-ous-tonyina', slot: 'dinar', slots: ['sopar'], name: 'Patata + ous + tonyina + verdura', tags: ['high_protein', 'homemade'],
     ingredients: [
       { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
       { foodId: 'egg', grams: 100, portionLabel: 'normal', precision: P },
       { foodId: 'tuna_can', grams: 80, portionLabel: 'petit', precision: P },
+      { foodId: 'vegetables', grams: 120, portionLabel: 'petit', precision: P },
     ],
   },
   {
-    id: 'w-llenties-arros-ou', slot: 'dinar', slots: ['sopar'], name: 'Llenties amb arròs i ou', tags: ['homemade', 'high_protein'],
+    id: 'w-llenties-arros-ou', slot: 'dinar', slots: ['sopar'], name: 'Llenties amb arròs, verdura i ou', tags: ['homemade', 'high_protein'],
     ingredients: [
       { foodId: 'lentils_cooked', grams: 250, portionLabel: 'normal', precision: P },
       { foodId: 'rice_cooked', grams: 150, portionLabel: 'petit', precision: P },
+      { foodId: 'vegetables', grams: 120, portionLabel: 'petit', precision: P },
       { foodId: 'egg', grams: 100, portionLabel: 'normal', precision: P },
     ],
   },
   {
-    id: 'w-wrap-carn-arros', slot: 'dinar', slots: ['sopar'], name: 'Wrap de carn picada + arròs', tags: ['high_protein', 'homemade'],
-    ingredients: [
-      { foodId: 'bread', grams: 80, portionLabel: 'normal', precision: P },
-      { foodId: 'beef_mince_cooked', grams: 150, portionLabel: 'normal', precision: P },
-      { foodId: 'rice_cooked', grams: 150, portionLabel: 'petit', precision: P },
-    ],
-  },
-  {
-    id: 'w-salmo-patata', slot: 'dinar', slots: ['sopar'], name: 'Salmó + patata', tags: ['high_protein'],
+    id: 'w-salmo-patata', slot: 'dinar', slots: ['sopar'], name: 'Salmó + patata + verdura', tags: ['high_protein'],
     ingredients: [
       { foodId: 'salmon', grams: 160, portionLabel: 'normal', precision: P },
       { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
     ],
   },
   {
-    id: 'w-pollastre-pure-pa', slot: 'dinar', slots: ['sopar'], name: 'Pollastre + puré (patata) + pa', tags: ['high_protein'],
+    id: 'w-pollastre-pure', slot: 'dinar', slots: ['sopar'], name: 'Pollastre + puré de patata + verdura', tags: ['high_protein'],
     ingredients: [
       { foodId: 'chicken_breast', grams: 170, portionLabel: 'normal', precision: P },
-      { foodId: 'potato_cooked', grams: 250, portionLabel: 'normal', precision: P },
-      { foodId: 'bread', grams: 40, portionLabel: 'petit', precision: P },
+      { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
     ],
   },
   {
-    id: 'w-pasta-carn', slot: 'sopar', slots: ['dinar'], name: 'Pasta + carn picada', tags: ['high_protein', 'homemade'],
+    id: 'w-pasta-carn', slot: 'sopar', slots: ['dinar'], name: 'Pasta bolonyesa (carn picada + verdura)', tags: ['high_protein', 'homemade'],
     ingredients: [
       { foodId: 'pasta_cooked', grams: 250, portionLabel: 'normal', precision: P },
       { foodId: 'beef_mince_cooked', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
       { foodId: 'cheese', grams: 20, portionLabel: 'petit', precision: P },
     ],
   },
   {
-    id: 'w-cigrons-ous', slot: 'sopar', slots: ['dinar'], name: 'Cigrons + ous', tags: ['homemade', 'high_protein'],
+    id: 'w-cigrons-verdura-ou', slot: 'sopar', slots: ['dinar'], name: 'Cigrons amb verdura i ou', tags: ['homemade', 'high_protein'],
     ingredients: [
       { foodId: 'chickpeas_cooked', grams: 250, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
       { foodId: 'egg', grams: 150, portionLabel: 'gran', precision: P },
       { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
     ],
   },
   {
-    id: 'w-salmo-arros', slot: 'sopar', slots: ['dinar'], name: 'Salmó + arròs', tags: ['high_protein'],
+    id: 'w-salmo-arros', slot: 'sopar', slots: ['dinar'], name: 'Salmó + arròs + verdura', tags: ['high_protein'],
     ingredients: [
       { foodId: 'salmon', grams: 150, portionLabel: 'normal', precision: P },
       { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
     ],
   },
   {
-    id: 'w-truita-patata-pa', slot: 'sopar', name: 'Truita de patata + pa', tags: ['high_protein', 'homemade'],
+    id: 'w-truita-patata', slot: 'sopar', name: 'Truita de patata + amanida', tags: ['high_protein', 'homemade'],
     ingredients: [
       { foodId: 'egg', grams: 150, portionLabel: 'gran', precision: P },
-      { foodId: 'potato_cooked', grams: 200, portionLabel: 'normal', precision: P },
-      { foodId: 'bread', grams: 60, portionLabel: 'petit', precision: P },
+      { foodId: 'potato_cooked', grams: 220, portionLabel: 'normal', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
     ],
   },
   {
-    id: 'w-arros-tonyina', slot: 'sopar', slots: ['dinar'], name: 'Arròs + tonyina + oli', tags: ['high_protein', 'no_cook'],
+    id: 'w-arros-tonyina', slot: 'sopar', slots: ['dinar'], name: 'Arròs amb tonyina i verdura', tags: ['high_protein', 'no_cook'],
     ingredients: [
       { foodId: 'rice_cooked', grams: 250, portionLabel: 'normal', precision: P },
       { foodId: 'tuna_can', grams: 120, portionLabel: 'gran', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
       { foodId: 'olive_oil', grams: 12, portionLabel: 'normal', precision: P },
     ],
   },
   {
-    id: 'w-entrepa-potent', slot: 'sopar', name: 'Entrepà potent (carn + pa)', tags: ['high_protein'],
+    id: 'w-gall-patata', slot: 'dinar', slots: ['sopar'], name: 'Gall dindi + patata + verdura', tags: ['high_protein'],
     ingredients: [
-      { foodId: 'bread', grams: 140, portionLabel: 'gran', precision: P },
-      { foodId: 'beef_mince_cooked', grams: 130, portionLabel: 'normal', precision: P },
-      { foodId: 'cheese', grams: 30, portionLabel: 'normal', precision: P },
+      { foodId: 'turkey_breast', grams: 170, portionLabel: 'normal', precision: P },
+      { foodId: 'potato_cooked', grams: 300, portionLabel: 'gran', precision: P },
+      { foodId: 'vegetables', grams: 150, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 12, portionLabel: 'normal', precision: P },
     ],
   },
 
