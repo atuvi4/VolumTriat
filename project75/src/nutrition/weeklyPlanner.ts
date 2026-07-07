@@ -1,4 +1,4 @@
-import type { MealRecipe, MealSlot } from './nutritionTypes';
+import type { MealRecipe, MealSlot, ResolvedMeal } from './nutritionTypes';
 import { PLANNER_POOL } from './plannerRecipes';
 import { slotMatchesRecipe } from './mealPlans';
 import { resolveRecipe } from './mealBuilder';
@@ -229,6 +229,19 @@ export function getPlannedDay(week: WeeklyMenu | undefined, dateISO: string): Pl
 /** Resum de la setmana (els dies tal qual, per a la vista general). */
 export function getWeekOverview(week: WeeklyMenu | undefined): PlannedDay[] {
   return week?.days ?? [];
+}
+
+/** Munta els àpats resolts (amb id `day-<slot>`) d'un dia planificat, per abocar
+ *  el pla setmanal al menú d'«Avui». Retorna null si el pla no conté aquesta data. */
+export function buildDayMealsFromPlan(week: WeeklyMenu | undefined, dateISO: string): ResolvedMeal[] | null {
+  const day = getPlannedDay(week, dateISO);
+  if (!day) return null;
+  const meals: ResolvedMeal[] = [];
+  for (const m of day.meals) {
+    const r = PLANNER_BY_ID[m.recipeId];
+    if (r) meals.push(resolveRecipe(r, { id: `day-${m.slot}`, done: false, slot: m.slot }));
+  }
+  return meals.length ? meals : null;
 }
 
 export { PLANNER_BY_ID, carbBaseOf, proteinOf };

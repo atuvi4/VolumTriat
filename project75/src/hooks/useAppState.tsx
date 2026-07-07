@@ -10,7 +10,7 @@ import {
 } from 'react';
 import type { AppState, CheckIn, Goal, Profile, Ritme, Tab } from '../types';
 import { computeTargets } from '../nutrition/nutritionTargets';
-import { generateWeeklyMenu, regenerateDayInWeek } from '../nutrition/weeklyPlanner';
+import { generateWeeklyMenu, regenerateDayInWeek, buildDayMealsFromPlan, type WeeklyMenu } from '../nutrition/weeklyPlanner';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
@@ -35,6 +35,26 @@ const DEFAULT_ANABOLIC = { kcal: 183, protein: 23 };
 
 function buildDayMeals(): ResolvedMeal[] {
   return defaultDayRecipes().map((r) => resolveRecipe(r, { id: `day-${r.slot}`, done: false }));
+}
+
+/** Àpats d'un dia: del pla setmanal si el conté, si no del pla base. */
+function dayMealsFor(dateISO: string, plan?: WeeklyMenu): ResolvedMeal[] {
+  return buildDayMealsFromPlan(plan, dateISO) ?? buildDayMeals();
+}
+
+/** Aboca el menú planificat d'avui als àpats PENDENTS, sense tocar els que ja
+ *  s'han marcat/canviat/registrat (done/changed/partial/skipped) ni els extres. */
+function mergePlanIntoToday(current: ResolvedMeal[], plan: WeeklyMenu): ResolvedMeal[] {
+  const planMeals = buildDayMealsFromPlan(plan, todayISO());
+  if (!planMeals) return current;
+  const bySlot = new Map(planMeals.map((m) => [m.slot, m]));
+  const replaceable = (m: ResolvedMeal) =>
+    !m.isExtra &&
+    typeof m.id === 'string' &&
+    m.id.startsWith('day-') &&
+    !m.done &&
+    (m.status ?? 'pending') === 'pending';
+  return current.map((m) => (replaceable(m) && bySlot.has(m.slot) ? bySlot.get(m.slot)! : m));
 }
 
 /** Project75 Brain v1 — registra un outcome real amb el context actual. */
@@ -139,13 +159,13 @@ function loadState(userId: string | null): AppState {
     if (!detectReadOnly()) writePreviousBackup(s);
     if (s.date !== todayISO()) {
       s.date = todayISO();
-      s.meals = buildDayMeals();
+      s.meals = dayMealsFor(todayISO(), s.weeklyPlan); // pla setmanal si el conté
       s.gymDone = false;
       s.checkin = null;
       s.dayMode = 'normal';
     }
     if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) {
-      s.meals = buildDayMeals();
+      s.meals = dayMealsFor(todayISO(), s.weeklyPlan);
     }
     s.meals = repairMealSlots(s.meals); // corregeix slots antics (sopar marcat com dinar, etc.)
     s.profile = { ...DEFAULT_PROFILE, ...s.profile };
@@ -703,30 +723,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---------- Weekly Planner ----------
   const generateWeek = useCallback(() => {
-    setState((s) => ({
-      ...s,
-      weeklyPlan: generateWeeklyMenu({
+    setState((s) => {
+      const weeklyPlan = generateWeeklyMenu({
         startDate: todayISO(),
         dislikes: s.dislikes,
         targetKcal: s.profile.kcalGoal,
         targetProtein: s.profile.protGoal,
-      }),
-    }));
-    showToast('Menú setmanal generat');
+      });
+      return { ...s, weeklyPlan, meals: mergePlanIntoToday(s.meals, weeklyPlan) };
+    });
+    showToast('Menú setmanal generat · avui actualitzat');
   }, [showToast]);
 
   const regenerateWeekDay = useCallback(
     (dateISO: string) => {
       setState((s) => {
         if (!s.weeklyPlan) return s;
-        return {
-          ...s,
-          weeklyPlan: regenerateDayInWeek(s.weeklyPlan, dateISO, {
-            dislikes: s.dislikes,
-            targetKcal: s.profile.kcalGoal,
-            targetProtein: s.profile.protGoal,
-          }),
-        };
+        const weeklyPlan = regenerateDayInWeek(s.weeklyPlan, dateISO, {
+          dislikes: s.dislikes,
+          targetKcal: s.profile.kcalGoal,
+          targetProtein: s.profile.protGoal,
+        });
+        // Si regeneres AVUI, actualitza també els àpats pendents del dia.
+        const meals = dateISO === todayISO() ? mergePlanIntoToday(s.meals, weeklyPlan) : s.meals;
+        return { ...s, weeklyPlan, meals };
       });
       showToast('Dia regenerat');
     },
