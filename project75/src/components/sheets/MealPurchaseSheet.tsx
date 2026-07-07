@@ -51,7 +51,7 @@ export default function MealPurchaseSheet({ meal, onChange }: Props) {
       dayMode: state.dayMode,
       appetite: state.checkin?.appetite,
       dislikes: state.dislikes,
-      recentMeals: state.meals.filter((m) => !m.isExtra).map((m) => m.name),
+      recentMeals: state.meals.filter((m) => !m.isExtra && m.id !== meal.id).map((m) => m.name),
       eatenThemes: [...eatenThemesToday(state.meals)],
       outcomes: state.outcomes ?? [],
       maxOptions: 6,

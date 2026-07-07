@@ -671,6 +671,24 @@ export async function generatePurchaseOptionsAI(input: PurchaseAIInput): Promise
     if (out.length >= maxOptions) break;
     pushOption(s);
   }
+
+  // Garantia: batut de proteïna + fruits secs és una compra habitual i sensata.
+  // Si l'slot ho permet i és plausible, assegura que aquesta opció hi sigui
+  // (encara que el rànquing l'hagués deixat fora per greix/varietat).
+  const canShakeNuts = pool.some((b) => b.id === 'protein_shake') && pool.some((b) => b.id === 'nuts');
+  const outHasShakeNuts = out.some((o) => o.id.includes('protein_shake') && o.id.includes('nuts'));
+  if (canShakeNuts && !outHasShakeNuts) {
+    const pickShakeNuts = (list: { c: Combo; score: number }[]) =>
+      list.find(({ c }) => {
+        const ids = c.parts.map((p) => p.block.id);
+        return ids.includes('protein_shake') && ids.includes('nuts');
+      });
+    const cand = pickShakeNuts(scored) ?? pickShakeNuts(usable.map((c) => ({ c, score: scoreOf(c) })));
+    if (cand) {
+      if (out.length >= maxOptions) out.pop(); // treu la de menys puntuació
+      out.push(buildOption(cand.c, cand.score, slot, store, R, lowApp, targetKcal, outcomes, slotDiff));
+    }
+  }
   return out;
 }
 
