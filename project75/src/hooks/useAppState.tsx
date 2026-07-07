@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { AppState, CheckIn, Goal, PersonalItem, Profile, Ritme, Tab } from '../types';
+import type { AppState, CheckIn, Goal, PersonalIngredient, PersonalItem, Profile, Ritme, Tab } from '../types';
 import { computeTargets } from '../nutrition/nutritionTargets';
 import { generateWeeklyMenu, regenerateDayInWeek, buildDayMealsFromPlan, type WeeklyMenu } from '../nutrition/weeklyPlanner';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
@@ -268,6 +268,8 @@ interface Ctx extends CloudSlice {
   /** Weekly Planner: genera/regenera el menú setmanal (no toca el menú d'avui). */
   generateWeek: () => void;
   regenerateWeekDay: (dateISO: string) => void;
+  /** Desa un ingredient propi (macros d'etiqueta) per reutilitzar al compositor. */
+  savePersonalIngredient: (name: string, kcalPer100g: number, proteinPer100g: number) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -785,6 +787,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast],
   );
 
+  const savePersonalIngredient = useCallback(
+    (name: string, kcalPer100g: number, proteinPer100g: number) => {
+      const nm = name.trim();
+      // Plausibilitat per 100 g: mai desa números impossibles.
+      if (
+        nm.length < 2 ||
+        !Number.isFinite(kcalPer100g) || kcalPer100g <= 0 || kcalPer100g > 1000 ||
+        !Number.isFinite(proteinPer100g) || proteinPer100g < 0 || proteinPer100g > 100 ||
+        proteinPer100g * 4 > kcalPer100g * 1.15 + 10
+      ) {
+        showToast('Valors no vàlids (revisa kcal i proteïna per 100 g)');
+        return;
+      }
+      setState((s) => {
+        const list = s.personalIngredients ?? [];
+        const key = nm.toLowerCase();
+        const idx = list.findIndex((it) => it.name.toLowerCase() === key);
+        const item: PersonalIngredient = {
+          id: idx >= 0 ? list[idx].id : `pig-${Date.now()}`,
+          name: nm,
+          kcalPer100g: Math.round(kcalPer100g),
+          proteinPer100g: Math.round(proteinPer100g * 10) / 10,
+        };
+        const next = idx >= 0 ? list.map((it, i) => (i === idx ? item : it)) : [...list, item].slice(-40);
+        return { ...s, personalIngredients: next };
+      });
+      showToast('Ingredient propi desat');
+    },
+    [showToast],
+  );
+
   const resetAll = useCallback(() => {
     writeLocalBackup(state); // desa el que hi havia: recuperable amb «Restaurar últim backup»
     localStorage.removeItem(stateKeyFor(userId));
@@ -853,13 +886,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveAnabolicServing: guard(saveAnabolicServing),
       generateWeek: guard(generateWeek),
       regenerateWeekDay: guard(regenerateWeekDay),
+      savePersonalIngredient: guard(savePersonalIngredient),
     };
   }, [
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
     submitCheckin, addWeight, updateProfile, completeOnboarding, setProjectStartDate, startToday, togglePrep, resetAll,
-    importState, toggleCreatine, saveAnabolicServing, generateWeek, regenerateWeekDay, cloud,
+    importState, toggleCreatine, saveAnabolicServing, generateWeek, regenerateWeekDay, savePersonalIngredient, cloud,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

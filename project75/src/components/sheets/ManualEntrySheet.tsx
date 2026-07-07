@@ -36,7 +36,7 @@ interface CompIngredient {
 }
 
 export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, onSubmit }: Props) {
-  const { state, closeSheet } = useApp();
+  const { state, closeSheet, savePersonalIngredient } = useApp();
   const [name, setName] = useState(initial?.name ?? '');
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '');
   const [protein, setProtein] = useState(initial ? String(initial.protein) : '');
@@ -96,6 +96,27 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
       grams: f.portions?.normal ?? 100,
     });
     setLocalQ('');
+  };
+
+  // Ingredients propis (p. ex. la teva proteïna de marca) + formulari per crear-ne.
+  const personalIngs = state.personalIngredients ?? [];
+  const [cName, setCName] = useState('');
+  const [cKcal, setCKcal] = useState('');
+  const [cProt, setCProt] = useState('');
+  const [showCustom, setShowCustom] = useState(false);
+  const cValid = cName.trim().length >= 2 && Number(cKcal) > 0 && Number(cProt) >= 0 && cProt !== '';
+  const addPersonalIng = (name: string, kcalPer100g: number, proteinPer100g: number) =>
+    addIngredient({ name, kcalPer100g, proteinPer100g, category: proteinPer100g >= 15 ? 'protein' : undefined, grams: 30 });
+  const saveAndAddCustom = () => {
+    if (!cValid) return;
+    const k = Math.round(Number(cKcal));
+    const p = Math.round(Number(cProt) * 10) / 10;
+    savePersonalIngredient(cName.trim(), k, p);
+    addPersonalIng(cName.trim(), k, p);
+    setCName('');
+    setCKcal('');
+    setCProt('');
+    setShowCustom(false);
   };
 
   // Cerca a Open Food Facts (productes reals, filtrable per súper).
@@ -229,6 +250,58 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
                 + {f.name}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Els meus ingredients (macros pròpies, p. ex. la teva proteïna) */}
+        {personalIngs.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {personalIngs.map((it) => (
+              <button
+                key={it.id}
+                onClick={() => addPersonalIng(it.name, it.kcalPer100g, it.proteinPer100g)}
+                className="text-[12.5px] font-semibold bg-accent-soft text-accent-strong border border-accent-line rounded-full px-3 py-1.5"
+              >
+                + {it.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {!showCustom ? (
+          <button onClick={() => setShowCustom(true)} className="mt-1.5 text-[12.5px] font-semibold text-accent">
+            + Ingredient propi (de l'etiqueta)
+          </button>
+        ) : (
+          <div className="mt-2 border border-line rounded-[12px] p-3 space-y-2">
+            <div className="text-[12px] font-semibold text-muted">Ingredient propi · macros per 100 g</div>
+            <input className={inputCls} placeholder="Nom (ex: Proteïna LifePro)" value={cName} onChange={(e) => setCName(e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                className={inputCls}
+                type="number"
+                inputMode="numeric"
+                placeholder="kcal /100 g"
+                value={cKcal}
+                onChange={(e) => setCKcal(e.target.value)}
+              />
+              <input
+                className={inputCls}
+                type="number"
+                inputMode="numeric"
+                placeholder="prot /100 g"
+                value={cProt}
+                onChange={(e) => setCProt(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="primary" size="sm" icon="check" disabled={!cValid} onClick={saveAndAddCustom}>
+                Afegir i desar
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowCustom(false)}>
+                Cancel·lar
+              </Button>
+            </div>
+            <p className="text-[11px] text-faint m-0">Ho trobaràs a l'etiqueta (per 100 g). Es desa per reutilitzar-lo.</p>
           </div>
         )}
 

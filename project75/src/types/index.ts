@@ -14,6 +14,15 @@ export interface PersonalItem {
   lastUsedAt: string; // ISO
 }
 
+/** Ingredient propi de l'usuari amb macros d'etiqueta (p. ex. la seva proteïna
+ *  whey de marca). Reutilitzable al compositor d'àpats. */
+export interface PersonalIngredient {
+  id: string;
+  name: string;
+  kcalPer100g: number;
+  proteinPer100g: number;
+}
+
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
 /** Objectiu corporal de l'usuari — determina dèficit/manteniment/superàvit. */
@@ -85,6 +94,8 @@ export interface AppState {
   weeklyPlan?: WeeklyMenu;
   /** Catàleg personal: àpats manuals habituals de l'usuari (aprèn del que menja). */
   personalItems?: PersonalItem[];
+  /** Ingredients propis (p. ex. la seva proteïna de marca), reutilitzables. */
+  personalIngredients?: PersonalIngredient[];
 }
 
 export interface Goals {
