@@ -54,7 +54,7 @@ export default function MealPurchaseSheet({ meal, onChange }: Props) {
       recentMeals: state.meals.filter((m) => !m.isExtra).map((m) => m.name),
       eatenThemes: [...eatenThemesToday(state.meals)],
       outcomes: state.outcomes ?? [],
-      maxOptions: 4,
+      maxOptions: 6,
     })
       .then((opts) => alive && setOptions(opts))
       .finally(() => alive && setLoading(false));
