@@ -374,6 +374,99 @@ export const FOODS: FoodItem[] = [
     source: 'local_verified', confidence: 'medium',
     portions: { petit: 70, normal: 100, gran: 150, 'molt gran': 200 },
   },
+
+  /* ---- Hamburgueses i acompanyaments ---- */
+  {
+    id: 'burger_beef', name: 'Hamburguesa de vedella (cuita)', category: 'protein',
+    servingName: '1 hamburguesa ≈ 120 g',
+    kcalPer100g: 250, proteinPer100g: 26, carbsPer100g: 1, fatPer100g: 17,
+    source: 'local_verified', confidence: 'low', // varia molt pel % de greix i la marca
+    portions: { petit: 90, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+  {
+    id: 'burger_chicken', name: 'Hamburguesa de pollastre (cuita)', category: 'protein',
+    servingName: '1 hamburguesa ≈ 110 g',
+    kcalPer100g: 172, proteinPer100g: 20, carbsPer100g: 3, fatPer100g: 9,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 90, normal: 110, gran: 160, 'molt gran': 220 },
+  },
+  {
+    id: 'burger_bun', name: "Pa d'hamburguesa", category: 'carb',
+    servingName: '1 pa ≈ 60 g',
+    kcalPer100g: 270, proteinPer100g: 9, carbsPer100g: 48, fatPer100g: 4.5, fiberPer100g: 2.5,
+    source: 'local_verified', confidence: 'low', // depèn del tipus (brioix, integral…)
+    portions: { petit: 50, normal: 60, gran: 75, 'molt gran': 90 },
+  },
+  {
+    id: 'bacon', name: 'Bacó (cuit)', category: 'protein',
+    kcalPer100g: 540, proteinPer100g: 37, carbsPer100g: 1.4, fatPer100g: 42,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 15, normal: 25, gran: 40, 'molt gran': 60 },
+  },
+  {
+    id: 'cheese_slice', name: 'Formatge en llesques (cheddar)', category: 'dairy',
+    servingName: '1 llesca ≈ 20 g',
+    kcalPer100g: 330, proteinPer100g: 18, carbsPer100g: 6, fatPer100g: 26,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 20, normal: 40, gran: 60, 'molt gran': 80 },
+  },
+  {
+    id: 'mayo', name: 'Maionesa', category: 'fat',
+    kcalPer100g: 680, proteinPer100g: 1, carbsPer100g: 1.5, fatPer100g: 75,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 10, normal: 15, gran: 25, 'molt gran': 40 },
+  },
+  {
+    id: 'ketchup', name: 'Ketchup', category: 'sweetener',
+    kcalPer100g: 102, proteinPer100g: 1.2, carbsPer100g: 24, fatPer100g: 0.2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 10, normal: 15, gran: 25, 'molt gran': 40 },
+  },
+  {
+    id: 'bbq_sauce', name: 'Salsa barbacoa', category: 'sweetener',
+    kcalPer100g: 172, proteinPer100g: 0.8, carbsPer100g: 41, fatPer100g: 0.6,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 10, normal: 20, gran: 30, 'molt gran': 45 },
+  },
+  {
+    id: 'onion', name: 'Ceba', category: 'fruit',
+    kcalPer100g: 40, proteinPer100g: 1.1, carbsPer100g: 9, fatPer100g: 0.1, fiberPer100g: 1.7,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 30, normal: 60, gran: 100, 'molt gran': 150 },
+  },
+  {
+    id: 'lettuce', name: 'Enciam', category: 'fruit',
+    kcalPer100g: 15, proteinPer100g: 1.4, carbsPer100g: 2.9, fatPer100g: 0.2, fiberPer100g: 1.3,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 20, normal: 40, gran: 70, 'molt gran': 100 },
+  },
+  {
+    id: 'pickles', name: 'Cogombrets en vinagre', category: 'fruit',
+    kcalPer100g: 12, proteinPer100g: 0.5, carbsPer100g: 2.3, fatPer100g: 0.2, fiberPer100g: 1.2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 15, normal: 30, gran: 50, 'molt gran': 80 },
+  },
+
+  /* ---- Altres bàsics habituals ---- */
+  {
+    id: 'rice_brown', name: 'Arròs integral cuit', category: 'carb',
+    kcalPer100g: 112, proteinPer100g: 2.6, carbsPer100g: 24, fatPer100g: 0.9, fiberPer100g: 1.8,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 150, normal: 250, gran: 350, 'molt gran': 450 },
+  },
+  {
+    id: 'sliced_bread', name: 'Pa de motlle', category: 'carb',
+    servingName: '1 llesca ≈ 30 g',
+    kcalPer100g: 265, proteinPer100g: 8, carbsPer100g: 49, fatPer100g: 4, fiberPer100g: 3,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 30, normal: 60, gran: 90, 'molt gran': 120 },
+  },
+  {
+    id: 'crisps', name: 'Patates xips (bossa)', category: 'carb',
+    kcalPer100g: 536, proteinPer100g: 6, carbsPer100g: 53, fatPer100g: 34, fiberPer100g: 4,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 25, normal: 40, gran: 60, 'molt gran': 90 },
+  },
 ];
 
 export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
