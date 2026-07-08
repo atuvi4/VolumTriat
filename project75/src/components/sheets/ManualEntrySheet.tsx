@@ -22,6 +22,8 @@ interface Props {
   target?: { kcal: number; protein: number };
   /** Mostra l'interruptor «Ja ho he menjat» (per canviar un àpat sense marcar-lo fet). */
   allowPending?: boolean;
+  /** Estat inicial de l'interruptor «Ja ho he menjat» (per defecte: sí si hi ha `initial`). */
+  defaultEaten?: boolean;
   onSubmit: (data: ManualLog) => void;
 }
 
@@ -37,7 +39,7 @@ interface CompIngredient {
   grams: number;
 }
 
-export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, allowPending, onSubmit }: Props) {
+export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, allowPending, defaultEaten, onSubmit }: Props) {
   const { state, closeSheet, savePersonalIngredient } = useApp();
   const [name, setName] = useState(initial?.name ?? '');
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '');
@@ -46,7 +48,7 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
   const [asShake, setAsShake] = useState(false);
   // Editar un àpat ja registrat (té initial) → per defecte segueix menjat; canviar
   // un àpat de zero → per defecte PENDENT (no el marca fet fins que ho confirmis).
-  const [asEaten, setAsEaten] = useState(allowPending ? !!initial : true);
+  const [asEaten, setAsEaten] = useState(allowPending ? (defaultEaten ?? !!initial) : true);
 
   const kcalN = Number(kcal);
   const protN = Number(protein);

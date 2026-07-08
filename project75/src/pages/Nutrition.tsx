@@ -17,7 +17,7 @@ import SwapSheet from '../components/sheets/SwapSheet';
 import SupplementsCard from '../components/SupplementsCard';
 import WeeklyPlannerCard from '../components/WeeklyPlannerCard';
 import RelatedAdjustSheet from '../components/sheets/RelatedAdjustSheet';
-import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, mealStatus } from '../utils/goals';
+import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, mealStatus, mealAsManualLog } from '../utils/goals';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
 import { nf } from '../utils/format';
 import { computeTargets } from '../nutrition/nutritionTargets';
@@ -206,20 +206,21 @@ export default function Nutrition() {
                 }
                 onUndo={() => applyThenMaybePrompt(m, () => undoMeal(m.id))}
                 onEdit={() =>
-                  mealStatus(m) === 'changed'
-                    ? openSheet(
+                  mealStatus(m) === 'partial'
+                    ? openSheet(<PartialSheet meal={m} onSave={onPartial} />)
+                    : openSheet(
                         <ManualEntrySheet
                           title={`Editar «${m.slot}»`}
-                          sub="Ajusta la dada manual del que has menjat."
+                          sub="Ajusta el nom, les calories o la proteïna d'aquest àpat."
                           submitLabel="Desar canvi"
-                          initial={m.logged}
+                          initial={mealAsManualLog(m)}
                           closeOnSubmit={false}
                           target={{ kcal: m.nutrition.kcal, protein: m.nutrition.protein }}
                           allowPending
+                          defaultEaten
                           onSubmit={onChange}
                         />,
                       )
-                    : openSheet(<PartialSheet meal={m} onSave={onPartial} />)
                 }
                 onViewCalc={() => openSheet(<CalcSheet meal={m} />)}
               />

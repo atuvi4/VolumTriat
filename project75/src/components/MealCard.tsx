@@ -163,7 +163,7 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
           </>
         ) : (
           <>
-            {(status === 'changed' || status === 'partial') && (
+            {(status === 'done' || status === 'changed' || status === 'partial') && (
               <button
                 onClick={onEdit}
                 className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"

@@ -1,5 +1,5 @@
 import type { AppState, Goals, WeightEntry } from '../types';
-import type { CalculatedNutrition, MealStatus, ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { CalculatedNutrition, ManualLog, MealStatus, ResolvedMeal } from '../nutrition/nutritionTypes';
 
 export function goalsFor(state: AppState): Goals {
   const { dayMode, profile } = state;
@@ -44,6 +44,17 @@ export function mealEaten(m: ResolvedMeal): CalculatedNutrition | null {
     };
   }
   return null; // pending, skipped
+}
+
+/**
+ * Valors actuals de l'àpat en format ManualLog, per PRE-OMPLIR l'edició.
+ * Si ja té una dada manual (changed) la reutilitza; si no, parteix del que
+ * consta menjat ara o, si encara és pendent, de la recepta planificada.
+ */
+export function mealAsManualLog(m: ResolvedMeal): ManualLog {
+  if (m.logged) return { ...m.logged };
+  const n = mealEaten(m) ?? m.nutrition;
+  return { name: m.name, kcal: n.kcal, protein: n.protein };
 }
 
 export const doneKcal = (meals: ResolvedMeal[]): number =>

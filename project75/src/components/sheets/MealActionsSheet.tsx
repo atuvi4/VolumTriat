@@ -5,6 +5,7 @@ import PartialSheet from './PartialSheet';
 import SwapSheet from './SwapSheet';
 import MealPurchaseSheet from './MealPurchaseSheet';
 import CorrectPurchaseSheet from './CorrectPurchaseSheet';
+import { mealAsManualLog } from '../../utils/goals';
 import type { ManualLog, ResolvedMeal } from '../../nutrition/nutritionTypes';
 
 interface Props {
@@ -25,6 +26,25 @@ export default function MealActionsSheet({ meal, onChange, onPartial, onSkip }: 
     <div>
       <SheetHeader title={`Opcions · «${meal.slot}»`} sub={meal.name} />
 
+      <SheetOption
+        label="Editar aquest àpat"
+        meta="ajusta el que hi ha"
+        onClick={() =>
+          openSheet(
+            <ManualEntrySheet
+              title={`Editar «${meal.slot}»`}
+              sub="Ajusta el nom, les calories o la proteïna d'aquest àpat."
+              submitLabel="Desar canvi"
+              initial={mealAsManualLog(meal)}
+              closeOnSubmit={false}
+              target={{ kcal: meal.nutrition.kcal, protein: meal.nutrition.protein }}
+              allowPending
+              defaultEaten={false}
+              onSubmit={onChange}
+            />,
+          )
+        }
+      />
       <SheetOption
         label="He menjat una altra cosa"
         meta="manual"
