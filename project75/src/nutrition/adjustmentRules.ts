@@ -14,8 +14,10 @@ function avgLastDays(weights: WeightPoint[], days: number): number | null {
   return list.reduce((s, w) => s + w.kg, 0) / list.length;
 }
 
-/** Tendència kg/setmana sobre una finestra de dies. */
-function trendPerWeek(weights: WeightPoint[], days: number): number | null {
+/** Tendència kg/setmana sobre una finestra de dies.
+ *  FONT ÚNICA de tendència de l'app: Evolució, Coach i l'ajust setmanal
+ *  l'han d'usar perquè mai es contradiguin entre pantalles. */
+export function trendPerWeekWindow(weights: WeightPoint[], days = 14): number | null {
   if (weights.length < 2) return null;
   const cutoff = Date.now() - days * 86400000;
   const win = weights.filter((w) => new Date(w.d).getTime() >= cutoff);
@@ -52,7 +54,7 @@ export function weeklyAdjustment(ctx: AdjustContext): WeeklyAdjustment {
   }
 
   const avg = avgLastDays(weights, 7);
-  const trend = trendPerWeek(weights, 14);
+  const trend = trendPerWeekWindow(weights, 14);
 
   if (avg == null || trend == null || weights.length < 4) {
     return {

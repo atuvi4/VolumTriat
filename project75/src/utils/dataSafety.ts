@@ -61,6 +61,28 @@ export function buildExport(state: AppState): ExportFile {
   return { app: 'project75', appVersion: APP_VERSION, exportedAt: new Date().toISOString(), state };
 }
 
+/* ---------- Recordatori d'export ----------
+   localStorage pot desaparèixer (canvi de navegador, neteja, iOS que purga
+   webs poc usades). L'export manual és l'única còpia fora del dispositiu
+   mentre no hi hagi sync: recordem quan es va fer l'últim. */
+const LAST_EXPORT_KEY = 'project75_last_export_at';
+
+export function lastExportedAt(): string | null {
+  try {
+    return localStorage.getItem(LAST_EXPORT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function markExported(): void {
+  try {
+    localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
+  } catch {
+    /* mai bloquejar l'export per això */
+  }
+}
+
 /** Descarrega un JSON amb tot l'AppState (profile, meals, weights, checkin,
  *  dislikes, outcomes, prepDone, projectStartDate, etc.). Només llegeix dades. */
 export function downloadExport(state: AppState): void {
@@ -73,6 +95,7 @@ export function downloadExport(state: AppState): void {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  markExported();
 }
 
 /* ---------- Import ---------- */

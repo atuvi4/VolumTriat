@@ -32,7 +32,7 @@ export default function Nutrition() {
   const {
     state, markMeal, changeMeal, partialMeal, skipMeal, undoMeal,
     addExtra, addAdjustment, removeExtra,
-    openSheet, closeSheet, addShake, regenerateDay, toggleLowAppetite, showToast,
+    openSheet, closeSheet, addShake, regenerateDay, toggleLowAppetite,
   } = app;
   const started = isStarted(state.profile.projectStartDate);
   const g = goalsFor(state);
@@ -116,16 +116,7 @@ export default function Nutrition() {
 
   return (
     <section>
-      <PageHead
-        title="Nutrició"
-        sub="Mode simple · marca, no comptis"
-        right={
-          <span className="inline-flex bg-seg rounded-[11px] p-[3px]">
-            <button className="px-3.5 py-2 rounded-[9px] font-semibold text-[13px] bg-white shadow-card">Simple</button>
-            <button className="px-3.5 py-2 rounded-[9px] font-semibold text-[13px] text-muted" onClick={() => showToast('Mode precís (grams i macros editables) — arriba a V2')}>Precís</button>
-          </span>
-        }
-      />
+      <PageHead title="Nutrició" sub="Mode simple · marca, no comptis" />
 
       {!started && (
         <div className="flex items-center gap-2 bg-warn-soft text-warn rounded-xl2 px-4 py-3 mb-3.5 text-[13.5px] font-semibold">
@@ -339,18 +330,6 @@ export default function Nutrition() {
       <div className="mt-4">
         <WeeklyPlannerCard />
       </div>
-
-      <Card className="mt-3.5 border-dashed">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 font-semibold text-[14px]">
-            <Icon name="database" size={17} className="text-muted" /> Cercar productes i escanejar codis
-          </div>
-          <span className="text-[11px] font-bold text-info bg-info-soft px-2.5 py-1 rounded-full">Properament</span>
-        </div>
-        <p className="text-[13px] text-muted m-0 mt-2">
-          Integracions preparades amb Open Food Facts, USDA i (futur) llenguatge natural. S'activen en desplegar el backend.
-        </p>
-      </Card>
 
       <p className="text-[12px] text-faint text-center mt-3">
         Les dades són estimacions per ració (precisió variable, indicada a cada àpat). No és consell mèdic ni nutricional professional.

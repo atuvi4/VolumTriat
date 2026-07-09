@@ -8,6 +8,13 @@ export const toLocalISO = (d: Date): string => {
 
 export const todayISO = (): string => toLocalISO(new Date());
 
+/** Suma (o resta) dies a una data ISO local. */
+export function addDaysISO(iso: string, days: number): string {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return toLocalISO(d);
+}
+
 const DIES = ['diumenge', 'dilluns', 'dimarts', 'dimecres', 'dijous', 'divendres', 'dissabte'];
 const MESOS = [
   'gener', 'febrer', 'març', 'abril', 'maig', 'juny',

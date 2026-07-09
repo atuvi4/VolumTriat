@@ -120,15 +120,9 @@ export default function Coach() {
         ))}
       </div>
 
-      <div className="mt-3.5 border border-dashed border-line rounded-xl2 p-4 text-muted">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px]">Assistent conversacional amb IA</span>
-          <Badge tone="info" dot={false}>V3</Badge>
-        </div>
-        <p className="text-[13px] m-0 mt-2">
-          Aviat podràs preguntar-li directament. De moment, les recomanacions es generen amb regles segons les teves dades.
-        </p>
-      </div>
+      <p className="text-[12px] text-faint text-center mt-4">
+        Recomanacions generades amb regles a partir de les teves dades. No és consell mèdic ni nutricional professional.
+      </p>
     </section>
   );
 }

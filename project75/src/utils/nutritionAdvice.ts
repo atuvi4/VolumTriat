@@ -54,8 +54,8 @@ export function nutritionAdjust(state: AppState): NutritionAdjust {
         title: 'Ajust per arribar avui',
         tone: 'info',
         read,
-        note: 'Calories cobertes: no cal menjar més.',
-        actions: [`Tanca només la proteïna: ${PROT_TEXT} (~${protLeft} g).`],
+        note: 'Calories cobertes — només queda tancar la proteïna.',
+        actions: [`Tanca la proteïna amb ${PROT_TEXT} (~${protLeft} g).`],
         confidence: 'medium',
       };
     }

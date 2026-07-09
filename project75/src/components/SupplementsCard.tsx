@@ -27,6 +27,11 @@ export default function SupplementsCard() {
 
   const logAnabolic = () => {
     if (!serv) return;
+    // Guarda anti-doble toc: si ja consta una presa avui, demana confirmació.
+    const alreadyToday = state.meals.some((m) => m.isExtra && /anabolic/i.test(m.name));
+    if (alreadyToday && !window.confirm('Ja has registrat una presa d’Anabolic Masster avui. Vols registrar-ne una altra?')) {
+      return;
+    }
     addExtra({
       name: 'Anabolic Masster (amb aigua)',
       kcal: serv.kcal,

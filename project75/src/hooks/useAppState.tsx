@@ -16,16 +16,16 @@ import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
 import { defaultDayRecipes, RECIPE_POOL, SHAKE_RECIPES } from '../nutrition/mealPlans';
 import { resolveRecipe } from '../nutrition/mealBuilder';
-import { todayISO } from '../utils/date';
-import { doneCount } from '../utils/goals';
+import { addDaysISO, todayISO } from '../utils/date';
+import { doneCount, mealEaten } from '../utils/goals';
 import { isStarted } from '../utils/project';
 import { detectReadOnly } from '../utils/readOnly';
-import { todayWorkout } from '../data/week';
+import { resolveTodayTraining } from '../data/week';
 import { appendOutcome } from '../brain/brain';
 import type { MealOutcome, OutcomeAction, OutcomeSource } from '../brain/brainTypes';
 import { stateKeyFor } from '../utils/storageKeys';
 import { pickInitialRaw } from '../utils/stateMigration';
-import { emptyState } from '../data/emptyState';
+import { emptyState, STARTER_PROFILE } from '../data/emptyState';
 import { useAuth } from '../auth/useAuth';
 import { writeLocalBackup, writePreviousBackup } from '../utils/dataSafety';
 import { useCloud, type CloudSlice } from '../cloud/useCloud';
@@ -40,6 +40,23 @@ function buildDayMeals(): ResolvedMeal[] {
 /** Àpats d'un dia: del pla setmanal si el conté, si no del pla base. */
 function dayMealsFor(dateISO: string, plan?: WeeklyMenu): ResolvedMeal[] {
   return buildDayMealsFromPlan(plan, dateISO) ?? buildDayMeals();
+}
+
+/** Reset diari en canviar de dia (única lògica, usada en carregar i amb l'app
+ *  oberta). Ratxa HONESTA: si ahir no es va completar, torna a zero — una
+ *  ratxa que mai es trenca no diu res. La constància (completedDates) no es toca. */
+function rolloverToToday(s: AppState): AppState {
+  const yesterday = addDaysISO(todayISO(), -1);
+  const keepStreak = !isStarted(s.profile.projectStartDate) || s.lastComplete === yesterday;
+  return {
+    ...s,
+    date: todayISO(),
+    streak: keepStreak ? s.streak : 0,
+    meals: dayMealsFor(todayISO(), s.weeklyPlan),
+    gymDone: false,
+    checkin: null,
+    dayMode: 'normal',
+  };
 }
 
 /** Aboca el menú planificat d'avui als àpats PENDENTS, sense tocar els que ja
@@ -86,12 +103,16 @@ function withOutcome(
     confidence: o.confidence,
     appetite: s.checkin?.appetite,
     dayMode: s.dayMode,
-    training: todayWorkout().type,
+    // Sessió REAL del dia (respecta la setmana d'adaptació), no la plantilla.
+    training: resolveTodayTraining(s.profile.projectStartDate).workout.type,
     reason: o.reason,
   };
   return { ...s, outcomes: appendOutcome(s.outcomes ?? [], outcome) };
 }
 
+/** Estat inicial d'un dispositiu NOU sense login: perfil neutre i onboarding
+ *  pendent (mai el perfil d'un altre usuari). Els estats ja desats no canvien:
+ *  aquesta funció només s'executa quan no hi ha res a localStorage. */
 function freshState(): AppState {
   return {
     version: 3,
@@ -107,8 +128,9 @@ function freshState(): AppState {
     completedDates: [],
     prepDone: [],
     outcomes: [],
+    gymDates: [],
     supplements: { creatineDates: [], anabolicServing: { ...DEFAULT_ANABOLIC } },
-    profile: { ...DEFAULT_PROFILE },
+    profile: { ...STARTER_PROFILE },
   };
 }
 
@@ -159,6 +181,7 @@ function normalizeState(s: AppState): AppState {
   s.completedDates = s.completedDates ?? [];
   s.prepDone = s.prepDone ?? [];
   s.outcomes = s.outcomes ?? [];
+  s.gymDates = s.gymDates ?? [];
   s.dislikes = s.dislikes ?? [];
   s.weights = s.weights ?? [];
   s.version = s.version ?? 3;
@@ -178,17 +201,11 @@ function loadState(userId: string | null): AppState {
   try {
     const raw = pickInitialRaw(userId, localStorage);
     if (!raw) return userId ? emptyState() : freshState();
-    const s = JSON.parse(raw) as AppState;
+    let s = JSON.parse(raw) as AppState;
     // Data Safety: desa una còpia crua ABANS de migrar (xarxa de seguretat si
     // una migració/deploy trenca l'estat). No escriure en mode visita.
     if (!detectReadOnly()) writePreviousBackup(s);
-    if (s.date !== todayISO()) {
-      s.date = todayISO();
-      s.meals = dayMealsFor(todayISO(), s.weeklyPlan); // pla setmanal si el conté
-      s.gymDone = false;
-      s.checkin = null;
-      s.dayMode = 'normal';
-    }
+    if (s.date !== todayISO()) s = rolloverToToday(s);
     if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) {
       s.meals = dayMealsFor(todayISO(), s.weeklyPlan);
     }
@@ -197,6 +214,7 @@ function loadState(userId: string | null): AppState {
     s.completedDates = s.completedDates ?? [];
     s.prepDone = s.prepDone ?? [];
     s.outcomes = s.outcomes ?? []; // Brain v1: acumula entre dies (no es reinicia)
+    s.gymDates = s.gymDates ?? []; // historial d'entrenament (persisteix entre dies)
     s.supplements = s.supplements ?? { creatineDates: [] };
     s.supplements.creatineDates = s.supplements.creatineDates ?? [];
     s.supplements.anabolicServing = s.supplements.anabolicServing ?? { ...DEFAULT_ANABOLIC };
@@ -296,17 +314,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // aplica el mateix reset diari que fa loadState en arrencar. Si no ha canviat
     // el dia, retorna el mateix estat i no hi ha re-render.
     const checkDayChange = () => {
-      setState((s) => {
-        if (s.date === todayISO()) return s;
-        return {
-          ...s,
-          date: todayISO(),
-          meals: dayMealsFor(todayISO(), s.weeklyPlan),
-          gymDone: false,
-          checkin: null,
-          dayMode: 'normal',
-        };
-      });
+      setState((s) => (s.date === todayISO() ? s : rolloverToToday(s)));
     };
     document.addEventListener('visibilitychange', checkDayChange);
     window.addEventListener('focus', checkDayChange);
@@ -476,15 +484,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const added = !id.startsWith('day-');
       setState((s) => {
         const m = s.meals.find((x) => x.id === id);
-        if (m && (m.isExtra || added)) return { ...s, meals: s.meals.filter((x) => x.id !== id) };
-        return {
-          ...s,
-          meals: s.meals.map((x) =>
-            x.id === id
-              ? { ...x, done: false, status: 'pending' as const, logged: undefined, partialPct: undefined }
-              : x,
-          ),
-        };
+        // Compensació al Brain: si constava com a menjat, resta'l de l'historial
+        // (sense això, fet→desfer→fet inflaria les kcal del dia a Evolució).
+        const eaten = m ? mealEaten(m) : null;
+        let next: AppState =
+          m && (m.isExtra || added)
+            ? { ...s, meals: s.meals.filter((x) => x.id !== id) }
+            : {
+                ...s,
+                meals: s.meals.map((x) =>
+                  x.id === id
+                    ? { ...x, done: false, status: 'pending' as const, logged: undefined, partialPct: undefined }
+                    : x,
+                ),
+              };
+        if (m && eaten)
+          next = withOutcome(next, {
+            slot: m.slot, mealName: m.name, recipeId: m.recipeId, action: 'undone',
+            kcal: eaten.kcal, protein: eaten.protein,
+          });
+        return next;
       });
       showToast(added ? 'Àpat tret' : 'Estat esborrat');
     },
@@ -557,11 +576,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (id: string) => {
       setState((s) => {
         const meal = s.meals.find((m) => m.id === id);
+        const eaten = meal ? mealEaten(meal) : null;
         let next: AppState = { ...s, meals: s.meals.filter((m) => m.id !== id) };
         if (meal?.isExtra && meal.extraOrigin === 'adjustment')
           next = withOutcome(next, {
             slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId,
             action: 'adjustment_removed', reason: meal.relatedMealStatus,
+          });
+        // Compensació: si l'extra constava com a menjat, resta'l de l'historial.
+        if (meal && eaten)
+          next = withOutcome(next, {
+            slot: meal.slot, mealName: meal.name, recipeId: meal.recipeId, action: 'undone',
+            kcal: eaten.kcal, protein: eaten.protein,
           });
         return next;
       });
@@ -674,7 +700,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [showToast]);
 
   const markGym = useCallback(() => {
-    setState((s) => ({ ...s, gymDone: true }));
+    setState((s) => ({
+      ...s,
+      gymDone: true,
+      // Historial persistent (gymDone es reinicia cada nit i es perdria).
+      gymDates: (s.gymDates ?? []).includes(todayISO()) ? s.gymDates : [...(s.gymDates ?? []), todayISO()],
+    }));
     showToast('Sessió registrada');
   }, [showToast]);
 

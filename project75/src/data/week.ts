@@ -54,8 +54,11 @@ export interface TodayTraining {
  */
 export function resolveTodayTraining(startISO: string): TodayTraining {
   if (isStarted(startISO) && inAdaptationWeek(startISO)) {
-    const idx = Math.min(projectDay(startISO) - 1, ADAPT.length - 1);
-    return { workout: ADAPT[idx], adaptation: true, soft: true, nutritionPriority: idx === 0 };
+    const day = projectDay(startISO) - 1;
+    // Cicle suau (gym → suau → descans): si la setmana 0 és llarga (p. ex.
+    // comences dilluns), el patró es repeteix en lloc de 5 dies seguits de descans.
+    const idx = day % ADAPT.length;
+    return { workout: ADAPT[idx], adaptation: true, soft: true, nutritionPriority: day === 0 };
   }
   return { workout: todayWorkout(), adaptation: false, soft: false, nutritionPriority: false };
 }

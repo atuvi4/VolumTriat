@@ -1,10 +1,21 @@
 import type { AppState, Goals, WeightEntry } from '../types';
 import type { CalculatedNutrition, ManualLog, MealStatus, ResolvedMeal } from '../nutrition/nutritionTypes';
 
+// Arrodoniment AVALL: en un dia de mínims mai s'ha de demanar de més.
+const floor50 = (n: number) => Math.floor(n / 50) * 50;
+const floor5 = (n: number) => Math.floor(n / 5) * 5;
+
+/** Objectius del dia. Els modes especials DERIVEN de l'objectiu del perfil
+ *  (mai xifres fixes): així segueixen l'usuari quan l'objectiu canvia i són
+ *  coherents amb cut/maintain/bulk.
+ *  - dificil: dia de mínims (~60% kcal / ~55% prot) — salvar el dia, no clavar-lo.
+ *  - pocaGana: objectiu reduït (~85% kcal / ~80% prot), prioritzant líquids. */
 export function goalsFor(state: AppState): Goals {
   const { dayMode, profile } = state;
-  if (dayMode === 'dificil') return { kcal: 1800, prot: 80, meals: 2, label: 'Dia difícil' };
-  if (dayMode === 'pocaGana') return { kcal: 2600, prot: 120, meals: 4, label: 'Poca gana' };
+  if (dayMode === 'dificil')
+    return { kcal: floor50(profile.kcalGoal * 0.6), prot: floor5(profile.protGoal * 0.55), meals: 2, label: 'Dia difícil' };
+  if (dayMode === 'pocaGana')
+    return { kcal: floor50(profile.kcalGoal * 0.85), prot: floor5(profile.protGoal * 0.8), meals: 4, label: 'Poca gana' };
   return {
     kcal: profile.kcalGoal,
     prot: profile.protGoal,
@@ -78,14 +89,19 @@ export const currentWeight = (weights: WeightEntry[]): number =>
 /** Mínim de registres reals per considerar una tendència fiable. */
 export const MIN_FOR_TREND = 4;
 
-export function trendPerWeek(weights: WeightEntry[]): number {
-  if (weights.length < 2) return 0;
-  const first = weights[0];
-  const last = weights[weights.length - 1];
-  const days = (new Date(last.d).getTime() - new Date(first.d).getTime()) / 86400000 || 1;
-  return (last.kg - first.kg) / (days / 7);
+/** Fites intermèdies entre el pes inicial i l'objectiu (personalitzades,
+ *  mai hardcoded). Funciona tant pujant (bulk) com baixant (cut). */
+export function milestonesFor(startWeight: number, target: number): number[] {
+  const span = target - startWeight;
+  if (!span) return [target];
+  const steps = Math.min(4, Math.max(2, Math.round(Math.abs(span) / 2)));
+  const out: number[] = [];
+  for (let i = 1; i <= steps; i++) out.push(Math.round((startWeight + (span * i) / steps) * 2) / 2);
+  return [...new Set(out)];
 }
 
-export function nextMilestone(weight: number, target1: number): number {
-  return [68, 70, 72, 75].find((m) => weight < m) ?? target1;
+/** Propera fita en la direcció de l'objectiu. */
+export function nextMilestone(weight: number, startWeight: number, target: number): number {
+  const dir = Math.sign(target - startWeight) || 1;
+  return milestonesFor(startWeight, target).find((m) => (dir > 0 ? weight < m : weight > m)) ?? target;
 }

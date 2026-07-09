@@ -7,13 +7,14 @@ import Icon from '../components/Icon';
 import Badge from '../components/Badge';
 import InitialWeightSheet from '../components/sheets/InitialWeightSheet';
 import HistoryCard from '../components/HistoryCard';
-import { currentWeight, trendPerWeek, nextMilestone, MIN_FOR_TREND } from '../utils/goals';
+import { currentWeight, milestonesFor, nextMilestone, MIN_FOR_TREND } from '../utils/goals';
+import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
 import { fmt1, pct } from '../utils/format';
 import { shortDate, longDate } from '../utils/date';
 import { isStarted, realWeights, consistencyPct } from '../utils/project';
 
 export default function Evolution() {
-  const { state, openSheet, showToast } = useApp();
+  const { state, openSheet } = useApp();
   const p = state.profile;
   const started = isStarted(p.projectStartDate);
   const startLabel = longDate(new Date(p.projectStartDate + 'T00:00:00'));
@@ -47,9 +48,11 @@ export default function Evolution() {
   const hasWeights = rw.length > 0;
   const w = hasWeights ? currentWeight(rw) : p.startWeight;
   const canTrend = rw.length >= MIN_FOR_TREND;
-  const trend = canTrend ? trendPerWeek(rw) : 0;
-  const next = nextMilestone(w, p.target1);
-  const miles = [68, 70, 72, 75];
+  // Tendència única de l'app (14 dies), la mateixa que Nutrició i Coach.
+  const trend = canTrend ? (trendPerWeekWindow(rw, 14) ?? 0) : 0;
+  const next = nextMilestone(w, p.startWeight, p.target1);
+  const miles = milestonesFor(p.startWeight, p.target1);
+  const dir = Math.sign(p.target1 - p.startWeight) || 1;
   const cons = consistencyPct(state);
 
   const show = rw.slice(-8);
@@ -65,14 +68,17 @@ export default function Evolution() {
         <MetricCard
           icon="activity"
           value={canTrend ? `${trend >= 0 ? '+' : ''}${fmt1(trend)}` : '—'}
-          label={canTrend ? 'kg / setmana' : 'tendència'}
+          label={canTrend ? 'kg/setm · 14 dies' : 'tendència'}
           highlight={canTrend && trend >= 0.2}
         />
         <MetricCard icon="target" value={String(next)} unit="kg" label="Fita propera" />
         <MetricCard icon="calendar" value={cons != null ? String(cons) : '—'} unit={cons != null ? '%' : ''} label="Constància 30d" tone="amber" />
       </div>
 
-      <Card title="Camí cap a 75 kg · després 80 kg" className="mb-3.5">
+      <Card
+        title={`Camí cap a ${p.target1} kg${p.target2 !== p.target1 ? ` · després ${p.target2} kg` : ''}`}
+        className="mb-3.5"
+      >
         <div className="flex justify-between font-bold text-[13px] mb-2.5">
           <span>{p.startWeight} kg</span>
           <b className="text-accent">{hasWeights ? fmt1(w) + ' kg' : 'sense pes'}</b>
@@ -83,7 +89,7 @@ export default function Evolution() {
         </div>
         <div className="relative h-[26px] mt-2.5">
           {miles.map((m) => {
-            const hit = hasWeights && w >= m;
+            const hit = hasWeights && (dir > 0 ? w >= m : w <= m);
             return (
               <div key={m} className={`absolute -translate-x-1/2 text-[11px] font-bold text-center ${hit ? 'text-accent-strong' : 'text-faint'}`} style={{ left: `${((m - p.startWeight) / (p.target1 - p.startWeight)) * 100}%` }}>
                 <span className={`block w-[9px] h-[9px] rounded-full mx-auto mb-1 border-2 border-surface ${hit ? 'bg-accent shadow-[0_0_0_1px_#0E7A5F]' : 'bg-[#D3D7DD] shadow-[0_0_0_1px_#D3D7DD]'}`} />
@@ -119,26 +125,10 @@ export default function Evolution() {
 
       <HistoryCard />
 
-      <Card title="Fotos de progrés" className="mb-3.5">
-        <div className="flex gap-2.5">
-          {['Setmana 1', 'Setmana 4'].map((l) => (
-            <div key={l} className="flex-1 aspect-[3/4] rounded-[14px] bg-surface2 border border-line flex flex-col items-center justify-center gap-1.5 text-faint">
-              <Icon name="image" size={26} strokeWidth={1.4} />
-              <span className="text-[11.5px] font-semibold">{l}</span>
-            </div>
-          ))}
-          <button onClick={() => showToast('Aquí afegiries una foto de progrés')} className="flex-1 aspect-[3/4] rounded-[14px] bg-surface2 border border-dashed border-accent-line text-accent flex flex-col items-center justify-center gap-1.5">
-            <Icon name="plus" size={26} strokeWidth={1.4} />
-            <span className="text-[11.5px] font-semibold">Afegir</span>
-          </button>
-        </div>
-      </Card>
-
       <div className="flex flex-wrap gap-2.5">
         <Button block variant="primary" icon="plus" onClick={() => openSheet(<InitialWeightSheet />)}>
           {hasWeights ? 'Afegir pes' : 'Registrar primer pes'}
         </Button>
-        <Button block variant="ghost" icon="image" onClick={() => showToast('Aquí afegiries una foto de progrés')}>Afegir foto</Button>
       </div>
     </section>
   );

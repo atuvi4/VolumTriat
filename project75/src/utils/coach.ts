@@ -1,7 +1,12 @@
 import type { AppState, Goal, Recommendation } from '../types';
 import { resolveTodayTraining } from '../data/week';
-import { goalsFor, doneKcal, doneProt, doneCount, trendPerWeek, MIN_FOR_TREND } from './goals';
+import { goalsFor, doneKcal, doneProt, doneCount, currentWeight, MIN_FOR_TREND } from './goals';
+import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
+import { computeTargets } from '../nutrition/nutritionTargets';
 import { nf } from './format';
+
+/** Franja horària per a copy contextual (mai «abans de dormir» al matí). */
+const isEvening = () => new Date().getHours() >= 18;
 
 export interface Directive {
   title: string;
@@ -81,7 +86,13 @@ export function getDirective(state: AppState): Directive {
   }
   // bulk
   if (left > 500)
-    return { title: `Et queden ${nf(left)} kcal`, sub: 'Vas bé. Un batut abans de dormir ho tanca sense esforç.', cta: 'batut' };
+    return {
+      title: `Et queden ${nf(left)} kcal`,
+      sub: isEvening()
+        ? 'Vas bé. Un batut abans de dormir ho tanca sense esforç.'
+        : 'Vas bé. Un batut entre àpats ho deixa gairebé fet.',
+      cta: 'batut',
+    };
   if (left > 0)
     return { title: `Gairebé fet: ${nf(left)} kcal`, sub: 'Un snack dens (fruits secs + iogurt) tanca el dia.', cta: 'nutri' };
   return { title: 'Objectiu del dia cobert', sub: 'Calories i proteïna dins. La constància és el que fa pujar el pes.', cta: 'nutri' };
@@ -121,7 +132,10 @@ export function getCoachLine(state: AppState): string {
     return `Avui una mica per sobre del manteniment. Res greu; demà t’hi acostes de nou.`;
   }
   // bulk
-  if (left > 500) return `Bon ritme. Et queden ~${nf(left)} kcal; un batut abans de dormir ho tanca fàcil.`;
+  if (left > 500)
+    return isEvening()
+      ? `Bon ritme. Et queden ~${nf(left)} kcal; un batut abans de dormir ho tanca fàcil.`
+      : `Bon ritme. Et queden ~${nf(left)} kcal; un batut entre àpats ho deixa gairebé fet.`;
   if (left > 0) return `Gairebé hi ets: ~${nf(left)} kcal per tancar el superàvit. Un snack dens ho resol.`;
   return 'Objectiu cobert avui: calories i proteïna dins. La constància fa pujar el pes.';
 }
@@ -136,8 +150,18 @@ export function getRecommendations(state: AppState): Recommendation[] {
   const goal = state.profile.goal;
   const t = resolveTodayTraining(state.profile.projectStartDate);
   const w = t.workout;
+  // Tendència ÚNICA de l'app (finestra 14 dies) i llindars derivats de
+  // l'objectiu calculat: els mateixos que usa l'ajust setmanal de Nutrició.
   const hasTrend = state.weights.length >= MIN_FOR_TREND;
-  const trend = hasTrend ? trendPerWeek(state.weights) : 0;
+  const trend = hasTrend ? (trendPerWeekWindow(state.weights, 14) ?? 0) : 0;
+  const [gainMin, gainMax] = computeTargets({
+    sex: state.profile.sex,
+    age: state.profile.age,
+    heightCm: state.profile.heightCm,
+    weightKg: currentWeight(state.weights) || state.profile.startWeight,
+    ritme: state.profile.ritme,
+    goal: state.profile.goal,
+  }).weeklyGain;
   const ci = state.checkin;
   const moodLow = ci?.mood === 'low';
   const energyLow = ci?.energy === 'low';
@@ -217,7 +241,9 @@ export function getRecommendations(state: AppState): Recommendation[] {
       p: 4,
       rec: {
         id: 'kcalgap', tone: 'accent', title: `Et falten ${nf(left)} kcal`,
-        body: 'Solució ràpida: un batut dens abans de dormir (llet + plàtan + civada + crema de cacauet).',
+        body: isEvening()
+          ? 'Solució ràpida: un batut dens abans de dormir (llet + plàtan + civada + crema de cacauet).'
+          : 'Solució ràpida: un batut dens entre àpats (llet + plàtan + civada + crema de cacauet).',
         why: 'Tancar el superàvit cada dia és el que fa pujar el pes; els líquids ho fan fàcil.',
         dataUsed: `Registrat ${nf(dk)} de ${nf(g.kcal)} kcal`, confidence: 'high',
         action: { label: 'Afegir batut', kind: 'addShake' },
@@ -277,18 +303,18 @@ export function getRecommendations(state: AppState): Recommendation[] {
 
   // 5. TENDÈNCIA de pes segons objectiu (l'ajust fi es fa a Nutrició)
   if (hasTrend && !unintended) {
-    if (goal === 'bulk' && trend > -0.5 && trend < 0.2) {
+    if (goal === 'bulk' && trend > -0.3 && trend < gainMin) {
       items.push({
         p: 7,
         rec: {
           id: 'stall', tone: 'info', title: 'El pes no puja al ritme objectiu',
           body: 'Puja +150-250 kcal/dia (un batut extra) i deixa passar una setmana abans de tornar a ajustar.',
           why: 'Es mira el patró de dies, no un sol pesatge. Sense superàvit no hi ha pujada.',
-          dataUsed: `Tendència: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setmana`, confidence: 'medium',
+          dataUsed: `Tendència 14 dies: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)} kg/setm · objectiu ${gainMin}-${gainMax}`, confidence: 'medium',
           action: { label: 'Veure ajust a Nutrició', kind: 'openNutrition' },
         },
       });
-    } else if (goal === 'cut' && trend > -0.2) {
+    } else if (goal === 'cut' && trend > gainMax) {
       items.push({
         p: 7,
         rec: {

@@ -37,9 +37,19 @@ export function dailyHistory(state: AppState, maxDays = 30): DayHistory[] {
       h.kcal += o.kcal ?? 0;
       h.protein += o.protein ?? 0;
       h.logged += 1;
+    } else if (o.action === 'undone') {
+      // Compensació: una ingesta desfeta/treta deixa de comptar (mai negatiu).
+      h.kcal -= o.kcal ?? 0;
+      h.protein -= o.protein ?? 0;
+      h.logged -= 1;
     } else if (o.action === 'skipped') {
       h.skipped += 1;
     }
+  }
+  for (const h of map.values()) {
+    h.kcal = Math.max(0, h.kcal);
+    h.protein = Math.max(0, h.protein);
+    h.logged = Math.max(0, h.logged);
   }
   for (const wgt of state.weights ?? []) get(wgt.d).weight = wgt.kg; // últim del dia guanya
   for (const d of state.completedDates ?? []) get(d).completed = true;

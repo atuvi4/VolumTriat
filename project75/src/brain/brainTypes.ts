@@ -17,6 +17,9 @@ export type OutcomeAction =
   | 'extra'
   | 'adjustment_added'
   | 'adjustment_removed'
+  /** Compensació: una ingesta que constava com a menjada s'ha desfet/tret.
+   *  Porta les kcal/proteïna que restaven perquè l'historial no quedi inflat. */
+  | 'undone'
   | 'disliked';
 
 /** Font de la dada nutricional associada a l'outcome (mai inventada). */

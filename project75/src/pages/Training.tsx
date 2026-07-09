@@ -23,7 +23,7 @@ function adaptationDays(startISO: string): { iso: string; day: WorkoutDay }[] {
   let i = 0;
   while (cur.getTime() <= end.getTime()) {
     const iso = toLocalISO(cur);
-    out.push({ iso, day: ADAPT[Math.min(i, ADAPT.length - 1)] });
+    out.push({ iso, day: ADAPT[i % ADAPT.length] }); // cicle: mai una setmana sencera de descans
     cur.setDate(cur.getDate() + 1);
     i++;
   }
@@ -94,10 +94,16 @@ export default function Training() {
   const base = new Date();
   const tomorrow = (today + 1) % 7;
   const conflict = w.label === 'Cames' && (WEEK[tomorrow].type === 'run' || WEEK[tomorrow].type === 'bike');
+  // Constància d'entrenament: sessions marcades en els últims 30 dies.
+  const cutoff30 = new Date(Date.now() - 29 * 86400000);
+  const gym30 = (state.gymDates ?? []).filter((d) => new Date(d + 'T00:00:00') >= cutoff30).length;
 
   return (
     <section>
-      <PageHead title="Entrenament" sub="Gym base + running · triatló progressiu" />
+      <PageHead
+        title="Entrenament"
+        sub={`Gym base + running · triatló progressiu${gym30 > 0 ? ` · ${gym30} sessions en 30 dies` : ''}`}
+      />
       {/* A) Acció primer: planning + sessió d'avui */}
       <div className="grid md:grid-cols-[1.15fr_1fr] gap-3.5 items-start">
         <Card title="Planning de la setmana">

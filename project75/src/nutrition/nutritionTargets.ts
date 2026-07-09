@@ -60,17 +60,19 @@ export function computeTargets(input: TargetInput): NutritionTargets {
   const fatMin = Math.round(weightKg * 0.8);
   const carbs = Math.max(0, Math.round((kcalStart - proteinGrams * 4 - fatMin * 9) / 4));
 
-  // Canvi de pes setmanal recomanat (% del pes), segons objectiu.
+  // Canvi de pes setmanal recomanat, COHERENT amb el superàvit/dèficit de kcal
+  // (~7.700 kcal ≈ 1 kg): bulk agressiu +250-450 kcal/dia ≈ 0,25-0,45 kg/setm.
+  // Prometre més del que les kcal donen faria que l'app digués «vas lent» per disseny.
   const weeklyGain: [number, number] =
     goal === 'cut'
       ? ritme === 'agressiu'
-        ? [-0.75, -0.5]
-        : [-0.5, -0.3]
+        ? [-0.55, -0.35]
+        : [-0.35, -0.2]
       : goal === 'maintain'
         ? [-0.1, 0.1]
         : ritme === 'agressiu'
-          ? [0.35, 0.6]
-          : [0.2, 0.4];
+          ? [0.25, 0.45]
+          : [0.1, 0.25];
 
   const goalWord = goal === 'cut' ? 'perdre greix' : goal === 'maintain' ? 'mantenir el pes' : 'pujar pes';
   const mech =

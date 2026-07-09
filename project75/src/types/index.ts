@@ -87,6 +87,9 @@ export interface AppState {
   prepDone: string[];
   /** Project75 Brain v1 — historial d'accions reals per aprendre (local). */
   outcomes: MealOutcome[];
+  /** Dies (ISO) amb sessió d'entrenament feta — historial que persisteix entre
+   *  dies (gymDone només és el flag d'avui i es reinicia cada nit). */
+  gymDates?: string[];
   /** Suplements (creatina + Anabolic Master), a part dels batuts de menjar. */
   supplements: SupplementsState;
   /** Weekly Nutrition Planner v1 — menú setmanal per organitzar compra i cuina.
