@@ -11,6 +11,7 @@ import RescueSheet from '../components/sheets/RescueSheet';
 import QuickOptionsSheet from '../components/sheets/QuickOptionsSheet';
 import CalcSheet from '../components/sheets/CalcSheet';
 import ManualEntrySheet from '../components/sheets/ManualEntrySheet';
+import NutritionLabelScannerSheet from '../components/sheets/NutritionLabelScannerSheet';
 import PartialSheet from '../components/sheets/PartialSheet';
 import MealActionsSheet from '../components/sheets/MealActionsSheet';
 import SwapSheet from '../components/sheets/SwapSheet';
@@ -251,6 +252,9 @@ export default function Nutrition() {
           </Button>
           <Button block variant="ghost" icon="cup" onClick={addShake}>Afegir batut</Button>
           <Button block variant="ghost" icon="alert" onClick={() => openSheet(<RescueSheet />)}>Rescat</Button>
+          <Button block variant="ghost" icon="image" onClick={() => openSheet(<NutritionLabelScannerSheet />)}>
+            Foto etiqueta
+          </Button>
         </div>
         <details className="mt-3 group">
           <summary className="cursor-pointer text-[13px] font-semibold text-accent list-none flex items-center gap-1">

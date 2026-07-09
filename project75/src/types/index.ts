@@ -23,6 +23,19 @@ export interface PersonalIngredient {
   proteinPer100g: number;
 }
 
+/** Producte real guardat des d'una etiqueta CONFIRMADA per l'usuari
+ *  (Nutrition Label Scanner). Sempre per 100 g/ml — la font més fiable
+ *  que tenim: l'etiqueta del paquet, revisada a mà. */
+export interface SavedProduct {
+  id: string;
+  name: string;
+  per100g: { kcal: number; protein: number; carbs?: number; fat?: number };
+  servingGrams?: number;
+  source: 'label';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type DayMode = 'normal' | 'pocaGana' | 'dificil';
 export type Ritme = 'moderat' | 'agressiu';
 /** Objectiu corporal de l'usuari — determina dèficit/manteniment/superàvit. */
@@ -99,6 +112,8 @@ export interface AppState {
   personalItems?: PersonalItem[];
   /** Ingredients propis (p. ex. la seva proteïna de marca), reutilitzables. */
   personalIngredients?: PersonalIngredient[];
+  /** Productes reals guardats des d'etiqueta confirmada (Label Scanner). */
+  savedProducts?: SavedProduct[];
 }
 
 export interface Goals {

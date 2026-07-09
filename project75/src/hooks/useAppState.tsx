@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { AppState, CheckIn, Goal, PersonalIngredient, PersonalItem, Profile, Ritme, Tab } from '../types';
+import type { AppState, CheckIn, Goal, PersonalIngredient, PersonalItem, Profile, Ritme, SavedProduct, Tab } from '../types';
 import { computeTargets } from '../nutrition/nutritionTargets';
 import { generateWeeklyMenu, regenerateDayInWeek, buildDayMealsFromPlan, type WeeklyMenu } from '../nutrition/weeklyPlanner';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
@@ -182,6 +182,7 @@ function normalizeState(s: AppState): AppState {
   s.prepDone = s.prepDone ?? [];
   s.outcomes = s.outcomes ?? [];
   s.gymDates = s.gymDates ?? [];
+  s.savedProducts = s.savedProducts ?? [];
   s.dislikes = s.dislikes ?? [];
   s.weights = s.weights ?? [];
   s.version = s.version ?? 3;
@@ -215,6 +216,7 @@ function loadState(userId: string | null): AppState {
     s.prepDone = s.prepDone ?? [];
     s.outcomes = s.outcomes ?? []; // Brain v1: acumula entre dies (no es reinicia)
     s.gymDates = s.gymDates ?? []; // historial d'entrenament (persisteix entre dies)
+    s.savedProducts = s.savedProducts ?? []; // productes d'etiqueta confirmats
     s.supplements = s.supplements ?? { creatineDates: [] };
     s.supplements.creatineDates = s.supplements.creatineDates ?? [];
     s.supplements.anabolicServing = s.supplements.anabolicServing ?? { ...DEFAULT_ANABOLIC };
@@ -288,6 +290,18 @@ interface Ctx extends CloudSlice {
   regenerateWeekDay: (dateISO: string) => void;
   /** Desa un ingredient propi (macros d'etiqueta) per reutilitzar al compositor. */
   savePersonalIngredient: (name: string, kcalPer100g: number, proteinPer100g: number) => void;
+  /** Label Scanner: desa un producte real amb macros d'etiqueta CONFIRMADES. */
+  saveProductFromLabel: (p: {
+    name: string;
+    kcalPer100g: number;
+    proteinPer100g: number;
+    carbsPer100g?: number;
+    fatPer100g?: number;
+    servingGrams?: number;
+  }) => void;
+  removeSavedProduct: (id: string) => void;
+  /** Registra N grams d'un producte guardat com a extra (kcal calculades). */
+  registerSavedProduct: (id: string, grams: number) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -907,6 +921,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [showToast],
   );
 
+  // ---------- Label Scanner: productes reals d'etiqueta confirmada ----------
+  const saveProductFromLabel = useCallback(
+    (p: { name: string; kcalPer100g: number; proteinPer100g: number; carbsPer100g?: number; fatPer100g?: number; servingGrams?: number }) => {
+      const nm = p.name.trim();
+      // Plausibilitat per 100 g: una etiqueta real mai té aquests valors.
+      if (
+        nm.length < 2 ||
+        !Number.isFinite(p.kcalPer100g) || p.kcalPer100g <= 0 || p.kcalPer100g > 950 ||
+        !Number.isFinite(p.proteinPer100g) || p.proteinPer100g < 0 || p.proteinPer100g > 100 ||
+        p.proteinPer100g * 4 > p.kcalPer100g * 1.15 + 10
+      ) {
+        showToast('Valors no vàlids per 100 g — revisa l\'etiqueta');
+        return;
+      }
+      setState((s) => {
+        const list = s.savedProducts ?? [];
+        const key = nm.toLowerCase();
+        const idx = list.findIndex((it) => it.name.toLowerCase() === key);
+        const now = new Date().toISOString();
+        const item: SavedProduct = {
+          id: idx >= 0 ? list[idx].id : `sp-${Date.now()}`,
+          name: nm,
+          per100g: {
+            kcal: Math.round(p.kcalPer100g),
+            protein: Math.round(p.proteinPer100g * 10) / 10,
+            carbs: p.carbsPer100g != null ? Math.round(p.carbsPer100g * 10) / 10 : undefined,
+            fat: p.fatPer100g != null ? Math.round(p.fatPer100g * 10) / 10 : undefined,
+          },
+          servingGrams: p.servingGrams,
+          source: 'label',
+          createdAt: idx >= 0 ? list[idx].createdAt : now,
+          updatedAt: now,
+        };
+        const next = idx >= 0 ? list.map((it, i) => (i === idx ? item : it)) : [...list, item].slice(-40);
+        return { ...s, savedProducts: next };
+      });
+      showToast('Producte desat · etiqueta revisada per tu');
+    },
+    [showToast],
+  );
+
+  const removeSavedProduct = useCallback(
+    (id: string) => {
+      setState((s) => ({ ...s, savedProducts: (s.savedProducts ?? []).filter((p) => p.id !== id) }));
+      showToast('Producte eliminat');
+    },
+    [showToast],
+  );
+
+  const registerSavedProduct = useCallback(
+    (id: string, grams: number) => {
+      const p = (state.savedProducts ?? []).find((x) => x.id === id);
+      if (!p || !Number.isFinite(grams) || grams <= 0 || grams > 2000) return;
+      const f = grams / 100;
+      addExtra({
+        name: `${p.name} (${Math.round(grams)} g)`,
+        kcal: Math.round(p.per100g.kcal * f),
+        protein: Math.round(p.per100g.protein * f),
+        note: `Etiqueta revisada per tu · ${Math.round(grams)} g`,
+      });
+    },
+    [state, addExtra],
+  );
+
   const resetAll = useCallback(() => {
     writeLocalBackup(state); // desa el que hi havia: recuperable amb «Restaurar últim backup»
     localStorage.removeItem(stateKeyFor(userId));
@@ -976,13 +1054,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       generateWeek: guard(generateWeek),
       regenerateWeekDay: guard(regenerateWeekDay),
       savePersonalIngredient: guard(savePersonalIngredient),
+      saveProductFromLabel: guard(saveProductFromLabel),
+      removeSavedProduct: guard(removeSavedProduct),
+      registerSavedProduct: guard(registerSavedProduct),
     };
   }, [
     state, tab, toast, sheet, isReadOnly, showToast, openSheet, closeSheet, markMeal, changeMeal, partialMeal,
     skipMeal, undoMeal, addExtra, addAdjustment, removeExtra, swapMeal, replaceMealWithPurchaseOption, dislikeMeal,
     addRecipe, regenerateDay, addShake, markGym, setDayMode, toggleHardDay, toggleLowAppetite,
     submitCheckin, addWeight, updateProfile, completeOnboarding, setProjectStartDate, startToday, togglePrep, resetAll,
-    importState, toggleCreatine, saveAnabolicServing, generateWeek, regenerateWeekDay, savePersonalIngredient, cloud,
+    importState, toggleCreatine, saveAnabolicServing, generateWeek, regenerateWeekDay, savePersonalIngredient,
+    saveProductFromLabel, removeSavedProduct, registerSavedProduct, cloud,
   ]);
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

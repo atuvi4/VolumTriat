@@ -13,7 +13,10 @@ const RELATED_LABEL: Record<'skipped' | 'partial' | 'changed', string> = {
 export default function ExtraRow({ meal, onRemove }: { meal: ResolvedMeal; onRemove: () => void }) {
   const isAdjustment = meal.extraOrigin === 'adjustment';
   const eaten = mealEaten(meal) ?? meal.nutrition;
-  const sourceText = meal.logged ? 'dada manual' : 'calculat per recepta';
+  // L'etiqueta confirmada per l'usuari és més fiable que una dada manual genèrica.
+  const sourceText = meal.logged
+    ? /etiqueta/i.test(meal.logged.note ?? '') ? 'etiqueta revisada per tu' : 'dada manual'
+    : 'calculat per recepta';
 
   return (
     <div className="flex items-center justify-between gap-2 border border-line rounded-xl2 p-[13px] mt-2 bg-surface2">
