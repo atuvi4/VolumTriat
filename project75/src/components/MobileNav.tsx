@@ -13,7 +13,7 @@ const ITEMS: { id: Tab; label: string; icon: IconName }[] = [
 export default function MobileNav() {
   const { tab, setTab } = useApp();
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 glass border-t border-line flex justify-around px-1.5 pt-2 pb-[calc(9px+env(safe-area-inset-bottom))]">
+    <nav className="md:hidden fixed bottom-[calc(10px+env(safe-area-inset-bottom))] left-3 right-3 z-20 glass border border-line rounded-[24px] shadow-nav flex justify-around px-1.5 py-2">
       {ITEMS.map((it) => {
         const active = tab === it.id;
         return (

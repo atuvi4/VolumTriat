@@ -17,7 +17,7 @@ const base =
   'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-[background-color,border-color,transform] duration-150 select-none active:scale-[.98] disabled:opacity-55 disabled:cursor-default disabled:active:scale-100';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-accent text-white border border-accent shadow-[0_4px_12px_rgba(14,122,95,.22)] hover:bg-accent-strong hover:border-accent-strong',
+  primary: 'bg-gradient-to-b from-[#10916F] to-accent-strong text-white border border-accent-strong shadow-[0_4px_12px_rgba(14,122,95,.22)] hover:from-accent-strong hover:to-accent-strong',
   ghost: 'bg-surface2 text-ink border border-line2 hover:border-faint',
   line: 'bg-white/10 text-white border border-white/25 hover:bg-white/20',
   toggle: 'bg-info text-white border border-info',

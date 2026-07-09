@@ -30,7 +30,7 @@ export default function Sheet({ open, onClose, children }: Props) {
 export function SheetHeader({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="mb-1">
-      <h3 className="text-[19px] font-bold m-0">{title}</h3>
+      <h3 className="font-display text-[20px] font-bold m-0">{title}</h3>
       {sub && <p className="text-muted text-[13.5px] mt-0.5 mb-1">{sub}</p>}
     </div>
   );

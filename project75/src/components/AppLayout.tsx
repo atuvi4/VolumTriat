@@ -14,14 +14,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen max-w-[1280px] mx-auto">
       <Sidebar />
 
-      <main className="flex-1 min-w-0 pb-[88px] md:pb-0">
+      <main className="flex-1 min-w-0 pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-0">
         {/* Appbar (mobile) */}
         <header className="md:hidden sticky top-0 z-[15] glass-canvas border-b border-line flex items-center justify-between px-[18px] py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[9px] grid place-items-center text-white font-extrabold text-[13px] brand-grad">
               75
             </div>
-            <span className="font-extrabold text-[15px]">Project75</span>
+            <span className="font-display font-bold text-[16px]">Project75</span>
           </div>
           <div className="flex items-center gap-2">
             {isReadOnly && (
@@ -68,7 +68,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </Sheet>
 
       {toast && (
-        <div className="fixed bottom-[102px] md:bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white px-[18px] py-3 rounded-[13px] text-[13.5px] font-semibold shadow-lg2 max-w-[86%] text-center">
+        <div className="fixed bottom-[calc(96px+env(safe-area-inset-bottom))] md:bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white px-[18px] py-3 rounded-[13px] text-[13.5px] font-semibold shadow-lg2 max-w-[86%] text-center">
           {toast}
         </div>
       )}

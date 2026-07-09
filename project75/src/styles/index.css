@@ -10,7 +10,11 @@
   }
   body {
     @apply bg-canvas text-ink font-sans antialiased;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+    /* Atmosfera: rentats radials verds molt suaus sobre el canvas (fix en scroll). */
+    background-image:
+      radial-gradient(55% 38% at 100% 0%, rgba(14, 122, 95, 0.06), transparent 70%),
+      radial-gradient(45% 32% at 0% 12%, rgba(18, 170, 128, 0.05), transparent 70%);
+    background-attachment: fixed;
   }
   h1,
   h2,
@@ -54,8 +58,17 @@
     backdrop-filter: saturate(180%) blur(14px);
   }
   .glass-canvas {
-    background: rgba(247, 248, 250, 0.86);
+    background: rgba(245, 247, 246, 0.86);
     backdrop-filter: saturate(180%) blur(12px);
+  }
+  /* Gra fotogràfic subtil (SVG inline): dona textura al hero sense pes de xarxa. */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
 
@@ -85,4 +98,36 @@
 }
 .animate-sheet {
   animation: sheetUp 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Cascada d'entrada: els blocs de cada pàgina apareixen esglaonats en canviar
+   de pestanya. Només afecta fills directes de la <section> de pàgina. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade section > * {
+  animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.animate-fade section > *:nth-child(2) { animation-delay: 0.04s; }
+.animate-fade section > *:nth-child(3) { animation-delay: 0.08s; }
+.animate-fade section > *:nth-child(4) { animation-delay: 0.12s; }
+.animate-fade section > *:nth-child(5) { animation-delay: 0.16s; }
+.animate-fade section > *:nth-child(6) { animation-delay: 0.2s; }
+.animate-fade section > *:nth-child(n + 7) { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

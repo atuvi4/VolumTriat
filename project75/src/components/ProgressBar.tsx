@@ -10,7 +10,10 @@ interface Props {
 }
 
 export default function ProgressBar({ value, max, label, valueLabel, big, color = 'accent' }: Props) {
-  const fill = color === 'prot' ? 'bg-accent-bright' : 'bg-accent';
+  const fill =
+    color === 'prot'
+      ? 'bg-gradient-to-r from-accent-bright to-[#16C79A]'
+      : 'bg-gradient-to-r from-accent to-accent-bright';
   return (
     <div>
       {(label || valueLabel) && (

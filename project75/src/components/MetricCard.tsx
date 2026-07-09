@@ -17,7 +17,7 @@ export default function MetricCard({ icon, value, unit, label, tone = 'accent', 
       <div className={`w-[34px] h-[34px] rounded-[10px] grid place-items-center mb-[10px] ${iconWrap}`}>
         <Icon name={icon} size={17} />
       </div>
-      <div className={`text-[22px] font-extrabold tracking-[-0.02em] tnum ${highlight ? 'text-accent' : ''}`}>
+      <div className={`font-display text-[23px] font-bold tracking-[-0.01em] tnum ${highlight ? 'text-accent' : ''}`}>
         {value}
         {unit && <span className="text-[13px] font-semibold text-muted"> {unit}</span>}
       </div>

@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: '#F7F8FA',
+        canvas: '#F5F7F6',
         surface: '#FFFFFF',
         surface2: '#FBFCFD',
         ink: '#111827',
@@ -27,14 +27,16 @@ export default {
         cat: { gym: '#0E7A5F', run: '#2563EB', bike: '#B4692B', swim: '#0E8FA8' },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Instrument Sans', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        display: ['Bricolage Grotesque', 'Instrument Sans', 'system-ui', 'sans-serif'],
       },
-      borderRadius: { xl2: '18px' },
+      borderRadius: { xl2: '20px' },
       boxShadow: {
-        card: '0 1px 2px rgba(17,24,39,.04)',
-        soft: '0 1px 2px rgba(17,24,39,.03), 0 10px 26px rgba(17,24,39,.05)',
-        lg2: '0 20px 50px rgba(17,24,39,.10)',
+        card: '0 1px 2px rgba(16,44,34,.04), 0 6px 20px rgba(16,44,34,.04)',
+        soft: '0 1px 2px rgba(16,44,34,.03), 0 10px 26px rgba(16,44,34,.05)',
+        lg2: '0 20px 50px rgba(16,44,34,.12)',
         hero: '0 14px 34px rgba(11,90,71,.28)',
+        nav: '0 6px 24px rgba(16,44,34,.10), 0 1px 2px rgba(16,44,34,.05)',
       },
     },
   },

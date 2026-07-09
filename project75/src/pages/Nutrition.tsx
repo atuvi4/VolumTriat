@@ -138,7 +138,7 @@ export default function Nutrition() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
           {objs.map((o) => (
             <div key={o.l} className={`rounded-[14px] p-3 border ${started && o.ok ? 'bg-accent-soft border-accent-line' : 'bg-surface2 border-line'}`}>
-              <div className={`text-[19px] font-extrabold tracking-[-0.02em] tnum ${started && o.ok ? 'text-accent-strong' : ''}`}>
+              <div className={`font-display text-[20px] font-bold tracking-[-0.01em] tnum ${started && o.ok ? 'text-accent-strong' : ''}`}>
                 {started ? o.v : o.gg}
               </div>
               <div className={`text-[11.5px] font-semibold mt-0.5 ${started && o.ok ? 'text-accent-strong' : 'text-muted'}`}>{o.l}</div>

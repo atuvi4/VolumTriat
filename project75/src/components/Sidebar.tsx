@@ -21,7 +21,7 @@ export default function Sidebar() {
           75
         </div>
         <div className="leading-tight">
-          <div className="font-extrabold text-[17px]">Project75</div>
+          <div className="font-display font-bold text-[18px]">Project75</div>
           <div className="text-[11px] text-faint font-medium">Nutrition-first hybrid coach</div>
         </div>
       </div>

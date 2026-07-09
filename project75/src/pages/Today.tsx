@@ -41,10 +41,11 @@ export default function Today() {
       <PageHead title="Avui" sub={`${greetName()}, ${state.profile.name} · ${longDate()} · Dia ${day}`} right={stateBadge} />
 
       {/* HERO — prioritat ara */}
-      <div className="hero-grad text-white rounded-xl2 shadow-hero relative overflow-hidden p-[22px] mb-3.5">
+      <div className="hero-grad noise text-white rounded-xl2 shadow-hero relative overflow-hidden p-[22px] mb-3.5">
         <span className="absolute right-[-40px] top-[-40px] w-[180px] h-[180px] rounded-full bg-white/[.06]" />
+        <span className="absolute right-[36px] top-[52px] w-[90px] h-[90px] rounded-full border border-white/10" />
         <span className="text-[11px] font-bold tracking-[0.09em] uppercase text-white/70 relative">Prioritat ara</span>
-        <div className="text-[22px] font-extrabold leading-tight mt-2 mb-1.5 relative">{dir.title}</div>
+        <div className="font-display text-[24px] font-bold leading-tight mt-2 mb-1.5 relative">{dir.title}</div>
         <p className="text-white/80 text-[14px] m-0 relative">{dir.sub}</p>
         <div className="flex gap-2.5 mt-4 relative flex-wrap">
           {dir.cta === 'batut' ? (
