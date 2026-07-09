@@ -36,10 +36,13 @@ export function normalizeLabelNumber(v: string): number {
 
 const NUM = '(\\d{1,4}(?:[.,]\\d{1,2})?)';
 
-/** Primer número (amb «g» opcional) d'una línia, o null. */
-function firstNumber(line: string): number | null {
-  const m = line.match(new RegExp(`${NUM}\\s*g?\\b`));
-  return m ? normalizeLabelNumber(m[1]) : null;
+/** Primer valor (amb «g» opcional) d'un segment, o null.
+ *  «<0,5» (traces, típic de la proteïna a la mel o els sucs) es llegeix com a 0:
+ *  el valor mínim del rang que declara l'etiqueta — mai inflar. */
+function firstNumber(segment: string): number | null {
+  const m = segment.match(new RegExp(`(<\\s*)?${NUM}\\s*g?\\b`));
+  if (!m) return null;
+  return m[1] ? 0 : normalizeLabelNumber(m[2]);
 }
 
 /** Quants números té la línia (per detectar etiquetes de dues columnes). */
@@ -112,12 +115,12 @@ function nearbyValue(whole: string, def: FieldDef): number | null {
   const m = new RegExp(def.match.source).exec(whole);
   if (!m) return null;
   const seg = whole.slice(m.index + m[0].length, m.index + m[0].length + 60);
-  const numM = seg.match(new RegExp(`${NUM}\\s*g?\\b`));
+  const numM = seg.match(new RegExp(`(<\\s*)?${NUM}\\s*g?\\b`));
   if (!numM || numM.index == null) return null;
   const before = seg.slice(0, numM.index);
   if (FIELD_BOUNDARY.test(before)) return null;
   if (def.exclude && def.exclude.test(before)) return null;
-  return normalizeLabelNumber(numM[1]);
+  return numM[1] ? 0 : normalizeLabelNumber(numM[2]);
 }
 
 /** Extreu els camps d'una etiqueta en text. Mai inventa: camp il·legible = buit. */
@@ -144,12 +147,16 @@ export function parseNutritionLabelText(text: string): ParsedNutritionLabel {
   let twoColumns = false;
   for (const [key, def] of Object.entries(FIELDS) as [keyof typeof FIELDS, FieldDef][]) {
     // 1r intent: nom i valor a la MATEIXA línia (etiqueta ben llegida).
+    // El valor es busca NOMÉS a partir del nom del camp: si l'OCR ha ajuntat
+    // diversos camps en una línia, mai s'agafa un número d'un camp anterior.
     const line = lines.find((l) => def.match.test(l) && !(def.exclude && def.exclude.test(l)));
     if (line) {
-      const v = firstNumber(line.replace(def.match, '')); // número després del nom del camp
+      const from = line.search(def.match);
+      const after = line.slice(from).replace(def.match, '');
+      const v = firstNumber(after);
       if (v != null) {
         out[key] = v;
-        if (numberCount(line) >= 2) twoColumns = true;
+        if (numberCount(after) >= 2) twoColumns = true;
         continue;
       }
     }

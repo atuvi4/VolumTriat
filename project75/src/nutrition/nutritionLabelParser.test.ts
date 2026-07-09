@@ -119,6 +119,28 @@ proteines
     expect(p.protein).toBe(13);
   });
 
+  it('mel de flors: «Proteínas <0,5 g» es llegeix com a traces (0, mai inflar)', () => {
+    const MEL = `por 100 g
+valor energetico 1394 kJ / 328 kcal
+grasas 0 g
+hidratos de carbono 82 g
+de los cuales azucares 82 g
+proteinas <0,5 g
+sal 0,01 g`;
+    const p = parseNutritionLabelText(MEL);
+    expect(p.kcal).toBe(328);
+    expect(p.carbs).toBe(82);
+    expect(p.fat).toBe(0);
+    expect(p.protein).toBe(0); // <0,5 → 0 (traces), no camp buit
+  });
+
+  it('camps ajuntats en una sola línia: mai agafa un número anterior al camp', () => {
+    const p = parseNutritionLabelText('per 100 g: 500 kcal grasas 28 g hidratos 52 g proteinas 7,5 g');
+    expect(p.fat).toBe(28);
+    expect(p.carbs).toBe(52);
+    expect(p.protein).toBe(7.5); // no 28 ni 52
+  });
+
   it('normalizeLabelNumber: comes i milers', () => {
     expect(normalizeLabelNumber('12,5')).toBe(12.5);
     expect(normalizeLabelNumber('12.5')).toBe(12.5);
