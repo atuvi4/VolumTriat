@@ -374,6 +374,12 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
         )}
       </div>
 
+      {!baseValid && (
+        <p className="text-[12px] font-semibold text-warn mt-3 mb-0">
+          Per registrar falten les kcal i la proteïna (marcades amb *): omple-les mirant la foto si la lectura no les ha trobat.
+        </p>
+      )}
+
       <div className="flex flex-wrap gap-2 mt-4">
         <Button variant="primary" icon="check" className="flex-1" disabled={!canRegister || isReadOnly} onClick={registerNow}>
           Registrar ara

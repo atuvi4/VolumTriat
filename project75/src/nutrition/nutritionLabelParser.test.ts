@@ -90,6 +90,35 @@ prote'ines 13 g`;
     expect(p.protein).toBe(13);
   });
 
+  it('OCR que parteix nom i valor en línies diferents (taules a dues columnes)', () => {
+    const SPLIT = `per 100 g
+valor energetic
+1520 kJ / 363 kcal
+greixos
+6,5 g
+hidrats de carboni
+58 g
+proteines
+13 g`;
+    const p = parseNutritionLabelText(SPLIT);
+    expect(p.kcal).toBe(363);
+    expect(p.fat).toBe(6.5);
+    expect(p.carbs).toBe(58);
+    expect(p.protein).toBe(13);
+  });
+
+  it('format «Energia (kcal) 363» (valor després de la paraula kcal)', () => {
+    const p = parseNutritionLabelText('per 100 g\nEnergia (kcal): 363\nProteïnes 13 g');
+    expect(p.kcal).toBe(363);
+  });
+
+  it('mai roba el número d\'un altre camp quan el valor propi falta', () => {
+    // «greixos» sense valor, seguit immediatament d'un altre camp amb valor:
+    const p = parseNutritionLabelText('per 100 g\n363 kcal\ngreixos\nproteines 13 g');
+    expect(p.fat).toBeUndefined(); // NO ha d'agafar el 13 de proteïnes
+    expect(p.protein).toBe(13);
+  });
+
   it('normalizeLabelNumber: comes i milers', () => {
     expect(normalizeLabelNumber('12,5')).toBe(12.5);
     expect(normalizeLabelNumber('12.5')).toBe(12.5);

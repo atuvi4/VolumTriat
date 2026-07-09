@@ -101,6 +101,25 @@ export function validateParsedLabel(p: ParsedNutritionLabel): string[] {
   return warnings;
 }
 
+/** Paraules que indiquen que hem creuat cap a UN ALTRE camp (per no robar-li
+ *  el número quan el valor no és a la mateixa línia). */
+const FIELD_BOUNDARY = /(prote|hidrat|carboh|glucid|grasa|greix|\bfats?\b|lipid|sucre|azucar|sugar|saturad|energ|valor|kcal|kj|\bsal\b|sodio|sodium|fibra|fiber)/;
+
+/** Valor d'un camp quan NO és a la línia del nom: primer número que segueix el
+ *  nom del camp (fins a 60 caràcters, saltant línies) — però NOMÉS si abans
+ *  d'aquest número no apareix cap altre camp. Mai roba valors d'altres files. */
+function nearbyValue(whole: string, def: FieldDef): number | null {
+  const m = new RegExp(def.match.source).exec(whole);
+  if (!m) return null;
+  const seg = whole.slice(m.index + m[0].length, m.index + m[0].length + 60);
+  const numM = seg.match(new RegExp(`${NUM}\\s*g?\\b`));
+  if (!numM || numM.index == null) return null;
+  const before = seg.slice(0, numM.index);
+  if (FIELD_BOUNDARY.test(before)) return null;
+  if (def.exclude && def.exclude.test(before)) return null;
+  return normalizeLabelNumber(numM[1]);
+}
+
 /** Extreu els camps d'una etiqueta en text. Mai inventa: camp il·legible = buit. */
 export function parseNutritionLabelText(text: string): ParsedNutritionLabel {
   const lines = text.split(/\n+/).map((l) => norm(l)).filter(Boolean);
@@ -111,7 +130,7 @@ export function parseNutritionLabelText(text: string): ParsedNutritionLabel {
   const out: ParsedNutritionLabel = { basis, servingGrams, warnings, confidence: 'low' };
 
   // Energia: només kcal explícites (mai confondre amb kJ).
-  const kcalMatch = whole.match(new RegExp(`${NUM}\\s*kcal`));
+  const kcalMatch = whole.match(new RegExp(`${NUM}\\s*kcal`)) ?? whole.match(new RegExp(`kcal[^\\n\\d]{0,15}${NUM}`));
   if (kcalMatch) {
     out.kcal = normalizeLabelNumber(kcalMatch[1]);
   } else {
@@ -124,13 +143,19 @@ export function parseNutritionLabelText(text: string): ParsedNutritionLabel {
 
   let twoColumns = false;
   for (const [key, def] of Object.entries(FIELDS) as [keyof typeof FIELDS, FieldDef][]) {
+    // 1r intent: nom i valor a la MATEIXA línia (etiqueta ben llegida).
     const line = lines.find((l) => def.match.test(l) && !(def.exclude && def.exclude.test(l)));
-    if (!line) continue;
-    const v = firstNumber(line.replace(def.match, '')); // número després del nom del camp
-    if (v != null) {
-      out[key] = v;
-      if (numberCount(line) >= 2) twoColumns = true;
+    if (line) {
+      const v = firstNumber(line.replace(def.match, '')); // número després del nom del camp
+      if (v != null) {
+        out[key] = v;
+        if (numberCount(line) >= 2) twoColumns = true;
+        continue;
+      }
     }
+    // 2n intent: l'OCR ha partit nom i valor en línies diferents.
+    const near = nearbyValue(whole, def);
+    if (near != null) out[key] = near;
   }
   if (twoColumns) {
     warnings.push('L\'etiqueta sembla tenir dues columnes (100 g i ració): he agafat la primera. Revisa-ho.');
