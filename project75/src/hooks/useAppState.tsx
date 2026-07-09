@@ -291,6 +291,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     writeLocalBackup(state); // còpia «última» a cada desada (Data Safety)
   }, [state, isReadOnly, userId]);
 
+  useEffect(() => {
+    // Canvi de dia amb l'app OBERTA (mòbil que passa la mitjanit sense recarregar):
+    // aplica el mateix reset diari que fa loadState en arrencar. Si no ha canviat
+    // el dia, retorna el mateix estat i no hi ha re-render.
+    const checkDayChange = () => {
+      setState((s) => {
+        if (s.date === todayISO()) return s;
+        return {
+          ...s,
+          date: todayISO(),
+          meals: dayMealsFor(todayISO(), s.weeklyPlan),
+          gymDone: false,
+          checkin: null,
+          dayMode: 'normal',
+        };
+      });
+    };
+    document.addEventListener('visibilitychange', checkDayChange);
+    window.addEventListener('focus', checkDayChange);
+    const timer = window.setInterval(checkDayChange, 60_000);
+    return () => {
+      document.removeEventListener('visibilitychange', checkDayChange);
+      window.removeEventListener('focus', checkDayChange);
+      window.clearInterval(timer);
+    };
+  }, []);
+
   const showToast = useCallback((m: string) => {
     setToast(m);
     window.clearTimeout(toastTimer.current);
