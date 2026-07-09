@@ -4,6 +4,7 @@ import { SheetHeader } from '../Sheet';
 import Button from '../Button';
 import Icon from '../Icon';
 import { parseNutritionLabelText, validateParsedLabel, type ParsedNutritionLabel } from '../../nutrition/nutritionLabelParser';
+import { ocrLabelImage } from '../../nutrition/labelOcr';
 
 /* =========================================================
    Nutrition Label Scanner v1 — foto de l'etiqueta + lectura assistida.
@@ -38,6 +39,9 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
   // ---------- Foto (només local: object URL, mai guardada) ----------
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrPct, setOcrPct] = useState(0);
+  const [ocrStage, setOcrStage] = useState<'download' | 'read'>('download');
   const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -46,8 +50,27 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
       return URL.createObjectURL(f);
     });
     e.target.value = '';
+    void runOcr(f); // lectura automàtica en fer la foto
   };
   useEffect(() => () => void (photoUrl && URL.revokeObjectURL(photoUrl)), [photoUrl]);
+
+  /** OCR local (Tesseract, lazy). Mai bloqueja: si falla, queda el camí manual. */
+  const runOcr = async (f: File) => {
+    setOcrBusy(true);
+    setOcrPct(0);
+    setReadNote(null);
+    const res = await ocrLabelImage(f, (pct, stage) => {
+      setOcrPct(pct);
+      setOcrStage(stage);
+    });
+    setOcrBusy(false);
+    if (!res || !res.text.trim()) {
+      setReadNote('No he pogut llegir la foto. Prova una foto més recta i a prop del quadre nutricional, o enganxa/escriu els valors a mà.');
+      return;
+    }
+    setPasted(res.text); // el text llegit queda visible i corregible
+    applyParsedText(res.text, res.confidence);
+  };
 
   // ---------- Camps editables (la revisió manual és obligatòria) ----------
   const [name, setName] = useState(initialName ?? '');
@@ -61,11 +84,13 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [readNote, setReadNote] = useState<string | null>(null);
 
-  // ---------- Lectura de text (Live Text / Lens / teclejat) ----------
+  // ---------- Lectura de text (OCR, Live Text / Lens, o teclejat) ----------
   const [showPaste, setShowPaste] = useState(false);
   const [pasted, setPasted] = useState('');
-  const readText = () => {
-    const p = parseNutritionLabelText(pasted);
+
+  /** Omple el formulari des d'un text d'etiqueta. Mai sobreescriu amb buits. */
+  const applyParsedText = (text: string, ocrConfidence?: number) => {
+    const p = parseNutritionLabelText(text);
     if (p.kcal != null) setKcal(String(p.kcal));
     if (p.protein != null) setProtein(String(p.protein));
     if (p.carbs != null) setCarbs(String(p.carbs));
@@ -75,14 +100,20 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
       setGrams(String(p.servingGrams));
     }
     if (p.basis !== 'unknown') setBasis(p.basis);
-    setWarnings(p.warnings);
+    const ws = [...p.warnings];
+    if (ocrConfidence != null && ocrConfidence < 60) {
+      ws.push('La lectura de la foto ha sortit poc nítida: repassa cada número amb l\'etiqueta.');
+    }
+    setWarnings(ws);
     const found = [p.kcal, p.protein, p.carbs, p.fat].filter((v) => v != null).length;
     setReadNote(
       found === 0
         ? 'No ho puc llegir bé: introdueix els valors a mà mirant la foto.'
-        : `He llegit ${found} valors del text · confiança ${p.confidence === 'medium' ? 'mitjana' : 'baixa'}. Confirma'ls abans de guardar.`,
+        : `He llegit ${found} valor${found > 1 ? 's' : ''} de l'etiqueta · confiança ${p.confidence === 'medium' && (ocrConfidence == null || ocrConfidence >= 60) ? 'mitjana' : 'baixa'}. Confirma'ls abans de guardar.`,
     );
   };
+
+  const readText = () => applyParsedText(pasted);
 
   // ---------- Validació en viu (mai desar números impossibles) ----------
   const kcalN = n(kcal);
@@ -218,8 +249,19 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
             <span className="text-[11.5px] text-faint">o triar-la de la galeria</span>
           </button>
         )}
+        {ocrBusy && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-[12px] font-semibold text-muted mb-1">
+              <span>{ocrStage === 'download' ? 'Preparant el lector (només el primer cop, ~5 MB)…' : 'Llegint l\'etiqueta…'}</span>
+              <span className="tnum">{ocrPct}%</span>
+            </div>
+            <div className="h-1.5 bg-track rounded-full overflow-hidden">
+              <div className="h-full bg-accent rounded-full transition-[width] duration-300" style={{ width: `${ocrPct}%` }} />
+            </div>
+          </div>
+        )}
         <p className="text-[11px] text-faint mt-1.5 mb-0">
-          La foto s'usa només per llegir l'etiqueta en aquest dispositiu. No es puja ni es guarda enlloc.
+          La foto es llegeix i es processa <b>en aquest dispositiu</b>. No es puja ni es guarda enlloc.
         </p>
       </div>
 
