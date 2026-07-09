@@ -77,6 +77,19 @@ describe('nutritionLabelParser — etiquetes reals', () => {
     expect(p.warnings.some((w) => w.includes('sumen'))).toBe(true);
   });
 
+  it('tolera errors típics d\'OCR (lletres canviades, frases escapçades)', () => {
+    const OCR = `informacio nutricional per 100 g
+valor energetic 1520 kJ / 363 kcal
+greixos 6,5 g
+hidrats d carboni 58 g
+prote'ines 13 g`;
+    const p = parseNutritionLabelText(OCR);
+    expect(p.kcal).toBe(363);
+    expect(p.fat).toBe(6.5);
+    expect(p.carbs).toBe(58);
+    expect(p.protein).toBe(13);
+  });
+
   it('normalizeLabelNumber: comes i milers', () => {
     expect(normalizeLabelNumber('12,5')).toBe(12.5);
     expect(normalizeLabelNumber('12.5')).toBe(12.5);

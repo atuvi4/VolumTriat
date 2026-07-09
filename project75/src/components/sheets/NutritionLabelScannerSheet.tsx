@@ -69,6 +69,7 @@ export default function NutritionLabelScannerSheet({ initialName }: Props) {
       return;
     }
     setPasted(res.text); // el text llegit queda visible i corregible
+    setShowPaste(true); // transparència: mostra què ha entès l'OCR
     applyParsedText(res.text, res.confidence);
   };
 

@@ -66,15 +66,18 @@ interface FieldDef {
   exclude?: RegExp;
 }
 
+/* Patrons tolerants a errors d'OCR: «Proteïnes» pot arribar com «Prote'ines»
+   o «Protelnes» (ï→l), i «hidrats de carboni» pot venir escapçat. Es busca el
+   tros distintiu i curt de cada paraula, no la frase perfecta. */
 const FIELDS: Record<'protein' | 'carbs' | 'fat', FieldDef> = {
-  protein: { match: /prote[i]n/ }, // proteïna/proteina/protein(s) — ja normalitzat sense accents
+  protein: { match: /prote/ }, // proteïna/proteïnes/protein(s) i variants OCR
   carbs: {
-    match: /(hidrats? de carboni|hidratos de carbono|carbohydrate|\bcarbs?\b|glucids)/,
+    match: /(hidrat|carboh|\bcarbs?\b|glucid)/,
     exclude: /(sucres|azucar|sugars?|midon|almidon|starch|polialcohol)/,
   },
   fat: {
-    match: /(grasas?|greixos?|\bfats?\b|lipids|lipidos)/,
-    exclude: /(saturad|saturades|saturated|monoinsaturad|poliinsaturad|monounsaturated|polyunsaturated|trans)/,
+    match: /(grasa|greix|\bfats?\b|lipid)/,
+    exclude: /(saturad|saturated|monoinsaturad|poliinsaturad|monounsaturated|polyunsaturated|trans)/,
   },
 };
 
