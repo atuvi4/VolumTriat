@@ -3,6 +3,7 @@ import PageHead from '../components/PageHead';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 import CoachRecommendation from '../components/CoachRecommendation';
+import CoachChat from '../components/CoachChat';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import InitialWeightSheet from '../components/sheets/InitialWeightSheet';
@@ -60,6 +61,9 @@ export default function Coach() {
   return (
     <section>
       <PageHead title="Coach" sub="Recomanacions segons les teves dades" />
+
+      {/* Xat local: preguntes i ordres sobre el dia real */}
+      <CoachChat />
 
       {/* card principal */}
       <Card className="border-accent-line mb-3.5">
