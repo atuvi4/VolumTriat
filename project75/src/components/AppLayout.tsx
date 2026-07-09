@@ -18,7 +18,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         {/* Appbar (mobile) */}
         <header className="md:hidden sticky top-0 z-[15] glass-canvas border-b border-line flex items-center justify-between px-[18px] py-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-[9px] grid place-items-center text-white font-extrabold text-[13px] bg-[linear-gradient(145deg,#12aa80,#0B6450)]">
+            <div className="w-8 h-8 rounded-[9px] grid place-items-center text-white font-extrabold text-[13px] brand-grad">
               75
             </div>
             <span className="font-extrabold text-[15px]">Project75</span>

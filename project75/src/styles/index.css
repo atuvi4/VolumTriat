@@ -17,15 +17,37 @@
   h3 {
     letter-spacing: -0.02em;
   }
+  /* Accessibilitat: anell de focus visible i coherent per teclat (no per clic). */
+  :focus-visible {
+    outline: 2px solid #0e7a5f;
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: #cde7df;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    min-height: 40px; /* mida tàctil mínima al mòbil */
+  }
 }
 
 @layer components {
   /* petits helpers per efectes difícils amb utilitats pures */
   .hero-grad {
-    background: linear-gradient(160deg, #0e7a5f 0%, #0b5a47 100%);
+    background:
+      radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 55%),
+      linear-gradient(160deg, #0e7a5f 0%, #0b5a47 100%);
+  }
+  /* Xifres alineades en columnes (kcal, grams): sempre la mateixa amplada. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
   }
   .chart-grad {
     background: linear-gradient(180deg, #16a882, #0e7a5f);
+  }
+  .brand-grad {
+    background: linear-gradient(145deg, #12aa80, #0b6450);
   }
   .glass {
     background: rgba(255, 255, 255, 0.9);

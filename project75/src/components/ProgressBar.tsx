@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function ProgressBar({ value, max, label, valueLabel, big, color = 'accent' }: Props) {
-  const fill = color === 'prot' ? 'bg-[#12aa80]' : 'bg-accent';
+  const fill = color === 'prot' ? 'bg-accent-bright' : 'bg-accent';
   return (
     <div>
       {(label || valueLabel) && (
@@ -19,7 +19,7 @@ export default function ProgressBar({ value, max, label, valueLabel, big, color 
           <span className="text-muted">{valueLabel}</span>
         </div>
       )}
-      <div className={`${big ? 'h-[11px]' : 'h-2'} bg-[#EEF1F3] rounded-full overflow-hidden`}>
+      <div className={`${big ? 'h-[11px]' : 'h-2'} bg-track rounded-full overflow-hidden`}>
         <div
           className={`h-full rounded-full ${fill} transition-[width] duration-500`}
           style={{ width: `${pct(value, max)}%` }}

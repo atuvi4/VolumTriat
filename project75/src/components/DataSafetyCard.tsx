@@ -113,7 +113,7 @@ export default function DataSafetyCard() {
         </div>
 
         <div className="border-t border-line pt-3">
-          <Button variant="ghost" size="sm" icon="alert" disabled={isReadOnly} onClick={reset}>
+          <Button variant="danger" size="sm" icon="alert" disabled={isReadOnly} onClick={reset}>
             Reiniciar projecte
           </Button>
         </div>

@@ -90,7 +90,7 @@ export default function Today() {
           )}
         </Card>
 
-        <div className={`relative overflow-hidden bg-surface border rounded-xl2 p-4 pl-[18px] ${hard ? 'border-[#EAD8C2]' : 'border-accent-line'}`}>
+        <div className={`relative overflow-hidden bg-surface border rounded-xl2 p-4 pl-[18px] ${hard ? 'border-warn-line' : 'border-accent-line'}`}>
           <span className={`absolute left-0 top-0 bottom-0 w-1 ${hard ? 'bg-warn' : 'bg-accent'}`} />
           <div className={`flex items-center gap-2 font-bold text-[12.5px] mb-[7px] ${hard ? 'text-warn' : 'text-accent-strong'}`}>
             <Icon name="coach" size={16} /> Recomanació del coach

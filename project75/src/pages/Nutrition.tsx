@@ -120,7 +120,7 @@ export default function Nutrition() {
         title="Nutrició"
         sub="Mode simple · marca, no comptis"
         right={
-          <span className="inline-flex bg-[#EDEFF2] rounded-[11px] p-[3px]">
+          <span className="inline-flex bg-seg rounded-[11px] p-[3px]">
             <button className="px-3.5 py-2 rounded-[9px] font-semibold text-[13px] bg-white shadow-card">Simple</button>
             <button className="px-3.5 py-2 rounded-[9px] font-semibold text-[13px] text-muted" onClick={() => showToast('Mode precís (grams i macros editables) — arriba a V2')}>Precís</button>
           </span>
@@ -138,7 +138,7 @@ export default function Nutrition() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
           {objs.map((o) => (
             <div key={o.l} className={`rounded-[14px] p-3 border ${started && o.ok ? 'bg-accent-soft border-accent-line' : 'bg-surface2 border-line'}`}>
-              <div className={`text-[19px] font-extrabold tracking-[-0.02em] ${started && o.ok ? 'text-accent-strong' : ''}`}>
+              <div className={`text-[19px] font-extrabold tracking-[-0.02em] tnum ${started && o.ok ? 'text-accent-strong' : ''}`}>
                 {started ? o.v : o.gg}
               </div>
               <div className={`text-[11.5px] font-semibold mt-0.5 ${started && o.ok ? 'text-accent-strong' : 'text-muted'}`}>{o.l}</div>

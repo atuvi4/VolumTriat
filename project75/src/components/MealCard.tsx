@@ -45,8 +45,8 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
 
   return (
     <div
-      className={`border rounded-2xl p-[15px] mt-[11px] transition-colors ${
-        pending ? 'bg-surface border-line' : 'bg-surface2 border-line'
+      className={`border rounded-xl2 p-4 mt-[11px] transition-colors ${
+        pending ? 'bg-surface border-line shadow-card' : 'bg-surface2 border-line'
       } ${skipped ? 'opacity-70' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -58,10 +58,10 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {meal.tags.includes('supplement') && (
-            <span className="text-[10.5px] font-bold text-info bg-info-soft px-2 py-1 rounded-full">Suplement</span>
+            <span className="text-[11px] font-bold text-info bg-info-soft px-2.5 py-1 rounded-full">Suplement</span>
           )}
           {badge && (
-            <span className={`inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-1 rounded-full ${badge.cls}`}>
+            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${badge.cls}`}>
               <Icon name={badge.icon} size={12} />
               {badge.label}
               {status === 'partial' && meal.partialPct ? ` ${meal.partialPct}%` : ''}
@@ -74,9 +74,9 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
       {skipped ? (
         <div className="mt-2 text-[13px] font-semibold text-faint">No suma calories ni proteïna avui.</div>
       ) : (
-        <div className="flex flex-wrap gap-3 mt-2 text-[13px] font-semibold text-muted">
-          <span>{shown.kcal} kcal</span>
-          <span>{shown.protein} g proteïna</span>
+        <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1 mt-2 text-[13px] font-semibold text-muted tnum">
+          <span><b className={`text-[14px] ${pending ? 'text-ink' : ''}`}>{shown.kcal}</b> kcal</span>
+          <span><b className={`text-[14px] ${pending ? 'text-ink' : ''}`}>{shown.protein}</b> g proteïna</span>
           {status === 'done' && <span className="text-faint font-medium">{shown.carbs}C · {shown.fat}G</span>}
         </div>
       )}
@@ -111,7 +111,7 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
 
       {/* Avís de seguretat: confiança baixa quan la proteïna importa */}
       {!skipped && requiresUserCheck(meal, status) && (
-        <div className="flex items-start gap-1.5 mt-2 text-[11.5px] font-semibold text-warn bg-warn-soft rounded-lg px-2.5 py-1.5">
+        <div className="flex items-start gap-2 mt-2 text-[12px] font-semibold text-warn bg-warn-soft border border-warn-line/60 rounded-[10px] px-3 py-2">
           <Icon name="alert" size={13} className="shrink-0 mt-0.5" />
           Estimació baixa: revisa l'etiqueta si aquest àpat és important per proteïna.
         </div>
@@ -119,7 +119,7 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
 
       {/* Avís: proposta de compra possiblement d'una versió antiga */}
       {!skipped && isSuspiciousPurchaseSnapshot(meal) && (
-        <div className="flex items-start gap-1.5 mt-2 text-[11.5px] font-semibold text-warn bg-warn-soft rounded-lg px-2.5 py-1.5">
+        <div className="flex items-start gap-2 mt-2 text-[12px] font-semibold text-warn bg-warn-soft border border-warn-line/60 rounded-[10px] px-3 py-2">
           <Icon name="alert" size={13} className="shrink-0 mt-0.5" />
           Aquesta proposta pot venir d'una versió antiga. A «Opcions» pots corregir productes o tornar a generar la compra.
         </div>
@@ -131,7 +131,7 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
 
       {/* Varietat diària: avís suau si repeteix un aliment base ja menjat avui */}
       {variety && (
-        <div className="flex items-start gap-2 mt-2 text-[12px] bg-info-soft text-info rounded-lg px-3 py-2">
+        <div className="flex items-start gap-2 mt-2 text-[12px] bg-info-soft text-info border border-info-line/60 rounded-[10px] px-3 py-2">
           <Icon name="swap" size={14} className="shrink-0 mt-0.5" />
           <div className="flex-1">
             <span className="font-semibold">{variety.message}</span>
@@ -150,13 +150,13 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
           <>
             <button
               onClick={onMarkDone}
-              className="inline-flex items-center gap-1.5 bg-accent text-white font-semibold text-[13px] px-4 py-2 rounded-[10px] hover:bg-accent-strong"
+              className="inline-flex items-center gap-1.5 min-h-[40px] bg-accent text-white font-semibold text-[13px] px-4 py-2 rounded-[11px] shadow-[0_2px_8px_rgba(14,122,95,.18)] hover:bg-accent-strong active:scale-[.98] transition-[background-color,transform] duration-150"
             >
               <Icon name="check" size={16} /> Fet
             </button>
             <button
               onClick={onOpenOptions}
-              className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"
+              className="inline-flex items-center gap-1.5 min-h-[40px] bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[11px] hover:border-faint active:scale-[.98] transition-[border-color,transform] duration-150"
             >
               <Icon name="chev" size={16} /> Opcions
             </button>
@@ -166,14 +166,14 @@ export default function MealCard({ meal, dayMeals, onMarkDone, onOpenOptions, on
             {(status === 'done' || status === 'changed' || status === 'partial') && (
               <button
                 onClick={onEdit}
-                className="inline-flex items-center gap-1.5 bg-surface2 border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:border-faint"
+                className="inline-flex items-center gap-1.5 min-h-[40px] bg-surface border border-line2 text-ink font-semibold text-[13px] px-3.5 py-2 rounded-[11px] hover:border-faint active:scale-[.98] transition-[border-color,transform] duration-150"
               >
                 <Icon name="edit" size={15} /> Editar
               </button>
             )}
             <button
               onClick={onUndo}
-              className="inline-flex items-center gap-1.5 text-muted font-semibold text-[13px] px-3.5 py-2 rounded-[10px] hover:text-ink"
+              className="inline-flex items-center gap-1.5 min-h-[40px] text-muted font-semibold text-[13px] px-3.5 py-2 rounded-[11px] hover:text-ink"
             >
               <Icon name="swap" size={15} /> Desfer
             </button>

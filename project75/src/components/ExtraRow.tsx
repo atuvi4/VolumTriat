@@ -16,7 +16,7 @@ export default function ExtraRow({ meal, onRemove }: { meal: ResolvedMeal; onRem
   const sourceText = meal.logged ? 'dada manual' : 'calculat per recepta';
 
   return (
-    <div className="flex items-center justify-between gap-2 border border-line rounded-2xl p-[13px] mt-2 bg-surface2">
+    <div className="flex items-center justify-between gap-2 border border-line rounded-xl2 p-[13px] mt-2 bg-surface2">
       <div className="min-w-0">
         {isAdjustment && (
           <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-accent bg-accent-soft px-2 py-0.5 rounded-full mb-1">
@@ -42,7 +42,7 @@ export default function ExtraRow({ meal, onRemove }: { meal: ResolvedMeal; onRem
       </div>
       <button
         onClick={onRemove}
-        className="shrink-0 inline-flex items-center gap-1 text-muted hover:text-warn font-semibold text-[13px] px-2.5 py-2 rounded-[10px]"
+        className="shrink-0 inline-flex items-center gap-1 min-h-[40px] text-muted hover:text-danger font-semibold text-[13px] px-2.5 py-2 rounded-[10px]"
       >
         <Icon name="x" size={16} /> Treure
       </button>

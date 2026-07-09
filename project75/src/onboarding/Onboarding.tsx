@@ -4,7 +4,7 @@ import Button from '../components/Button';
 import type { Goal, Ritme } from '../types';
 
 const inputCls =
-  'w-full bg-surface2 border border-line2 rounded-[10px] px-3 py-2.5 text-[14px] font-semibold focus:outline-none focus:border-accent';
+  'w-full bg-surface2 border border-line2 rounded-[10px] px-3 py-2.5 text-[14px] font-semibold focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft transition-[border-color,box-shadow]';
 
 function Seg<T extends string>({
   value,
@@ -16,7 +16,7 @@ function Seg<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex flex-wrap gap-[3px] bg-[#EDEFF2] rounded-[10px] p-[3px] w-full">
+    <div className="inline-flex flex-wrap gap-[3px] bg-seg rounded-[10px] p-[3px] w-full">
       {options.map((o) => (
         <button
           key={o.v}

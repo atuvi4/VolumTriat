@@ -78,7 +78,7 @@ export default function Evolution() {
           <b className="text-accent">{hasWeights ? fmt1(w) + ' kg' : 'sense pes'}</b>
           <span>{p.target1} kg</span>
         </div>
-        <div className="h-[11px] bg-[#EEF1F3] rounded-full overflow-hidden">
+        <div className="h-[11px] bg-track rounded-full overflow-hidden">
           <div className="h-full bg-accent rounded-full transition-[width] duration-500" style={{ width: `${pct(w - p.startWeight, p.target1 - p.startWeight)}%` }} />
         </div>
         <div className="relative h-[26px] mt-2.5">

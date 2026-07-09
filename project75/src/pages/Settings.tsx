@@ -29,7 +29,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 const inputCls =
-  'w-[120px] text-right bg-surface2 border border-line2 rounded-[10px] px-3 py-2 text-[14px] font-semibold focus:outline-none focus:border-accent';
+  'w-[120px] text-right bg-surface2 border border-line2 rounded-[10px] px-3 py-2 text-[14px] font-semibold focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft transition-[border-color,box-shadow]';
 
 export default function Settings() {
   const { state, updateProfile, addWeight, resetAll, startToday } = useApp();
@@ -70,12 +70,12 @@ export default function Settings() {
 
       <Group title="Projecte">
         <Field label="Data d'inici del projecte">
-          <input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <input type="date" className={`${inputCls} !w-[160px]`} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </Field>
         <div className="flex gap-2.5 py-3">
           <Button variant="ghost" size="sm" icon="check" onClick={startToday}>Començar avui</Button>
           <Button
-            variant="ghost"
+            variant="danger"
             size="sm"
             icon="alert"
             onClick={() => {
@@ -116,7 +116,7 @@ export default function Settings() {
           <input type="number" step="0.5" className={inputCls} value={target2} onChange={(e) => setT2(+e.target.value)} />
         </Field>
         <Field label="Ritme">
-          <span className="inline-flex bg-[#EDEFF2] rounded-[10px] p-[3px]">
+          <span className="inline-flex bg-seg rounded-[10px] p-[3px]">
             {(['moderat', 'agressiu'] as Ritme[]).map((r) => (
               <button
                 key={r}

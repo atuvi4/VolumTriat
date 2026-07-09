@@ -5,8 +5,8 @@ import { CONFIDENCE_LABEL } from '../nutrition/nutritionSources';
 
 const tone = {
   accent: { border: 'border-accent-line', bar: 'bg-accent', head: 'text-accent-strong' },
-  warn: { border: 'border-[#EAD8C2]', bar: 'bg-warn', head: 'text-warn' },
-  info: { border: 'border-[#D3E0FC]', bar: 'bg-info', head: 'text-info' },
+  warn: { border: 'border-warn-line', bar: 'bg-warn', head: 'text-warn' },
+  info: { border: 'border-info-line', bar: 'bg-info', head: 'text-info' },
 };
 
 interface Props {

@@ -14,7 +14,7 @@ export default function Ring({ percent, value, sub }: Props) {
     >
       <div className="absolute inset-[9px] bg-surface rounded-full grid place-items-center text-center">
         <div>
-          <div className="text-[20px] font-extrabold leading-none">{value}</div>
+          <div className="text-[20px] font-extrabold leading-none tnum">{value}</div>
           <div className="text-[10.5px] text-muted mt-[3px]">{sub}</div>
         </div>
       </div>

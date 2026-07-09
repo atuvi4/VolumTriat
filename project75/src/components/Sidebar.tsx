@@ -17,7 +17,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-[250px] shrink-0 border-r border-line bg-surface p-6 sticky top-0 h-screen">
       <div className="flex items-center gap-3">
-        <div className="w-[38px] h-[38px] rounded-[11px] grid place-items-center text-white font-extrabold text-[15px] tracking-tight shadow-[0_4px_12px_rgba(11,100,80,.28)] bg-[linear-gradient(145deg,#12aa80,#0B6450)]">
+        <div className="w-[38px] h-[38px] rounded-[11px] grid place-items-center text-white font-extrabold text-[15px] tracking-tight shadow-[0_4px_12px_rgba(11,100,80,.28)] brand-grad">
           75
         </div>
         <div className="leading-tight">

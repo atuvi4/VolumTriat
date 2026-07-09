@@ -114,7 +114,7 @@ export default function Training() {
         <div className="flex flex-col gap-3.5">
           <FocusCard w={w} done={state.gymDone} onMark={markGym} />
           {conflict && (
-            <div className="relative overflow-hidden bg-surface border border-[#EAD8C2] rounded-xl2 p-4 pl-[18px]">
+            <div className="relative overflow-hidden bg-surface border border-warn-line rounded-xl2 p-4 pl-[18px]">
               <span className="absolute left-0 top-0 bottom-0 w-1 bg-warn" />
               <div className="flex items-center gap-2 font-bold text-[12.5px] mb-[7px] text-warn">
                 <Icon name="alert" size={16} /> Possible conflicte

@@ -9,17 +9,21 @@ export default {
         surface2: '#FBFCFD',
         ink: '#111827',
         muted: '#6B7280',
-        faint: '#9CA3AF',
+        faint: '#8A919C',
         line: '#ECEEF1',
         line2: '#E3E6EA',
+        track: '#EEF1F3', // fons de barres de progrés
+        seg: '#EDEFF2', // fons de controls segmentats
         accent: {
           DEFAULT: '#0E7A5F',
           strong: '#0B6450',
+          bright: '#12AA80',
           soft: '#E7F3EF',
           line: '#CDE7DF',
         },
-        warn: { DEFAULT: '#B4692B', soft: '#FBF2E9' },
-        info: { DEFAULT: '#2F5FE0', soft: '#EEF2FD' },
+        warn: { DEFAULT: '#B4692B', soft: '#FBF2E9', line: '#EAD8C2' },
+        info: { DEFAULT: '#2F5FE0', soft: '#EEF2FD', line: '#D3E0FC' },
+        danger: { DEFAULT: '#B3403A', soft: '#FBEFEE', line: '#F0D4D2' },
         cat: { gym: '#0E7A5F', run: '#2563EB', bike: '#B4692B', swim: '#0E8FA8' },
       },
       fontFamily: {

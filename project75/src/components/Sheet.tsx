@@ -10,12 +10,17 @@ export default function Sheet({ open, onClose, children }: Props) {
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end md:items-center justify-center bg-[rgba(17,24,39,.44)] backdrop-blur-[2px]"
+      className="fixed inset-0 z-40 flex items-end md:items-center justify-center bg-[rgba(17,24,39,.48)] backdrop-blur-[2px]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="animate-sheet w-full max-w-[500px] md:max-w-[460px] bg-surface rounded-t-[22px] md:rounded-[22px] shadow-lg2 p-5 pb-[calc(26px+env(safe-area-inset-bottom))] md:pb-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="animate-sheet w-full max-w-[500px] md:max-w-[460px] max-h-[88dvh] overflow-y-auto bg-surface rounded-t-[22px] md:rounded-[22px] shadow-lg2 p-5 pb-[calc(26px+env(safe-area-inset-bottom))] md:pb-6"
+      >
+        <span className="md:hidden block w-9 h-1 rounded-full bg-line2 mx-auto -mt-1 mb-3" aria-hidden="true" />
         {children}
       </div>
     </div>

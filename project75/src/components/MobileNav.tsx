@@ -20,11 +20,14 @@ export default function MobileNav() {
           <button
             key={it.id}
             onClick={() => setTab(it.id)}
-            className={`flex flex-col items-center gap-[3px] flex-1 py-[3px] text-[10.5px] font-semibold ${
-              active ? 'text-accent' : 'text-faint'
+            aria-current={active ? 'page' : undefined}
+            className={`flex flex-col items-center gap-[3px] flex-1 py-[3px] text-[11px] font-semibold transition-colors ${
+              active ? 'text-accent-strong' : 'text-faint'
             }`}
           >
-            <Icon name={it.icon} size={22} />
+            <span className={`grid place-items-center h-[26px] px-4 rounded-full transition-colors ${active ? 'bg-accent-soft' : ''}`}>
+              <Icon name={it.icon} size={21} />
+            </span>
             {it.label}
           </button>
         );
