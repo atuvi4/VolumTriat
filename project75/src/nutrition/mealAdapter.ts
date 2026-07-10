@@ -1,4 +1,5 @@
-import type { MealRecipe, ResolvedMeal } from './nutritionTypes';
+import type { FoodItem, MealRecipe, ResolvedMeal } from './nutritionTypes';
+import { FOODS } from './foodDatabase';
 
 /* =========================================================
    Meal Adapter v1 — «no tinc plàtan»: adapta un àpat planificat traient
@@ -52,7 +53,7 @@ export function adaptMealWithout(meal: ResolvedMeal, missing: string): AdaptedMe
     return { foodId: i.foodId, grams: toG, precision: 'estimated_portion' as const };
   });
 
-  const baseName = meal.name.replace(/\s*\(sense [^)]*\)\s*$/i, '');
+  const baseName = meal.name.replace(/\s*\((sense|amb) [^)]*\)\s*$/i, '');
   return {
     recipe: {
       id: `adapt-${meal.recipeId ?? meal.id}-${Date.now()}`,
@@ -63,5 +64,72 @@ export function adaptMealWithout(meal: ResolvedMeal, missing: string): AdaptedMe
     },
     removedName: removed.name,
     changes,
+  };
+}
+
+/* ---------- Substitució de variant: «tinc iogurt normal, no el proteic» ---------- */
+
+/** Millor aliment de la base local per a un text lliure (per encaix de tokens). */
+export function findLocalFood(query: string): FoodItem | null {
+  const q = tokens(query);
+  if (!q.length) return null;
+  let best: FoodItem | null = null;
+  let bestScore = 0;
+  for (const f of FOODS) {
+    const name = tokens(f.name);
+    const score = q.filter((m) => name.some((n) => n.startsWith(m) || m.startsWith(n))).length;
+    if (score > bestScore) {
+      best = f;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+export type SubstituteResult =
+  /** El pla ja compta exactament amb el que l'usuari té: res a canviar. */
+  | { kind: 'already'; foodName: string; kcalPer100g: number; proteinPer100g: number }
+  | { kind: 'adapted'; recipe: MealRecipe; fromName: string; toName: string; fromG: number; toG: number };
+
+/** Substitueix un ingredient de l'àpat per la variant que l'usuari té de veritat
+ *  (base local), reajustant els grams per recuperar la PROTEÏNA de l'original
+ *  (prioritat de volum), dins de límits de seny. Nutrició final: el motor. */
+export function substituteIngredientInMeal(meal: ResolvedMeal, have: string, insteadOf?: string): SubstituteResult | null {
+  const target =
+    (insteadOf && meal.ingredients.find((i) => ingredientMatches(i.name, insteadOf))) ||
+    meal.ingredients.find((i) => ingredientMatches(i.name, have));
+  if (!target || !target.foodId || target.grams <= 0) return null;
+
+  const sub = findLocalFood(have);
+  if (!sub) return null;
+  if (sub.id === target.foodId) {
+    return { kind: 'already', foodName: sub.name, kcalPer100g: sub.kcalPer100g, proteinPer100g: sub.proteinPer100g };
+  }
+
+  // Grams que recuperen la proteïna original amb la variant nova (clamp de seny).
+  const ideal =
+    target.nutrition.protein > 0 && sub.proteinPer100g > 0
+      ? (target.nutrition.protein / sub.proteinPer100g) * 100
+      : target.grams;
+  const toG = Math.min(Math.min(MAX_GRAMS, target.grams * MAX_SCALE), Math.max(target.grams * 0.5, round5(ideal)));
+
+  const baseName = meal.name.replace(/\s*\((sense|amb) [^)]*\)\s*$/i, '');
+  return {
+    kind: 'adapted',
+    recipe: {
+      id: `subst-${meal.recipeId ?? meal.id}-${Date.now()}`,
+      slot: meal.slot,
+      name: `${baseName} (amb ${sub.name.toLowerCase()})`,
+      tags: meal.tags,
+      ingredients: meal.ingredients.map((i) =>
+        i === target
+          ? { foodId: sub.id, grams: round5(toG), precision: 'estimated_portion' as const }
+          : { foodId: i.foodId, grams: i.grams, precision: 'estimated_portion' as const },
+      ),
+    },
+    fromName: target.name,
+    toName: sub.name,
+    fromG: Math.round(target.grams),
+    toG: round5(toG),
   };
 }

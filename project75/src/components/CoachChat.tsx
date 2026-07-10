@@ -8,7 +8,7 @@ import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
 import { resolveTodayTraining } from '../data/week';
 import { swapOptionsFor } from '../nutrition/mealPlans';
-import { adaptMealWithout, ingredientMatches } from '../nutrition/mealAdapter';
+import { adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from '../nutrition/mealAdapter';
 import { rankSwapOptions } from '../brain/brain';
 import { previewNutrition } from '../nutrition/mealBuilder';
 import { realWeights } from '../utils/project';
@@ -65,6 +65,11 @@ export default function CoachChat() {
     const n = previewNutrition(r);
     app.swapMeal(meal.id, r);
     coach(`✓ ${meal.slot} canviat a «${r.name}» · ${n.kcal} kcal · ${n.protein} g proteïna (calculat per ingredients).`);
+  };
+
+  const offerAlternatives = (meal: ResolvedMeal, lead: string) => {
+    const ranked = rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []).slice(0, 4);
+    coach(lead, ranked.map((r) => ({ label: `${r.name} · ${previewNutrition(r).kcal} kcal`, run: () => doSwap(meal, r) })));
   };
 
   const handle = (intent: ChatIntent) => {
@@ -261,14 +266,11 @@ export default function CoachChat() {
           );
           return;
         }
-        const showAlternatives = (lead: string) => {
-          const ranked = rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []).slice(0, 4);
-          coach(lead, ranked.map((r) => ({ label: `${r.name} · ${previewNutrition(r).kcal} kcal`, run: () => doSwap(meal, r) })));
-        };
         const adapted = adaptMealWithout(meal, intent.missing);
         if (!adapted) {
           const carries = meal.ingredients.some((i) => ingredientMatches(i.name, intent.missing));
-          showAlternatives(
+          offerAlternatives(
+            meal,
             carries
               ? `El ${meal.slot} porta ${intent.missing} però adaptar-lo el deixaria coix. Millor una alternativa (calculades pel motor):`
               : `El ${meal.slot} d'avui («${meal.name}») no porta ${intent.missing}. Si el vols canviar igualment:`,
@@ -285,7 +287,42 @@ export default function CoachChat() {
           }`,
           [
             { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, adapted.recipe) },
-            { label: 'Millor una alternativa', run: () => showAlternatives(`Alternatives per al ${meal.slot}:`) },
+            { label: 'Millor una alternativa', run: () => offerAlternatives(meal, `Alternatives per al ${meal.slot}:`) },
+          ],
+        );
+        return;
+      }
+
+      case 'substituteIngredient': {
+        const pending = SLOT_ORDER.map(plannedBySlot).filter((m): m is ResolvedMeal => !!m && mealStatus(m) === 'pending');
+        const meal = intent.slot
+          ? pending.find((m) => m.slot === intent.slot)
+          : pending.find((m) =>
+              m.ingredients.some(
+                (i) => ingredientMatches(i.name, intent.insteadOf ?? intent.have) || ingredientMatches(i.name, intent.have),
+              ),
+            );
+        if (!meal) {
+          coach(`Cap àpat pendent d'avui porta res semblant a «${intent.insteadOf ?? intent.have}».`);
+          return;
+        }
+        const res = substituteIngredientInMeal(meal, intent.have, intent.insteadOf);
+        if (!res) {
+          offerAlternatives(meal, `No he sabut encaixar «${intent.have}» al ${meal.slot}. Si vols, canvia'l per una alternativa:`);
+          return;
+        }
+        if (res.kind === 'already') {
+          coach(
+            `Bona notícia: el ${meal.slot} ja compta amb ${res.foodName.toLowerCase()} normal (${res.kcalPer100g} kcal · ${res.proteinPer100g} g de proteïna per 100 g, base local). No cal canviar res — marca'l «Fet» quan te'l mengis.`,
+          );
+          return;
+        }
+        const n = previewNutrition(res.recipe);
+        coach(
+          `Amb ${res.toName.toLowerCase()} en lloc de ${res.fromName.toLowerCase()}: ${res.fromG}→${res.toG} g per mantenir la proteïna.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.`,
+          [
+            { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, res.recipe) },
+            { label: 'Millor una alternativa', run: () => offerAlternatives(meal, `Alternatives per al ${meal.slot}:`) },
           ],
         );
         return;

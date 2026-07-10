@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adaptMealWithout, ingredientMatches } from './mealAdapter';
+import { adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from './mealAdapter';
 import { resolveRecipe, previewNutrition } from './mealBuilder';
 import { defaultDayRecipes } from './mealPlans';
 
@@ -37,6 +37,25 @@ describe('adaptMealWithout — quadra kcal sense inventar', () => {
 
   it('si l\'àpat no porta l\'ingredient → null (mai adapta a cegues)', () => {
     expect(adaptMealWithout(berenar(), 'salmó')).toBeNull();
+  });
+
+  it('substitueix una variant reajustant grams per proteïna, calculat pel motor', () => {
+    const m = snack(); // llet + plàtan + civada
+    const res = substituteIngredientInMeal(m, 'iogurt grec', 'llet')!;
+    expect(res.kind).toBe('adapted');
+    if (res.kind === 'adapted') {
+      expect(res.fromName.toLowerCase()).toContain('llet');
+      expect(res.toName.toLowerCase()).toContain('iogurt');
+      expect(res.toG).toBeGreaterThan(0);
+      const n = previewNutrition(res.recipe);
+      expect(n.kcal).toBeGreaterThan(0); // resoluble pel motor, mai inventat
+    }
+  });
+
+  it('si el pla ja porta el que l\'usuari té → «already», res a canviar', () => {
+    const res = substituteIngredientInMeal(berenar(), 'iogurt grec natural del consum', 'proteic')!;
+    expect(res.kind).toBe('already');
+    if (res.kind === 'already') expect(res.foodName.toLowerCase()).toContain('iogurt grec');
   });
 
   it('el nom no acumula «(sense …)» en adaptar dues vegades', () => {

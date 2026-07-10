@@ -62,6 +62,18 @@ describe('chatEngine — adaptar àpat (ingredient que falta)', () => {
     expect(parseIntent('no em queda civada')).toEqual({ kind: 'adaptMeal', missing: 'civada', slot: undefined });
   });
 
+  it('«tinc X, no el Y» / «en lloc de» / «només tinc» → substituir variant', () => {
+    expect(parseIntent('tinc el iogurt grec natural del consum no el proteic')).toEqual({
+      kind: 'substituteIngredient', have: 'iogurt grec natural del consum', insteadOf: 'proteic', slot: undefined,
+    });
+    expect(parseIntent('tinc llet sencera en lloc de iogurt')).toEqual({
+      kind: 'substituteIngredient', have: 'llet sencera', insteadOf: 'iogurt', slot: undefined,
+    });
+    expect(parseIntent('només tinc pa per esmorzar')).toEqual({
+      kind: 'substituteIngredient', have: 'pa', slot: 'esmorzar',
+    });
+  });
+
   it('mai confon «no tinc gana» amb un ingredient', () => {
     expect(parseIntent('no tinc gana').kind).toBe('lowAppetite');
     expect(parseIntent('no tinc gens de gana').kind).toBe('lowAppetite');
