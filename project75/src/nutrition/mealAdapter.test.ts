@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adaptMealWithLimit, adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from './mealAdapter';
+import { adaptMealWithLimit, adaptMealWithout, addIngredientToMeal, ingredientMatches, substituteIngredientInMeal } from './mealAdapter';
 import { resolveRecipe, previewNutrition } from './mealBuilder';
 import { defaultDayRecipes, RECIPE_POOL } from './mealPlans';
 
@@ -93,6 +93,34 @@ describe('adaptMealWithout — quadra kcal sense inventar', () => {
       expect(res.neededG).toBe(200);
       expect(res.haveG).toBe(250);
     }
+  });
+
+  it('afegir un ingredient que JA hi és → l\'amplia (mel al berenar)', () => {
+    const m = berenar(); // ja porta mel 15 g
+    const res = addIngredientToMeal(m, 'mel')!;
+    expect(res.kind).toBe('increased');
+    if (res.kind === 'increased') {
+      expect(res.fromG).toBe(15);
+      expect(res.toG).toBeGreaterThan(15);
+    }
+    expect(previewNutrition(res.recipe).kcal).toBeGreaterThan(m.nutrition.kcal);
+  });
+
+  it('afegir un ingredient nou → s\'incorpora amb ració raonable', () => {
+    const m = snack(); // llet + plàtan + civada (sense fruits secs)
+    const res = addIngredientToMeal(m, 'fruits secs', 25)!;
+    expect(res.kind).toBe('added');
+    if (res.kind === 'added') expect(res.grams).toBe(25);
+    expect(res.recipe.ingredients).toHaveLength(m.ingredients.length + 1);
+  });
+
+  it('la substitució mai supera la ració «molt gran» de l\'aliment', () => {
+    // pollastre 150 g (46 g prot) substituït per iogurt: l'ideal serien ~515 g,
+    // però el límit de ració del iogurt (400) i el +75% (262) manen.
+    const dinar = resolveRecipe(defaultDayRecipes().find((r) => r.slot === 'dinar')!, { id: 'day-dinar' });
+    const res = substituteIngredientInMeal(dinar, 'iogurt grec', 'pollastre')!;
+    expect(res.kind).toBe('adapted');
+    if (res.kind === 'adapted') expect(res.toG).toBeLessThanOrEqual(265);
   });
 
   it('el nom no acumula «(sense …)» en adaptar dues vegades', () => {

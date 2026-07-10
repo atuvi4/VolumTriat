@@ -3,12 +3,12 @@ import { useApp } from '../hooks/useAppState';
 import Card from './Card';
 import Icon from './Icon';
 import { HELP_TEXT, isActionIntent, parseIntent, type ChatIntent } from '../coach/chatEngine';
-import { goalsFor, doneKcal, doneProt, doneCount, mealStatus, currentWeight, MIN_FOR_TREND } from '../utils/goals';
+import { goalsFor, doneKcal, doneProt, doneCount, mealEaten, mealStatus, currentWeight, MIN_FOR_TREND } from '../utils/goals';
 import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
 import { resolveTodayTraining } from '../data/week';
 import { swapOptionsFor } from '../nutrition/mealPlans';
-import { adaptMealWithLimit, adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from '../nutrition/mealAdapter';
+import { adaptMealWithLimit, adaptMealWithout, addIngredientToMeal, ingredientMatches, substituteIngredientInMeal } from '../nutrition/mealAdapter';
 import { rankSwapOptions } from '../brain/brain';
 import { previewNutrition } from '../nutrition/mealBuilder';
 import { realWeights } from '../utils/project';
@@ -61,10 +61,29 @@ export default function CoachChat() {
   const plannedBySlot = (slot: MealSlot): ResolvedMeal | undefined =>
     state.meals.find((m) => !m.isExtra && m.slot === slot);
 
+  /** Kcal del PLA sencer d'avui: menjat + pendents al valor planificat. El
+   *  coach vigila el dia, no cada àpat aïllat. */
+  const plannedDayKcal = () =>
+    state.meals.reduce((sum, m) => {
+      const eaten = mealEaten(m);
+      if (eaten) return sum + eaten.kcal;
+      return sum + (!m.isExtra && mealStatus(m) === 'pending' ? m.nutrition.kcal : 0);
+    }, 0);
+
+  /** Avís si, després d'un canvi en un àpat pendent, el pla del dia queda curt. */
+  const dayPlanNote = (oldPendingKcal: number, newPendingKcal: number): string => {
+    const target = goalsFor(state).kcal;
+    const expected = plannedDayKcal() - oldPendingKcal + newPendingKcal;
+    if (expected >= target - 100) return '';
+    return `\n⚠ Amb aquest canvi, el pla d'avui queda en ~${nf(expected)} de ${nf(target)} kcal. Tanca-ho amb «afegeix un batut» o «afegeix mel al berenar».`;
+  };
+
   const doSwap = (meal: ResolvedMeal, r: MealRecipe) => {
     const n = previewNutrition(r);
     app.swapMeal(meal.id, r);
-    coach(`✓ ${meal.slot} canviat a «${r.name}» · ${n.kcal} kcal · ${n.protein} g proteïna (calculat per ingredients).`);
+    coach(
+      `✓ ${meal.slot} canviat a «${r.name}» · ${n.kcal} kcal · ${n.protein} g proteïna (calculat per ingredients).${dayPlanNote(meal.nutrition.kcal, n.kcal)}`,
+    );
   };
 
   /** «Iogurt 200→120 g» per als canvis; «+ Mel 20 g (nou)» per als afegits de rebost. */
@@ -99,8 +118,14 @@ export default function CoachChat() {
           rw.length >= MIN_FOR_TREND
             ? ` Tendència 14 dies: ${(trendPerWeekWindow(rw, 14) ?? 0) >= 0 ? '+' : ''}${fmt1(trendPerWeekWindow(rw, 14) ?? 0)} kg/setm.`
             : '';
+        // Vigila el PLA sencer: si amb els pendents no s'arriba, avisa ara, no a les 23h.
+        const plan = plannedDayKcal();
+        const planLine =
+          plan < g.kcal - 100
+            ? `\n⚠ El pla d'avui (menjat + pendent) suma ~${nf(plan)} de ${nf(g.kcal)} kcal: afegeix un batut o amplia un àpat per cobrir-ho.`
+            : '';
         coach(
-          `${nf(dk)}/${nf(g.kcal)} kcal · ${dp}/${g.prot} g proteïna · ${doneCount(state.meals)}/${g.meals} ingestes (${g.label}).${trendLine}`,
+          `${nf(dk)}/${nf(g.kcal)} kcal · ${dp}/${g.prot} g proteïna · ${doneCount(state.meals)}/${g.meals} ingestes (${g.label}).${trendLine}${planLine}`,
         );
         return;
       }
@@ -325,6 +350,36 @@ export default function CoachChat() {
           [
             { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, res.recipe) },
             { label: 'Millor una alternativa', run: () => offerAlternatives(meal, `Alternatives per al ${meal.slot}:`) },
+          ],
+        );
+        return;
+      }
+
+      case 'addIngredient': {
+        const meal = plannedBySlot(intent.slot);
+        if (!meal || mealStatus(meal) !== 'pending') {
+          coach(
+            !meal
+              ? `Avui no tinc cap ${intent.slot} al pla.`
+              : `El ${intent.slot} ja consta com a ${mealStatus(meal)}. Si vols afegir-hi res, desfés-lo primer o apunta-ho com a extra.`,
+          );
+          return;
+        }
+        const res = addIngredientToMeal(meal, intent.ingredient, intent.grams);
+        if (!res) {
+          coach(`No tinc «${intent.ingredient}» a la base local d'aliments. Pots apuntar-ho com a extra amb les dades de l'etiqueta.`);
+          return;
+        }
+        const n = previewNutrition(res.recipe);
+        const changeTxt =
+          res.kind === 'increased'
+            ? `${res.name} ${res.fromG}→${res.toG} g (ja en portava: l'amplio)`
+            : `+ ${res.name} ${res.grams} g (nou)`;
+        coach(
+          `${changeTxt}.\nEl ${meal.slot} queda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.${dayPlanNote(meal.nutrition.kcal, n.kcal)}`,
+          [
+            { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, res.recipe) },
+            { label: 'Deixar-ho com estava', run: () => coach('Fet, no toco res.') },
           ],
         );
         return;

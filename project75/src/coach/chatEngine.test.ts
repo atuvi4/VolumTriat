@@ -85,6 +85,20 @@ describe('chatEngine — adaptar àpat (ingredient que falta)', () => {
     expect(parseIntent('només tinc pa').kind).toBe('substituteIngredient');
   });
 
+  it('«afegeix mel al berenar» (i el typo «afageixo») → afegir ingredient', () => {
+    expect(parseIntent('afegeix mel al berenar')).toEqual({
+      kind: 'addIngredient', ingredient: 'mel', grams: undefined, slot: 'berenar',
+    });
+    expect(parseIntent('afageixo mel al berenar')).toEqual({
+      kind: 'addIngredient', ingredient: 'mel', grams: undefined, slot: 'berenar',
+    });
+    expect(parseIntent('afegeix 20 g de mel al berenar')).toEqual({
+      kind: 'addIngredient', ingredient: 'mel', grams: 20, slot: 'berenar',
+    });
+    // «afegeix un batut» segueix sent el batut d'un toc
+    expect(parseIntent('afegeix un batut').kind).toBe('addShake');
+  });
+
   it('mai confon «no tinc gana» amb un ingredient', () => {
     expect(parseIntent('no tinc gana').kind).toBe('lowAppetite');
     expect(parseIntent('no tinc gens de gana').kind).toBe('lowAppetite');

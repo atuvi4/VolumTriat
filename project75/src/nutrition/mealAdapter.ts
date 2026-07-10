@@ -212,6 +212,66 @@ export function adaptMealWithLimit(meal: ResolvedMeal, ingredientQuery: string, 
   };
 }
 
+/* ---------- Afegir ingredient: «afegeix mel al berenar» ---------- */
+
+export type AddIngredientResult =
+  | { kind: 'added'; recipe: MealRecipe; name: string; grams: number }
+  | { kind: 'increased'; recipe: MealRecipe; name: string; fromG: number; toG: number };
+
+/** Afegeix (o amplia, si ja hi és) un ingredient de la base local a l'àpat.
+ *  Grams: els que digui l'usuari, o la ració «normal» de l'aliment. Sempre
+ *  dins de límits de seny; la nutrició final la recalcula el motor. */
+export function addIngredientToMeal(meal: ResolvedMeal, query: string, grams?: number): AddIngredientResult | null {
+  if (meal.ingredients.some((i) => !i.foodId || i.grams <= 0)) return null;
+  const food = findLocalFood(query);
+  if (!food) return null;
+
+  const cap = Math.min(MAX_GRAMS, food.portions?.['molt gran'] ?? 200);
+  const g = round5(Math.min(cap, grams && grams > 0 ? grams : (food.portions?.normal ?? 30)));
+  if (g <= 0) return null;
+
+  const present = meal.ingredients.find((i) => i.foodId === food.id);
+  const baseName = meal.name.replace(/\s*\((sense|amb) [^)]*\)\s*$/i, '');
+  const recipeBase = {
+    id: `add-${meal.recipeId ?? meal.id}-${Date.now()}`,
+    slot: meal.slot,
+    tags: meal.tags,
+  };
+
+  if (present) {
+    const toG = Math.min(Math.min(MAX_GRAMS, food.portions?.['molt gran'] ?? MAX_GRAMS), round5(present.grams + g));
+    return {
+      kind: 'increased',
+      name: food.name,
+      fromG: Math.round(present.grams),
+      toG,
+      recipe: {
+        ...recipeBase,
+        name: baseName,
+        ingredients: meal.ingredients.map((i) => ({
+          foodId: i.foodId,
+          grams: i === present ? toG : i.grams,
+          precision: 'estimated_portion' as const,
+        })),
+      },
+    };
+  }
+
+  return {
+    kind: 'added',
+    name: food.name,
+    grams: g,
+    recipe: {
+      ...recipeBase,
+      name: `${baseName} (amb ${food.name.toLowerCase()})`,
+      ingredients: [
+        ...meal.ingredients.map((i) => ({ foodId: i.foodId, grams: i.grams, precision: 'estimated_portion' as const })),
+        { foodId: food.id, grams: g, precision: 'estimated_portion' as const },
+      ],
+    },
+  };
+}
+
 /* ---------- Substitució de variant: «tinc iogurt normal, no el proteic» ---------- */
 
 /** Millor aliment de la base local per a un text lliure (per encaix de tokens). */
@@ -251,12 +311,14 @@ export function substituteIngredientInMeal(meal: ResolvedMeal, have: string, ins
     return { kind: 'already', foodName: sub.name, kcalPer100g: sub.kcalPer100g, proteinPer100g: sub.proteinPer100g };
   }
 
-  // Grams que recuperen la proteïna original amb la variant nova (clamp de seny).
+  // Grams que recuperen la proteïna original amb la variant nova (clamp de seny:
+  // mai per sobre del +75% NI de la ració «molt gran» de l'aliment — res de 480 g de iogurt).
   const ideal =
     target.nutrition.protein > 0 && sub.proteinPer100g > 0
       ? (target.nutrition.protein / sub.proteinPer100g) * 100
       : target.grams;
-  const toG = Math.min(Math.min(MAX_GRAMS, target.grams * MAX_SCALE), Math.max(target.grams * 0.5, round5(ideal)));
+  const subCap = Math.min(MAX_GRAMS, sub.portions?.['molt gran'] ?? MAX_GRAMS, target.grams * MAX_SCALE);
+  const toG = Math.min(subCap, Math.max(target.grams * 0.5, round5(ideal)));
 
   const baseName = meal.name.replace(/\s*\((sense|amb) [^)]*\)\s*$/i, '');
   return {

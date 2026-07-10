@@ -20,6 +20,8 @@ export type ChatIntent =
   | { kind: 'substituteIngredient'; have: string; insteadOf?: string; slot?: MealSlot }
   /** «Només tinc 120 g de iogurt»: retallar l'ingredient i compensar amb la resta. */
   | { kind: 'limitIngredient'; ingredient: string; grams: number; slot?: MealSlot }
+  /** «Afegeix mel al berenar»: sumar/ampliar un ingredient de l'àpat. */
+  | { kind: 'addIngredient'; ingredient: string; grams?: number; slot: MealSlot }
   | { kind: 'addExtra'; name: string; kcal?: number; protein?: number }
   | { kind: 'addWeight'; kg: number }
   | { kind: 'hardDay' }
@@ -134,6 +136,18 @@ export function parseIntent(raw: string): ChatIntent {
         .replace(/^(el|la|els|les|un|una)\s+/, '')
         .replace(/[?!.]+$/, '')
         .trim();
+    // «afegeix mel al berenar» / «afageixo 20 g de mel al berenar» (tolerant amb typos)
+    const mAdd = t.match(
+      /\b(?:af[ae]geix\w*|posa(?:['’]?m|-li)?|tira(?:-li)?|suma(?:-li)?)\s+(?:(\d+[.,]?\d*)\s*(?:g|grams?|gr)\s+)?(?:de |d')?(.+?)\s+(?:a |al |a l')(esmorzar|dinar|berenar|sopar|snack)\b/,
+    );
+    if (mAdd) {
+      const grams = mAdd[1] ? num(mAdd[1]) : undefined;
+      const ingredient = cleanIng(mAdd[2]);
+      if (ingredient && !/\bbatut\b/.test(ingredient)) {
+        return { kind: 'addIngredient', ingredient, grams, slot: mAdd[3] as MealSlot };
+      }
+    }
+
     // «només tinc 120 g de iogurt» / «em queden 30 grams de civada» — quantitat limitada
     const mLimit = t.match(
       /(?:nomes (?:tinc|em queden?)|tinc nomes|em queden? nomes|em queden?|tinc)\s+(\d+[.,]?\d*)\s*(?:g|grams?|gr)\b\s*(?:de |d')?(.+)$/,
@@ -195,6 +209,6 @@ export const HELP_TEXT =
   '· «Com vaig?» / «Què em toca ara?» / «Què entreno avui?»\n' +
   '· «Afegeix un batut» / «Creatina feta» / «Peso 68,4»\n' +
   '· «He fet el dinar» / «Salta\'m el berenar» / «Canvia\'m el sopar»\n' +
-  '· «No tinc plàtan» / «Només tinc 120 g de iogurt» → t\'adapto l\'àpat\n' +
+  '· «No tinc plàtan» / «Només tinc 120 g de iogurt» / «Afegeix mel al berenar»\n' +
   '· «He menjat un entrepà de 450 kcal i 22 g de proteïna»\n' +
   'Mai m\'invento calories: si registres una cosa sense números, te\'ls demanaré.';
