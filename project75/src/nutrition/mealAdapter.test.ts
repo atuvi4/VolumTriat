@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from './mealAdapter';
+import { adaptMealWithLimit, adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from './mealAdapter';
 import { resolveRecipe, previewNutrition } from './mealBuilder';
-import { defaultDayRecipes } from './mealPlans';
+import { defaultDayRecipes, RECIPE_POOL } from './mealPlans';
 
 // El berenar base real: iogurt grec + civada + mel + cacauet.
 const berenar = () => resolveRecipe(defaultDayRecipes().find((r) => r.slot === 'berenar')!, { id: 'day-berenar' });
@@ -35,6 +35,19 @@ describe('adaptMealWithout — quadra kcal sense inventar', () => {
     expect(n.kcal).toBeLessThanOrEqual(m.nutrition.kcal * 1.2);
   });
 
+  it('rebost intel·ligent: si repujar no arriba, AFEGEIX un bàsic del mateix rol', () => {
+    // Sopar pasta+tonyina+formatge sense pasta: la resta no pot recuperar-ho
+    // ni amb +75% → ha d'afegir un carbohidrat de rebost (mel/civada...).
+    const sopar = resolveRecipe(RECIPE_POOL.find((r) => r.id === 'r-sopar-pasta-tonyina-formatge')!, { id: 'day-sopar' });
+    const adapted = adaptMealWithout(sopar, 'pasta')!;
+    expect(adapted).not.toBeNull();
+    const added = adapted.changes.find((c) => c.fromG === 0);
+    expect(added).toBeDefined(); // hi ha un ingredient NOU de rebost
+    const n = previewNutrition(adapted.recipe);
+    expect(n.kcal).toBeGreaterThan(sopar.nutrition.kcal * 0.8); // recupera el gruix
+    expect(n.kcal).toBeLessThanOrEqual(sopar.nutrition.kcal * 1.2);
+  });
+
   it('si l\'àpat no porta l\'ingredient → null (mai adapta a cegues)', () => {
     expect(adaptMealWithout(berenar(), 'salmó')).toBeNull();
   });
@@ -56,6 +69,30 @@ describe('adaptMealWithout — quadra kcal sense inventar', () => {
     const res = substituteIngredientInMeal(berenar(), 'iogurt grec natural del consum', 'proteic')!;
     expect(res.kind).toBe('already');
     if (res.kind === 'already') expect(res.foodName.toLowerCase()).toContain('iogurt grec');
+  });
+
+  it('quantitat limitada: retalla l\'ingredient i repuja la resta', () => {
+    const m = berenar(); // iogurt 200 g + civada + mel + cacauet
+    const res = adaptMealWithLimit(m, 'iogurt', 120)!;
+    expect(res.kind).toBe('adapted');
+    if (res.kind === 'adapted') {
+      const yog = res.changes.find((c) => /iogurt/i.test(c.name))!;
+      expect(yog.toG).toBe(120); // mai compta més del que hi ha
+      const others = res.changes.filter((c) => c !== yog);
+      expect(others.every((c) => c.toG >= c.fromG)).toBe(true); // la resta puja
+      const n = previewNutrition(res.recipe);
+      expect(n.kcal).toBeGreaterThan(m.nutrition.kcal * 0.75); // recupera bona part
+      expect(n.kcal).toBeLessThanOrEqual(m.nutrition.kcal * 1.15);
+    }
+  });
+
+  it('si en té prou (250 g quan en calen 200) → «enough», res a tocar', () => {
+    const res = adaptMealWithLimit(berenar(), 'iogurt', 250)!;
+    expect(res.kind).toBe('enough');
+    if (res.kind === 'enough') {
+      expect(res.neededG).toBe(200);
+      expect(res.haveG).toBe(250);
+    }
   });
 
   it('el nom no acumula «(sense …)» en adaptar dues vegades', () => {

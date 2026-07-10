@@ -74,6 +74,17 @@ describe('chatEngine — adaptar àpat (ingredient que falta)', () => {
     });
   });
 
+  it('«només tinc 250 grams de iogurt» → quantitat limitada', () => {
+    expect(parseIntent('només tinc 250 grams de iogurt')).toEqual({
+      kind: 'limitIngredient', ingredient: 'iogurt', grams: 250, slot: undefined,
+    });
+    expect(parseIntent('em queden 30 g de civada per esmorzar')).toEqual({
+      kind: 'limitIngredient', ingredient: 'civada', grams: 30, slot: 'esmorzar',
+    });
+    // sense quantitat segueix sent substitució de variant
+    expect(parseIntent('només tinc pa').kind).toBe('substituteIngredient');
+  });
+
   it('mai confon «no tinc gana» amb un ingredient', () => {
     expect(parseIntent('no tinc gana').kind).toBe('lowAppetite');
     expect(parseIntent('no tinc gens de gana').kind).toBe('lowAppetite');

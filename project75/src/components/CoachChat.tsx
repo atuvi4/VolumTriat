@@ -8,7 +8,7 @@ import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
 import { resolveTodayTraining } from '../data/week';
 import { swapOptionsFor } from '../nutrition/mealPlans';
-import { adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from '../nutrition/mealAdapter';
+import { adaptMealWithLimit, adaptMealWithout, ingredientMatches, substituteIngredientInMeal } from '../nutrition/mealAdapter';
 import { rankSwapOptions } from '../brain/brain';
 import { previewNutrition } from '../nutrition/mealBuilder';
 import { realWeights } from '../utils/project';
@@ -66,6 +66,10 @@ export default function CoachChat() {
     app.swapMeal(meal.id, r);
     coach(`✓ ${meal.slot} canviat a «${r.name}» · ${n.kcal} kcal · ${n.protein} g proteïna (calculat per ingredients).`);
   };
+
+  /** «Iogurt 200→120 g» per als canvis; «+ Mel 20 g (nou)» per als afegits de rebost. */
+  const fmtChange = (c: { name: string; fromG: number; toG: number }) =>
+    c.fromG === 0 ? `+ ${c.name} ${c.toG} g (nou)` : `${c.name} ${c.fromG}→${c.toG} g`;
 
   const offerAlternatives = (meal: ResolvedMeal, lead: string) => {
     const ranked = rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []).slice(0, 4);
@@ -280,13 +284,46 @@ export default function CoachChat() {
         const n = previewNutrition(adapted.recipe);
         const protDrop = meal.nutrition.protein - n.protein;
         coach(
-          `Sense ${adapted.removedName.toLowerCase()}, t'ho quadro repujant la resta: ${adapted.changes
-            .map((c) => `${c.name} ${c.fromG}→${c.toG} g`)
-            .join(' · ')}.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.${
+          `Sense ${adapted.removedName.toLowerCase()}, t'ho quadro així: ${adapted.changes.map(fmtChange).join(' · ')}.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.${
             protDrop >= 8 ? `\nPerds ~${Math.round(protDrop)} g de proteïna: valora acompanyar-ho amb iogurt o un batut.` : ''
           }`,
           [
             { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, adapted.recipe) },
+            { label: 'Millor una alternativa', run: () => offerAlternatives(meal, `Alternatives per al ${meal.slot}:`) },
+          ],
+        );
+        return;
+      }
+
+      case 'limitIngredient': {
+        const pending = SLOT_ORDER.map(plannedBySlot).filter((m): m is ResolvedMeal => !!m && mealStatus(m) === 'pending');
+        const meal = intent.slot
+          ? pending.find((m) => m.slot === intent.slot)
+          : pending.find((m) => m.ingredients.some((i) => ingredientMatches(i.name, intent.ingredient)));
+        if (!meal) {
+          coach(`Cap àpat pendent d'avui porta ${intent.ingredient}.`);
+          return;
+        }
+        const res = adaptMealWithLimit(meal, intent.ingredient, intent.grams);
+        if (!res) {
+          offerAlternatives(meal, `No he sabut adaptar el ${meal.slot} amb aquesta quantitat. Alternatives:`);
+          return;
+        }
+        if (res.kind === 'enough') {
+          coach(
+            `Vas sobrat: el ${meal.slot} en demana ${res.neededG} g i en tens ${res.haveG}. No cal tocar res — marca'l «Fet» quan te'l mengis.`,
+          );
+          return;
+        }
+        const n = previewNutrition(res.recipe);
+        const kcalDrop = meal.nutrition.kcal - n.kcal;
+        const protDrop = meal.nutrition.protein - n.protein;
+        coach(
+          `Amb el ${res.limitedName.toLowerCase()} que tens, t'ho quadro així: ${res.changes.map(fmtChange).join(' · ')}.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.${
+            kcalDrop >= 60 ? `\nQueden ~${Math.round(kcalDrop)} kcal curtes: un snack petit o mig batut les tanca.` : ''
+          }${protDrop >= 8 ? `\nPerds ~${Math.round(protDrop)} g de proteïna: valora acompanyar-ho amb iogurt o un batut.` : ''}`,
+          [
+            { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, res.recipe) },
             { label: 'Millor una alternativa', run: () => offerAlternatives(meal, `Alternatives per al ${meal.slot}:`) },
           ],
         );

@@ -18,6 +18,8 @@ export type ChatIntent =
   | { kind: 'adaptMeal'; missing: string; slot?: MealSlot }
   /** «Tinc iogurt normal, no el proteic»: substituir per la variant real. */
   | { kind: 'substituteIngredient'; have: string; insteadOf?: string; slot?: MealSlot }
+  /** «Només tinc 120 g de iogurt»: retallar l'ingredient i compensar amb la resta. */
+  | { kind: 'limitIngredient'; ingredient: string; grams: number; slot?: MealSlot }
   | { kind: 'addExtra'; name: string; kcal?: number; protein?: number }
   | { kind: 'addWeight'; kg: number }
   | { kind: 'hardDay' }
@@ -132,6 +134,15 @@ export function parseIntent(raw: string): ChatIntent {
         .replace(/^(el|la|els|les|un|una)\s+/, '')
         .replace(/[?!.]+$/, '')
         .trim();
+    // «només tinc 120 g de iogurt» / «em queden 30 grams de civada» — quantitat limitada
+    const mLimit = t.match(
+      /(?:nomes (?:tinc|em queden?)|tinc nomes|em queden? nomes|em queden?|tinc)\s+(\d+[.,]?\d*)\s*(?:g|grams?|gr)\b\s*(?:de |d')?(.+)$/,
+    );
+    if (mLimit) {
+      const grams = num(mLimit[1]);
+      const ingredient = cleanIng(mLimit[2]);
+      if (grams > 0 && grams <= 2000 && ingredient) return { kind: 'limitIngredient', ingredient, grams, slot: slot ?? undefined };
+    }
     const mLloc = t.match(/\btinc\s+(?:el |la |l')?(.+?)\s+en (?:lloc|comptes) (?:de |del |de la )(.+)$/);
     if (mLloc) return { kind: 'substituteIngredient', have: cleanIng(mLloc[1]), insteadOf: cleanIng(mLloc[2]), slot: slot ?? undefined };
     const mNo = t.match(/(?:^|[^o] )tinc\s+(?:el |la |l')?(.+?),?\s+(?:i no|no)\s+(?:el |la |l')?(.+)$/);
@@ -184,6 +195,6 @@ export const HELP_TEXT =
   '· «Com vaig?» / «Què em toca ara?» / «Què entreno avui?»\n' +
   '· «Afegeix un batut» / «Creatina feta» / «Peso 68,4»\n' +
   '· «He fet el dinar» / «Salta\'m el berenar» / «Canvia\'m el sopar»\n' +
-  '· «No tinc plàtan» / «Tinc iogurt normal, no el proteic» → t\'adapto l\'àpat\n' +
+  '· «No tinc plàtan» / «Només tinc 120 g de iogurt» → t\'adapto l\'àpat\n' +
   '· «He menjat un entrepà de 450 kcal i 22 g de proteïna»\n' +
   'Mai m\'invento calories: si registres una cosa sense números, te\'ls demanaré.';
