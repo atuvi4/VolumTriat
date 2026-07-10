@@ -1,4 +1,4 @@
-import type { MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
+import type { MealSlot, MealStatus, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { MealOutcome } from '../brain/brainTypes';
 import type { WeeklyMenu } from '../nutrition/weeklyPlanner';
 
@@ -21,6 +21,42 @@ export interface PersonalIngredient {
   name: string;
   kcalPer100g: number;
   proteinPer100g: number;
+}
+
+/* ---------- History & Analytics v1 ---------- */
+
+/** Àpat tal com va quedar al final del dia (snapshot, no referència viva). */
+export interface DailyLogMeal {
+  id: string;
+  slot: MealSlot;
+  name: string;
+  status: MealStatus;
+  /** El que va COMPTAR de veritat (0 si pendent/saltat). */
+  kcal: number;
+  protein: number;
+  sourceLabel?: string;
+}
+
+/** Resum congelat d'un dia sencer. Es fixa al canvi de dia; el dia actual
+ *  sempre es deriva en viu de l'estat (mai desincronitzat). */
+export interface DailyLog {
+  date: string; // ISO
+  kcal: number;
+  protein: number;
+  /** Objectius D'AQUELL dia (canvien amb mode difícil/poca gana i ajustos). */
+  targetKcal: number;
+  targetProtein: number;
+  meals: DailyLogMeal[];
+  extras: { name: string; kcal: number; protein: number }[];
+  supplements: { creatine: boolean; anabolicMaster?: boolean };
+  training: { plannedLabel?: string; plannedType?: WorkoutType; done: boolean; note?: string };
+  weightKg?: number;
+  dayMode?: DayMode;
+  completed: boolean;
+  /** Reconstruït des dels outcomes antics (resum aproximat, sense detall d'àpats). */
+  backfilled?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Producte real guardat des d'una etiqueta CONFIRMADA per l'usuari
@@ -114,6 +150,9 @@ export interface AppState {
   personalIngredients?: PersonalIngredient[];
   /** Productes reals guardats des d'etiqueta confirmada (Label Scanner). */
   savedProducts?: SavedProduct[];
+  /** History & Analytics v1: snapshot per dia (clau = data ISO). El dia
+   *  actual NO hi és: es deriva en viu i es congela al canvi de dia. */
+  history?: Record<string, DailyLog>;
 }
 
 export interface Goals {

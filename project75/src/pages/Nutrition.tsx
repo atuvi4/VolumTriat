@@ -336,7 +336,8 @@ export default function Nutrition() {
       </div>
 
       <p className="text-[12px] text-faint text-center mt-3">
-        Les dades són estimacions per ració (precisió variable, indicada a cada àpat). No és consell mèdic ni nutricional professional.
+        El dia d'avui es guarda automàticament a l'historial (Evolució). Les dades són estimacions per ració (precisió variable,
+        indicada a cada àpat). No és consell mèdic ni nutricional professional.
       </p>
     </section>
   );

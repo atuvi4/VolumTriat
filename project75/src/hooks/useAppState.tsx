@@ -26,6 +26,7 @@ import type { MealOutcome, OutcomeAction, OutcomeSource } from '../brain/brainTy
 import { stateKeyFor } from '../utils/storageKeys';
 import { pickInitialRaw } from '../utils/stateMigration';
 import { emptyState, STARTER_PROFILE } from '../data/emptyState';
+import { backfillHistoryFromOutcomes, pruneHistory, buildDailyLog } from '../history/dailyLog';
 import { useAuth } from '../auth/useAuth';
 import { writeLocalBackup, writePreviousBackup } from '../utils/dataSafety';
 import { useCloud, type CloudSlice } from '../cloud/useCloud';
@@ -48,8 +49,12 @@ function dayMealsFor(dateISO: string, plan?: WeeklyMenu): ResolvedMeal[] {
 function rolloverToToday(s: AppState): AppState {
   const yesterday = addDaysISO(todayISO(), -1);
   const keepStreak = !isStarted(s.profile.projectStartDate) || s.lastComplete === yesterday;
+  // History v1: congela el dia que s'acaba (amb el seu estat FINAL: àpats,
+  // extres, objectius del dia, mode, entrenament) abans de resetejar res.
+  const history = pruneHistory({ ...(s.history ?? {}), [s.date]: buildDailyLog(s) });
   return {
     ...s,
+    history,
     date: todayISO(),
     streak: keepStreak ? s.streak : 0,
     meals: dayMealsFor(todayISO(), s.weeklyPlan),
@@ -195,6 +200,8 @@ function normalizeState(s: AppState): AppState {
   s.supplements = s.supplements ?? { creatineDates: [] };
   s.supplements.creatineDates = s.supplements.creatineDates ?? [];
   s.supplements.anabolicServing = s.supplements.anabolicServing ?? { ...DEFAULT_ANABOLIC };
+  // History v1: backfill únic des dels outcomes si l'estat encara no en té.
+  s.history = s.history ?? backfillHistoryFromOutcomes(s);
   return s;
 }
 
@@ -206,12 +213,15 @@ function loadState(userId: string | null): AppState {
     // Data Safety: desa una còpia crua ABANS de migrar (xarxa de seguretat si
     // una migració/deploy trenca l'estat). No escriure en mode visita.
     if (!detectReadOnly()) writePreviousBackup(s);
+    s.profile = { ...DEFAULT_PROFILE, ...s.profile };
+    // History v1: backfill ABANS del rollover (si no, el rollover crearia un
+    // history d'una sola entrada i els dies antics dels outcomes es perdrien).
+    s.history = s.history ?? backfillHistoryFromOutcomes(s);
     if (s.date !== todayISO()) s = rolloverToToday(s);
     if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) {
       s.meals = dayMealsFor(todayISO(), s.weeklyPlan);
     }
     s.meals = repairMealSlots(s.meals); // corregeix slots antics (sopar marcat com dinar, etc.)
-    s.profile = { ...DEFAULT_PROFILE, ...s.profile };
     s.completedDates = s.completedDates ?? [];
     s.prepDone = s.prepDone ?? [];
     s.outcomes = s.outcomes ?? []; // Brain v1: acumula entre dies (no es reinicia)

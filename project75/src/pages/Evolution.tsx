@@ -6,7 +6,7 @@ import Button from '../components/Button';
 import Icon from '../components/Icon';
 import Badge from '../components/Badge';
 import InitialWeightSheet from '../components/sheets/InitialWeightSheet';
-import HistoryCard from '../components/HistoryCard';
+import HistoryPanel from '../components/HistoryPanel';
 import { currentWeight, milestonesFor, nextMilestone, MIN_FOR_TREND } from '../utils/goals';
 import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
 import { fmt1, pct } from '../utils/format';
@@ -123,7 +123,7 @@ export default function Evolution() {
         )}
       </Card>
 
-      <HistoryCard />
+      <HistoryPanel />
 
       <div className="flex flex-wrap gap-2.5">
         <Button block variant="primary" icon="plus" onClick={() => openSheet(<InitialWeightSheet />)}>
