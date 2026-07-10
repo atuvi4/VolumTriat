@@ -54,6 +54,20 @@ describe('chatEngine — ordres', () => {
   });
 });
 
+describe('chatEngine — adaptar àpat (ingredient que falta)', () => {
+  it('«no tinc plàtan» amb i sense àpat indicat', () => {
+    expect(parseIntent('no tinc plàtan')).toEqual({ kind: 'adaptMeal', missing: 'platan', slot: undefined });
+    expect(parseIntent('no tinc plàtan per berenar')).toEqual({ kind: 'adaptMeal', missing: 'platan', slot: 'berenar' });
+    expect(parseIntent("m'he quedat sense iogurt")).toEqual({ kind: 'adaptMeal', missing: 'iogurt', slot: undefined });
+    expect(parseIntent('no em queda civada')).toEqual({ kind: 'adaptMeal', missing: 'civada', slot: undefined });
+  });
+
+  it('mai confon «no tinc gana» amb un ingredient', () => {
+    expect(parseIntent('no tinc gana').kind).toBe('lowAppetite');
+    expect(parseIntent('no tinc gens de gana').kind).toBe('lowAppetite');
+  });
+});
+
 describe('chatEngine — preguntes', () => {
   it('estat, restants, proper àpat, entrenament, tendència', () => {
     expect(parseIntent('com vaig?').kind).toBe('status');

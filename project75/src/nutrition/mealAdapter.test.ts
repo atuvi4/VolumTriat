@@ -1,0 +1,49 @@
+import { describe, expect, it } from 'vitest';
+import { adaptMealWithout, ingredientMatches } from './mealAdapter';
+import { resolveRecipe, previewNutrition } from './mealBuilder';
+import { defaultDayRecipes } from './mealPlans';
+
+// El berenar base real: iogurt grec + civada + mel + cacauet.
+const berenar = () => resolveRecipe(defaultDayRecipes().find((r) => r.slot === 'berenar')!, { id: 'day-berenar' });
+// L'snack base real: batut de llet + plàtan + civada.
+const snack = () => resolveRecipe(defaultDayRecipes().find((r) => r.slot === 'snack')!, { id: 'day-snack' });
+
+describe('ingredientMatches — noms flexibles', () => {
+  it('singular/plural i noms compostos', () => {
+    expect(ingredientMatches('Plàtan', 'platans')).toBe(true);
+    expect(ingredientMatches('Iogurt grec', 'iogurt')).toBe(true);
+    expect(ingredientMatches('Crema de cacauet', 'cacauet')).toBe(true);
+    expect(ingredientMatches('Plàtan', 'iogurt')).toBe(false);
+  });
+});
+
+describe('adaptMealWithout — quadra kcal sense inventar', () => {
+  it('treu el plàtan del batut i repuja la resta cap a les kcal originals', () => {
+    const m = snack();
+    const adapted = adaptMealWithout(m, 'plàtan')!;
+    expect(adapted).not.toBeNull();
+    expect(adapted.removedName.toLowerCase()).toContain('plàtan');
+    expect(adapted.recipe.name).toContain('sense');
+    // Tots els ingredients restants pugen (mai baixen) i dins de límits de seny.
+    for (const c of adapted.changes) {
+      expect(c.toG).toBeGreaterThanOrEqual(c.fromG);
+      expect(c.toG).toBeLessThanOrEqual(Math.max(c.fromG, Math.min(800, Math.round(c.fromG * 1.75 / 5) * 5)));
+    }
+    // La nutrició final la dona el MOTOR i s'acosta a l'original (±20%).
+    const n = previewNutrition(adapted.recipe);
+    expect(n.kcal).toBeGreaterThan(m.nutrition.kcal * 0.8);
+    expect(n.kcal).toBeLessThanOrEqual(m.nutrition.kcal * 1.2);
+  });
+
+  it('si l\'àpat no porta l\'ingredient → null (mai adapta a cegues)', () => {
+    expect(adaptMealWithout(berenar(), 'salmó')).toBeNull();
+  });
+
+  it('el nom no acumula «(sense …)» en adaptar dues vegades', () => {
+    const m = snack();
+    const a1 = adaptMealWithout(m, 'plàtan')!;
+    const fake = { ...m, name: a1.recipe.name };
+    const a2 = adaptMealWithout(fake, 'civada')!;
+    expect(a2.recipe.name.match(/\(sense/g)).toHaveLength(1);
+  });
+});

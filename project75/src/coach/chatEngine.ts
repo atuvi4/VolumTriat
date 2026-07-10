@@ -14,6 +14,8 @@ export type ChatIntent =
   | { kind: 'skipMeal'; slot: MealSlot }
   | { kind: 'undoMeal'; slot: MealSlot }
   | { kind: 'swapMeal'; slot: MealSlot; query?: string }
+  /** «No tinc plàtan (per berenar)»: adaptar l'àpat sense aquest ingredient. */
+  | { kind: 'adaptMeal'; missing: string; slot?: MealSlot }
   | { kind: 'addExtra'; name: string; kcal?: number; protein?: number }
   | { kind: 'addWeight'; kg: number }
   | { kind: 'hardDay' }
@@ -110,6 +112,16 @@ export function parseIntent(raw: string): ChatIntent {
   if (/\bbatut\b/.test(t) && /(afegeix|apunta|posa|registra|suma|vull|fes|dona)/.test(t)) return { kind: 'addShake' };
   if (/^batut$/.test(t)) return { kind: 'addShake' };
 
+  // «No tinc X» → adaptar l'àpat sense aquest ingredient (mai confondre amb la gana)
+  const noTinc = t.match(/(?:no (?:tinc|em queda|queda|hi ha)|m['’]?he quedat sense)\s+(?:cap\s+|gens de\s+)?(.+)$/);
+  if (noTinc && !/gan[ae]s?\b/.test(noTinc[1])) {
+    const missing = noTinc[1]
+      .replace(/\bper (?:a )?(?:al |el |l')?(esmorzar|dinar|berenar|sopar|snack)\b.*$/, '')
+      .replace(/^(el|la|els|les|un|una)\s+/, '')
+      .trim();
+    if (missing) return { kind: 'adaptMeal', missing, slot: slot ?? undefined };
+  }
+
   // Canviar un àpat (amb "per X" opcional)
   if (slot && /(canvia|cambia|substitueix|alternativ|una altra opcio)/.test(t)) {
     const per = t.match(/\bper\s+(.+)$/);
@@ -154,5 +166,6 @@ export const HELP_TEXT =
   '· «Com vaig?» / «Què em toca ara?» / «Què entreno avui?»\n' +
   '· «Afegeix un batut» / «Creatina feta» / «Peso 68,4»\n' +
   '· «He fet el dinar» / «Salta\'m el berenar» / «Canvia\'m el sopar»\n' +
+  '· «No tinc plàtan» → t\'adapto l\'àpat repujant la resta d\'ingredients\n' +
   '· «He menjat un entrepà de 450 kcal i 22 g de proteïna»\n' +
   'Mai m\'invento calories: si registres una cosa sense números, te\'ls demanaré.';

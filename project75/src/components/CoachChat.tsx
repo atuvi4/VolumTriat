@@ -8,6 +8,7 @@ import { trendPerWeekWindow } from '../nutrition/adjustmentRules';
 import { nutritionAdjust } from '../utils/nutritionAdvice';
 import { resolveTodayTraining } from '../data/week';
 import { swapOptionsFor } from '../nutrition/mealPlans';
+import { adaptMealWithout, ingredientMatches } from '../nutrition/mealAdapter';
 import { rankSwapOptions } from '../brain/brain';
 import { previewNutrition } from '../nutrition/mealBuilder';
 import { realWeights } from '../utils/project';
@@ -243,6 +244,50 @@ export default function CoachChat() {
           label: `${r.name} · ${previewNutrition(r).kcal} kcal`,
           run: () => doSwap(meal, r),
         })));
+        return;
+      }
+
+      case 'adaptMeal': {
+        // Candidat: el pendent del slot indicat, o el primer pendent que porti l'ingredient.
+        const pending = SLOT_ORDER.map(plannedBySlot).filter((m): m is ResolvedMeal => !!m && mealStatus(m) === 'pending');
+        const meal = intent.slot
+          ? pending.find((m) => m.slot === intent.slot)
+          : pending.find((m) => m.ingredients.some((i) => ingredientMatches(i.name, intent.missing)));
+        if (!meal) {
+          coach(
+            intent.slot
+              ? `Avui no tens cap ${intent.slot} pendent per adaptar.`
+              : `Cap àpat pendent d'avui porta «${intent.missing}». Si en vols canviar un igualment, digue'm «canvia'm el [àpat]».`,
+          );
+          return;
+        }
+        const showAlternatives = (lead: string) => {
+          const ranked = rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []).slice(0, 4);
+          coach(lead, ranked.map((r) => ({ label: `${r.name} · ${previewNutrition(r).kcal} kcal`, run: () => doSwap(meal, r) })));
+        };
+        const adapted = adaptMealWithout(meal, intent.missing);
+        if (!adapted) {
+          const carries = meal.ingredients.some((i) => ingredientMatches(i.name, intent.missing));
+          showAlternatives(
+            carries
+              ? `El ${meal.slot} porta ${intent.missing} però adaptar-lo el deixaria coix. Millor una alternativa (calculades pel motor):`
+              : `El ${meal.slot} d'avui («${meal.name}») no porta ${intent.missing}. Si el vols canviar igualment:`,
+          );
+          return;
+        }
+        const n = previewNutrition(adapted.recipe);
+        const protDrop = meal.nutrition.protein - n.protein;
+        coach(
+          `Sense ${adapted.removedName.toLowerCase()}, t'ho quadro repujant la resta: ${adapted.changes
+            .map((c) => `${c.name} ${c.fromG}→${c.toG} g`)
+            .join(' · ')}.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.${
+            protDrop >= 8 ? `\nPerds ~${Math.round(protDrop)} g de proteïna: valora acompanyar-ho amb iogurt o un batut.` : ''
+          }`,
+          [
+            { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, adapted.recipe) },
+            { label: 'Millor una alternativa', run: () => showAlternatives(`Alternatives per al ${meal.slot}:`) },
+          ],
+        );
         return;
       }
 
