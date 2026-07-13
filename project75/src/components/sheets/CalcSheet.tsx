@@ -97,7 +97,8 @@ export default function CalcSheet({ meal }: { meal: ResolvedMeal }) {
           </p>
         )}
         <p className="m-0 mt-1.5 text-faint">
-          Per millorar la precisió, pesa aquest àpat 1-2 cops i desa'l com a plantilla personal (properament).
+          Per millorar la precisió, pesa els ingredients 1-2 cops. Si registres l'àpat amb nom, es desa als teus
+          habituals i el repeteixes amb un toc.
         </p>
       </div>
     </div>
