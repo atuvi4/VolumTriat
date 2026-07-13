@@ -2,6 +2,7 @@ import { SheetHeader } from '../Sheet';
 import Icon from '../Icon';
 import type { ResolvedMeal } from '../../nutrition/nutritionTypes';
 import { SOURCE_META, CONFIDENCE_LABEL, PRECISION_LABEL } from '../../nutrition/nutritionSources';
+import { displayUnitOf } from '../../nutrition/foodDatabase';
 import { mealStatus } from '../../utils/goals';
 import { mealDataKind, sourceLabelForMeal, shouldWarnLowConfidence } from '../../nutrition/nutritionConfidencePolicy';
 
@@ -40,7 +41,7 @@ export default function CalcSheet({ meal }: { meal: ResolvedMeal }) {
               <div className="text-[11.5px] text-faint">
                 {ing.purchaseGrams != null && ing.purchaseGrams !== ing.grams
                   ? `~${ing.purchaseGrams} g compra · ${ing.grams} g comestible`
-                  : `${ing.grams} g`}
+                  : `${ing.grams} ${displayUnitOf(ing.foodId)}`}
                 {ing.portionLabel ? ` · ${ing.portionLabel}` : ''} · {PRECISION_LABEL[ing.precision]} · {SOURCE_META[ing.source].short}
               </div>
             </div>

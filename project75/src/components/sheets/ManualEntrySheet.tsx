@@ -37,6 +37,8 @@ interface CompIngredient {
   proteinPer100g: number;
   category?: string;
   grams: number;
+  /** 'ml' per a líquids (mostra); el càlcul segueix per 100 g≈100 ml. */
+  unit?: 'g' | 'ml';
 }
 
 export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'Desar', closeOnSubmit = true, target, allowPending, defaultEaten, onSubmit }: Props) {
@@ -102,6 +104,7 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
       proteinPer100g: f.proteinPer100g,
       category: f.category,
       grams: f.portions?.normal ?? 100,
+      unit: f.displayUnit,
     });
     setLocalQ('');
   };
@@ -402,7 +405,7 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
                     value={ing.grams}
                     onChange={(e) => setIngGrams(idx, e.target.value)}
                   />
-                  <span className="text-[11px] text-faint">g</span>
+                  <span className="text-[11px] text-faint">{ing.unit ?? 'g'}</span>
                   <button onClick={() => removeIngredient(idx)} className="text-faint hover:text-warn p-1">
                     <Icon name="x" size={15} />
                   </button>

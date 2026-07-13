@@ -86,9 +86,9 @@ export default function CoachChat() {
     );
   };
 
-  /** «Iogurt 200→120 g» per als canvis; «+ Mel 20 g (nou)» per als afegits de rebost. */
-  const fmtChange = (c: { name: string; fromG: number; toG: number }) =>
-    c.fromG === 0 ? `+ ${c.name} ${c.toG} g (nou)` : `${c.name} ${c.fromG}→${c.toG} g`;
+  /** «Iogurt 200→120 g» / «Llet 300→405 ml» / «+ Mel 20 g (nou)». */
+  const fmtChange = (c: { name: string; fromG: number; toG: number; unit?: 'g' | 'ml' }) =>
+    c.fromG === 0 ? `+ ${c.name} ${c.toG} ${c.unit ?? 'g'} (nou)` : `${c.name} ${c.fromG}→${c.toG} ${c.unit ?? 'g'}`;
 
   const offerAlternatives = (meal: ResolvedMeal, lead: string) => {
     const ranked = rankSwapOptions(swapOptionsFor(meal, state.dislikes), state.outcomes ?? []).slice(0, 4);
@@ -336,7 +336,7 @@ export default function CoachChat() {
         }
         if (res.kind === 'enough') {
           coach(
-            `Vas sobrat: el ${meal.slot} en demana ${res.neededG} g i en tens ${res.haveG}. No cal tocar res — marca'l «Fet» quan te'l mengis.`,
+            `Vas sobrat: el ${meal.slot} en demana ${res.neededG} ${res.unit} i en tens ${res.haveG}. No cal tocar res — marca'l «Fet» quan te'l mengis.`,
           );
           return;
         }
@@ -373,8 +373,8 @@ export default function CoachChat() {
         const n = previewNutrition(res.recipe);
         const changeTxt =
           res.kind === 'increased'
-            ? `${res.name} ${res.fromG}→${res.toG} g (ja en portava: l'amplio)`
-            : `+ ${res.name} ${res.grams} g (nou)`;
+            ? `${res.name} ${res.fromG}→${res.toG} ${res.unit} (ja en portava: l'amplio)`
+            : `+ ${res.name} ${res.grams} ${res.unit} (nou)`;
         coach(
           `${changeTxt}.\nEl ${meal.slot} queda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.${dayPlanNote(meal.nutrition.kcal, n.kcal)}`,
           [
@@ -411,7 +411,7 @@ export default function CoachChat() {
         }
         const n = previewNutrition(res.recipe);
         coach(
-          `Amb ${res.toName.toLowerCase()} en lloc de ${res.fromName.toLowerCase()}: ${res.fromG}→${res.toG} g per mantenir la proteïna.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.`,
+          `Amb ${res.toName.toLowerCase()} (${res.toG} ${res.toUnit}) en lloc de ${res.fromName.toLowerCase()} (${res.fromG} ${res.fromUnit}), per mantenir la proteïna.\nQueda en ${n.kcal} kcal · ${n.protein} g proteïna (abans ${meal.nutrition.kcal} · ${meal.nutrition.protein} g), calculat per ingredients.`,
           [
             { label: `✓ Aplicar al ${meal.slot}`, run: () => doSwap(meal, res.recipe) },
             { label: 'Millor una alternativa', run: () => offerAlternatives(meal, `Alternatives per al ${meal.slot}:`) },

@@ -10,6 +10,11 @@ import type { FoodItem } from './nutritionTypes';
    alguns com "placeholder_pending_verification" fins connectar API.
    ========================================================= */
 
+/** Unitat de mostra d'un aliment ('ml' per a líquids). El càlcul segueix en grams. */
+export function displayUnitOf(foodId?: string): 'g' | 'ml' {
+  return (foodId && getFood(foodId)?.displayUnit) || 'g';
+}
+
 export const FOODS: FoodItem[] = [
   {
     id: 'rice_cooked', name: 'Arròs blanc cuit', category: 'carb',
@@ -78,7 +83,7 @@ export const FOODS: FoodItem[] = [
     portions: { petit: 125, normal: 200, gran: 300, 'molt gran': 400 },
   },
   {
-    id: 'milk_whole', name: 'Llet sencera', category: 'dairy',
+    id: 'milk_whole', name: 'Llet sencera', category: 'dairy', displayUnit: 'ml',
     kcalPer100g: 61, proteinPer100g: 3.2, carbsPer100g: 4.8, fatPer100g: 3.3,
     source: 'local_verified', confidence: 'medium',
     portions: { petit: 200, normal: 300, gran: 400, 'molt gran': 500 },
@@ -87,7 +92,7 @@ export const FOODS: FoodItem[] = [
     // Etiqueta real (finditapp, juliol 2026). ATENCIÓ: NO és la línia «+Proteínas»
     // — és beguda làctia ensucrada (2,3 g prot/100 ml). Va bé com a calories
     // líquides de volum; per proteïna, whey/iogurt o el batut +Proteínas escanejat.
-    id: 'milk_drink_fruit', name: 'Beguda làctia maduixa-plàtan (Mercadona)', category: 'dairy',
+    id: 'milk_drink_fruit', name: 'Beguda làctia maduixa-plàtan (Mercadona)', category: 'dairy', displayUnit: 'ml',
     kcalPer100g: 76, proteinPer100g: 2.3, carbsPer100g: 12.4, fatPer100g: 1.9,
     source: 'local_verified', confidence: 'medium', // etiqueta de marca: pot canviar de formulació
     portions: { petit: 150, normal: 250, gran: 330, 'molt gran': 500 },

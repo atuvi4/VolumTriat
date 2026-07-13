@@ -59,6 +59,8 @@ describe('adaptMealWithout — quadra kcal sense inventar', () => {
     if (res.kind === 'adapted') {
       expect(res.fromName.toLowerCase()).toContain('llet');
       expect(res.toName.toLowerCase()).toContain('iogurt');
+      expect(res.fromUnit).toBe('ml'); // la llet es mostra en ml, no en g
+      expect(res.toUnit).toBe('g');
       expect(res.toG).toBeGreaterThan(0);
       const n = previewNutrition(res.recipe);
       expect(n.kcal).toBeGreaterThan(0); // resoluble pel motor, mai inventat

@@ -1,5 +1,5 @@
 import type { CalculatedNutrition, FoodItem, MealRecipe, ResolvedMeal } from './nutritionTypes';
-import { FOODS, getFood } from './foodDatabase';
+import { displayUnitOf, FOODS, getFood } from './foodDatabase';
 
 /* =========================================================
    Meal Adapter v1 — «no tinc plàtan»: adapta un àpat planificat traient
@@ -12,7 +12,15 @@ import { FOODS, getFood } from './foodDatabase';
 export interface AdaptedMeal {
   recipe: MealRecipe;
   removedName: string;
-  changes: { name: string; fromG: number; toG: number }[];
+  changes: AdapterChange[];
+}
+
+/** Canvi de grams d'un ingredient (unit: 'ml' per a líquids, només mostra). */
+export interface AdapterChange {
+  name: string;
+  fromG: number;
+  toG: number;
+  unit?: 'g' | 'ml';
 }
 
 const DIACRITICS = new RegExp('[\\u0300-\\u036f]', 'g');
@@ -107,7 +115,7 @@ export function adaptMealWithout(meal: ResolvedMeal, missing: string): AdaptedMe
   let scaledProt = 0;
   const ingredients = remaining.map((i) => {
     const toG = Math.min(MAX_GRAMS, Math.max(5, round5(i.grams * f)));
-    changes.push({ name: i.name, fromG: Math.round(i.grams), toG });
+    changes.push({ name: i.name, fromG: Math.round(i.grams), toG, unit: displayUnitOf(i.foodId) });
     scaledKcal += (i.nutrition.kcal * toG) / i.grams;
     scaledProt += (i.nutrition.protein * toG) / i.grams;
     return { foodId: i.foodId, grams: toG, precision: 'estimated_portion' as const };
@@ -123,7 +131,7 @@ export function adaptMealWithout(meal: ResolvedMeal, missing: string): AdaptedMe
   );
   if (addition) {
     ingredients.push({ foodId: addition.foodId, grams: addition.grams, precision: 'estimated_portion' as const });
-    changes.push({ name: addition.name, fromG: 0, toG: addition.grams });
+    changes.push({ name: addition.name, fromG: 0, toG: addition.grams, unit: displayUnitOf(addition.foodId) });
   }
 
   const baseName = meal.name.replace(/\s*\((sense|amb) [^)]*\)\s*$/i, '');
@@ -146,8 +154,8 @@ const floor5 = (n: number) => Math.max(5, Math.floor(n / 5) * 5);
 
 export type LimitResult =
   /** En té prou: la recepta en demana menys del que hi ha. Res a adaptar. */
-  | { kind: 'enough'; ingredientName: string; neededG: number; haveG: number }
-  | { kind: 'adapted'; recipe: MealRecipe; limitedName: string; changes: { name: string; fromG: number; toG: number }[] };
+  | { kind: 'enough'; ingredientName: string; neededG: number; haveG: number; unit: 'g' | 'ml' }
+  | { kind: 'adapted'; recipe: MealRecipe; limitedName: string; changes: AdapterChange[] };
 
 /** Retalla un ingredient al que l'usuari té i repuja la resta per recuperar
  *  les kcal perdudes (límits de seny). Nutrició final: sempre el motor. */
@@ -157,7 +165,13 @@ export function adaptMealWithLimit(meal: ResolvedMeal, ingredientQuery: string, 
   if (!target || !target.foodId || target.grams <= 0) return null;
 
   if (availableGrams >= target.grams) {
-    return { kind: 'enough', ingredientName: target.name, neededG: Math.round(target.grams), haveG: Math.round(availableGrams) };
+    return {
+      kind: 'enough',
+      ingredientName: target.name,
+      neededG: Math.round(target.grams),
+      haveG: Math.round(availableGrams),
+      unit: displayUnitOf(target.foodId),
+    };
   }
 
   const others = meal.ingredients.filter((i) => i !== target);
@@ -168,8 +182,8 @@ export function adaptMealWithLimit(meal: ResolvedMeal, ingredientQuery: string, 
   const othersKcal = others.reduce((s, i) => s + i.nutrition.kcal, 0);
   const f = others.length && othersKcal > 0 ? Math.min(MAX_SCALE, 1 + lostKcal / othersKcal) : 1;
 
-  const changes: { name: string; fromG: number; toG: number }[] = [
-    { name: target.name, fromG: Math.round(target.grams), toG: newTargetG },
+  const changes: AdapterChange[] = [
+    { name: target.name, fromG: Math.round(target.grams), toG: newTargetG, unit: displayUnitOf(target.foodId) },
   ];
   let scaledKcal = (target.nutrition.kcal * newTargetG) / target.grams;
   let scaledProt = (target.nutrition.protein * newTargetG) / target.grams;
@@ -177,7 +191,7 @@ export function adaptMealWithLimit(meal: ResolvedMeal, ingredientQuery: string, 
     { foodId: target.foodId, grams: newTargetG, precision: 'estimated_portion' as const },
     ...others.map((i) => {
       const toG = Math.min(MAX_GRAMS, round5(i.grams * f));
-      changes.push({ name: i.name, fromG: Math.round(i.grams), toG });
+      changes.push({ name: i.name, fromG: Math.round(i.grams), toG, unit: displayUnitOf(i.foodId) });
       scaledKcal += (i.nutrition.kcal * toG) / i.grams;
       scaledProt += (i.nutrition.protein * toG) / i.grams;
       return { foodId: i.foodId, grams: toG, precision: 'estimated_portion' as const };
@@ -194,7 +208,7 @@ export function adaptMealWithLimit(meal: ResolvedMeal, ingredientQuery: string, 
   );
   if (addition) {
     ingredients.push({ foodId: addition.foodId, grams: addition.grams, precision: 'estimated_portion' as const });
-    changes.push({ name: addition.name, fromG: 0, toG: addition.grams });
+    changes.push({ name: addition.name, fromG: 0, toG: addition.grams, unit: displayUnitOf(addition.foodId) });
   }
 
   const baseName = meal.name.replace(/\s*\((sense|amb) [^)]*\)\s*$/i, '');
@@ -215,8 +229,8 @@ export function adaptMealWithLimit(meal: ResolvedMeal, ingredientQuery: string, 
 /* ---------- Afegir ingredient: «afegeix mel al berenar» ---------- */
 
 export type AddIngredientResult =
-  | { kind: 'added'; recipe: MealRecipe; name: string; grams: number }
-  | { kind: 'increased'; recipe: MealRecipe; name: string; fromG: number; toG: number };
+  | { kind: 'added'; recipe: MealRecipe; name: string; grams: number; unit: 'g' | 'ml' }
+  | { kind: 'increased'; recipe: MealRecipe; name: string; fromG: number; toG: number; unit: 'g' | 'ml' };
 
 /** Afegeix (o amplia, si ja hi és) un ingredient de la base local a l'àpat.
  *  Grams: els que digui l'usuari, o la ració «normal» de l'aliment. Sempre
@@ -245,6 +259,7 @@ export function addIngredientToMeal(meal: ResolvedMeal, query: string, grams?: n
       name: food.name,
       fromG: Math.round(present.grams),
       toG,
+      unit: food.displayUnit ?? 'g',
       recipe: {
         ...recipeBase,
         name: baseName,
@@ -261,6 +276,7 @@ export function addIngredientToMeal(meal: ResolvedMeal, query: string, grams?: n
     kind: 'added',
     name: food.name,
     grams: g,
+    unit: food.displayUnit ?? 'g',
     recipe: {
       ...recipeBase,
       name: `${baseName} (amb ${food.name.toLowerCase()})`,
@@ -294,7 +310,16 @@ export function findLocalFood(query: string): FoodItem | null {
 export type SubstituteResult =
   /** El pla ja compta exactament amb el que l'usuari té: res a canviar. */
   | { kind: 'already'; foodName: string; kcalPer100g: number; proteinPer100g: number }
-  | { kind: 'adapted'; recipe: MealRecipe; fromName: string; toName: string; fromG: number; toG: number };
+  | {
+      kind: 'adapted';
+      recipe: MealRecipe;
+      fromName: string;
+      toName: string;
+      fromG: number;
+      toG: number;
+      fromUnit: 'g' | 'ml';
+      toUnit: 'g' | 'ml';
+    };
 
 /** Substitueix un ingredient de l'àpat per la variant que l'usuari té de veritat
  *  (base local), reajustant els grams per recuperar la PROTEÏNA de l'original
@@ -338,5 +363,7 @@ export function substituteIngredientInMeal(meal: ResolvedMeal, have: string, ins
     toName: sub.name,
     fromG: Math.round(target.grams),
     toG: round5(toG),
+    fromUnit: displayUnitOf(target.foodId),
+    toUnit: sub.displayUnit ?? 'g',
   };
 }

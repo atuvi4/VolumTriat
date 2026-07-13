@@ -49,6 +49,10 @@ export interface FoodItem {
   confidence: Confidence;
   lastVerifiedAt?: string;
   isSupplement?: boolean;
+  /** Unitat de MOSTRA per a l'usuari: 'ml' per a líquids (llet, begudes).
+   *  El càlcul intern segueix en grams (densitat ≈1 per a làctics: error <3%,
+   *  molt per sota de la precisió de racions estimades). Per defecte 'g'. */
+  displayUnit?: 'g' | 'ml';
   /** grams equivalents per etiqueta de ració (opcional; si falta, s'usa el default per categoria). */
   portions?: Partial<Record<PortionLabel, number>>;
   category?: 'carb' | 'protein' | 'dairy' | 'fat' | 'fruit' | 'legume' | 'sweetener' | 'supplement' | 'other';
