@@ -207,11 +207,17 @@ export default function ManualEntrySheet({ title, sub, initial, submitLabel = 'D
 
   const save = () => {
     if (!valid) return;
+    // Els grams del compositor es conserven a la NOTA: sense això, després
+    // només queden kcal/proteïna i no recordes quant hi vas posar.
+    const gramsDetail = ingredients
+      .filter((i) => i.grams > 0)
+      .map((i) => `${i.grams} ${i.unit ?? 'g'} ${i.name.toLowerCase()}`)
+      .join(' + ');
     onSubmit({
       name: name.trim() || undefined,
       kcal: Math.round(kcalN),
       protein: Math.round(protN),
-      note: note.trim() || undefined,
+      note: [note.trim(), gramsDetail].filter(Boolean).join(' · ') || undefined,
       isShake: asShake || undefined,
       eaten: allowPending ? asEaten : undefined,
     });
