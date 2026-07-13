@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp } from '../hooks/useAppState';
 import Card from './Card';
 import Icon from './Icon';
@@ -21,33 +22,131 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   pending: { label: 'No registrat', cls: 'text-faint bg-surface2' },
 };
 
-/** Barres d'un valor per dia amb línia d'objectiu. Verd/ambre/gris. */
-function DayBars({ days, value, target, unit }: {
-  days: (DailyLog | undefined)[];
+interface TrendDay {
+  date: string;
+  log?: DailyLog;
+}
+
+/** Fila de barres CLICABLES amb línia d'objectiu. Verd/ambre/gris. */
+function BarRow({ days, value, target, height, selected, onSelect }: {
+  days: TrendDay[];
   value: (l: DailyLog) => number;
   target: (l: DailyLog) => number;
-  unit: string;
+  height: number;
+  selected: number | null;
+  onSelect: (i: number) => void;
 }) {
-  const max = Math.max(...days.map((l) => (l ? Math.max(value(l), target(l)) : 0)), 1);
+  const max = Math.max(...days.map((d) => (d.log ? Math.max(value(d.log), target(d.log)) : 0)), 1);
   return (
-    <div className="flex items-end gap-1 h-[72px]">
-      {days.map((l, i) => {
-        const v = l ? value(l) : 0;
-        const t = l ? target(l) : 0;
-        const hit = l && t > 0 && v >= t * 0.9;
+    <div className="flex items-end gap-1" style={{ height }}>
+      {days.map((d, i) => {
+        const v = d.log ? value(d.log) : 0;
+        const t = d.log ? target(d.log) : 0;
+        const hit = d.log && t > 0 && v >= t * 0.9;
         return (
-          <div key={i} className="flex-1 h-full relative flex items-end" title={l ? `${shortDate(l.date)} · ${v} ${unit}` : ''}>
-            {l && t > 0 && (
-              <span className="absolute left-0 right-0 border-t border-dashed border-faint/50" style={{ bottom: `${(t / max) * 100}%` }} />
+          <button
+            key={d.date}
+            onClick={() => onSelect(i)}
+            aria-label={`${shortDate(d.date)}: ${v}${d.log ? ` de ${t}` : ''}`}
+            aria-pressed={selected === i}
+            className={`flex-1 h-full relative flex items-end rounded-[5px] transition-colors ${
+              selected === i ? 'bg-accent-soft' : 'hover:bg-surface2'
+            }`}
+          >
+            {d.log && t > 0 && (
+              <span className="absolute left-0 right-0 border-t border-dashed border-faint/60" style={{ bottom: `${(t / max) * 100}%` }} />
             )}
-            <div
-              className={`w-full rounded-t-[4px] min-h-[2px] ${v === 0 ? 'bg-track' : hit ? 'bg-accent' : 'bg-warn/70'}`}
-              style={{ height: `${Math.max(2, (v / max) * 100)}%` }}
+            <span
+              className={`w-full rounded-t-[4px] min-h-[3px] ${
+                v === 0 ? 'bg-track' : hit ? 'bg-accent' : 'bg-warn/70'
+              } ${selected === i ? 'ring-1 ring-accent-strong' : ''}`}
+              style={{ height: `${Math.max(3, (v / max) * 100)}%` }}
             />
-          </div>
+          </button>
         );
       })}
     </div>
+  );
+}
+
+/** Gràfiques de 14 dies amb selecció: toca un dia i en veus la fitxa. */
+function TrendCharts({ days, today }: { days: TrendDay[]; today: string }) {
+  const [sel, setSel] = useState<number | null>(null);
+  const pick = (i: number) => setSel((cur) => (cur === i ? null : i));
+  const selDay = sel != null ? days[sel] : null;
+  const l = selDay?.log;
+
+  return (
+    <>
+      <div className="text-[11px] text-faint font-semibold mb-1">Calories (línia = objectiu del dia · toca un dia)</div>
+      <BarRow days={days} value={(x) => x.kcal} target={(x) => x.targetKcal} height={88} selected={sel} onSelect={pick} />
+      <div className="text-[11px] text-faint font-semibold mb-1 mt-3">Proteïna</div>
+      <BarRow days={days} value={(x) => x.protein} target={(x) => x.targetProtein} height={52} selected={sel} onSelect={pick} />
+
+      {/* Dies de la setmana + entrenament/creatina */}
+      <div className="flex gap-1 mt-1.5">
+        {days.map((d, i) => (
+          <button key={d.date} onClick={() => pick(i)} className="flex-1 flex flex-col items-center gap-1">
+            <span className={`text-[9.5px] font-bold capitalize ${d.date === today ? 'text-accent-strong' : sel === i ? 'text-ink' : 'text-faint'}`}>
+              {weekday(d.date)}
+            </span>
+            <span className={`w-2 h-2 rounded-full ${d.log?.training.done ? 'bg-accent' : 'bg-track'}`} />
+            <span className={`w-2 h-2 rounded-full ${d.log?.supplements.creatine ? 'bg-info' : 'bg-track'}`} />
+          </button>
+        ))}
+      </div>
+
+      {/* Llegenda */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10.5px] text-faint font-semibold">
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-[2px] bg-accent" /> objectiu assolit (≥90%)</span>
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-[2px] bg-warn/70" /> curt</span>
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-[2px] bg-track" /> sense dades</span>
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent" /> entrenament</span>
+        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-info" /> creatina</span>
+      </div>
+
+      {/* Fitxa del dia seleccionat */}
+      {selDay && (
+        <div className="mt-3 bg-surface2 border border-line rounded-[12px] px-3.5 py-2.5 animate-fade">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[13px] font-bold capitalize">
+              {weekday(selDay.date)} {shortDate(selDay.date)}
+              {selDay.date === today && <span className="ml-1.5 text-[10px] font-bold text-accent bg-accent-soft px-1.5 py-0.5 rounded-full">Avui</span>}
+              {l?.completed && <Icon name="checkCircle" size={14} className="inline ml-1.5 text-accent -mt-0.5" />}
+            </div>
+            <button onClick={() => setSel(null)} aria-label="Tancar" className="text-faint hover:text-ink p-1">
+              <Icon name="x" size={14} />
+            </button>
+          </div>
+          {!l ? (
+            <p className="text-[12.5px] text-muted m-0 mt-1">Sense registre aquest dia — no m'invento res.</p>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[12.5px] font-semibold tnum">
+                <span className={l.kcal >= l.targetKcal * 0.9 ? 'text-accent-strong' : l.kcal > 0 ? 'text-warn' : 'text-faint'}>
+                  {nf(l.kcal)} / {nf(l.targetKcal)} kcal ({Math.round((l.kcal / Math.max(1, l.targetKcal)) * 100)}%)
+                </span>
+                <span className={l.protein >= l.targetProtein ? 'text-accent-strong' : l.protein > 0 ? 'text-warn' : 'text-faint'}>
+                  {l.protein} / {l.targetProtein} g proteïna
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[11.5px] text-muted font-semibold">
+                <span>Entrenament {l.training.done ? '✓' : '—'}{l.training.plannedLabel ? ` (${l.training.plannedLabel})` : ''}</span>
+                <span>Creatina {l.supplements.creatine ? '✓' : '—'}</span>
+                {l.supplements.anabolicMaster && <span>Anabolic ✓</span>}
+                {l.weightKg != null && <span>{fmt1(l.weightKg)} kg</span>}
+                {l.dayMode === 'dificil' && <span>dia difícil</span>}
+                {l.dayMode === 'pocaGana' && <span>poca gana</span>}
+              </div>
+              <p className="text-[11px] text-faint m-0 mt-1.5">
+                {l.backfilled ? 'Resum reconstruït dels registres antics.' : 'El detall d\'àpats és a «Historial de dies», aquí sota.'}
+              </p>
+            </>
+          )}
+        </div>
+      )}
+      {!selDay && <p className="text-[11px] text-faint m-0 mt-2">Toca qualsevol dia per veure'n la fitxa.</p>}
+    </>
   );
 }
 
@@ -68,7 +167,10 @@ export default function HistoryPanel() {
 
   // 14 dies per a les gràfiques (buits inclosos, per veure la continuïtat real).
   const byDate = new Map(listDailyLogs(state).map((l) => [l.date, l]));
-  const last14 = Array.from({ length: 14 }, (_, i) => byDate.get(addDaysISO(todayISO(), -(13 - i))));
+  const last14: TrendDay[] = Array.from({ length: 14 }, (_, i) => {
+    const date = addDaysISO(todayISO(), -(13 - i));
+    return { date, log: byDate.get(date) };
+  });
 
   // Interpretacions honestes (orientatives, mai diagnòstic).
   const notes: string[] = [];
@@ -123,25 +225,9 @@ export default function HistoryPanel() {
         </div>
       </Card>
 
-      {/* Gràfiques 14 dies */}
+      {/* Gràfiques 14 dies (interactives: toca un dia per veure'n la fitxa) */}
       <Card title="Kcal i proteïna · 14 dies" className="mb-3.5">
-        <div className="text-[11px] text-faint font-semibold mb-1">Calories (línia = objectiu del dia)</div>
-        <DayBars days={last14} value={(l) => l.kcal} target={(l) => l.targetKcal} unit="kcal" />
-        <div className="text-[11px] text-faint font-semibold mb-1 mt-3">Proteïna</div>
-        <DayBars days={last14} value={(l) => l.protein} target={(l) => l.targetProtein} unit="g" />
-        {/* Entrenament i creatina per dia */}
-        <div className="flex gap-1 mt-3">
-          {last14.map((l, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <span className={`w-2 h-2 rounded-full ${l?.training.done ? 'bg-accent' : 'bg-track'}`} title="Entrenament" />
-              <span className={`w-2 h-2 rounded-full ${l?.supplements.creatine ? 'bg-info' : 'bg-track'}`} title="Creatina" />
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-3 mt-1.5 text-[10.5px] text-faint font-semibold">
-          <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent" /> entrenament</span>
-          <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-info" /> creatina</span>
-        </div>
+        <TrendCharts days={last14} today={state.date} />
       </Card>
 
       {/* Historial per dies amb detall */}

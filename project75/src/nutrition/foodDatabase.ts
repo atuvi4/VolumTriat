@@ -84,6 +84,15 @@ export const FOODS: FoodItem[] = [
     portions: { petit: 200, normal: 300, gran: 400, 'molt gran': 500 },
   },
   {
+    // Etiqueta real (finditapp, juliol 2026). ATENCIÓ: NO és la línia «+Proteínas»
+    // — és beguda làctia ensucrada (2,3 g prot/100 ml). Va bé com a calories
+    // líquides de volum; per proteïna, whey/iogurt o el batut +Proteínas escanejat.
+    id: 'milk_drink_fruit', name: 'Beguda làctia maduixa-plàtan (Mercadona)', category: 'dairy',
+    kcalPer100g: 76, proteinPer100g: 2.3, carbsPer100g: 12.4, fatPer100g: 1.9,
+    source: 'local_verified', confidence: 'medium', // etiqueta de marca: pot canviar de formulació
+    portions: { petit: 150, normal: 250, gran: 330, 'molt gran': 500 },
+  },
+  {
     id: 'cheese', name: 'Formatge semi', category: 'dairy',
     kcalPer100g: 350, proteinPer100g: 25, carbsPer100g: 2, fatPer100g: 27,
     source: 'local_verified', confidence: 'low', // molt variable per tipus
