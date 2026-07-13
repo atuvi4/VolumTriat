@@ -32,6 +32,14 @@ export default function CalcSheet({ meal }: { meal: ResolvedMeal }) {
         </div>
       )}
 
+      {/* Detall del que hi has posat (grams del compositor / nota teva) */}
+      {meal.logged?.note && (
+        <div className="mt-2 border border-line rounded-[14px] px-3.5 py-2.5">
+          <div className="text-[11px] font-bold tracking-[0.07em] uppercase text-faint mb-1">El que hi has posat</div>
+          <div className="text-[13.5px] font-semibold leading-relaxed">{meal.logged.note}</div>
+        </div>
+      )}
+
       {showIngredients && (
       <div className="mt-2 border border-line rounded-[14px] divide-y divide-line">
         {meal.ingredients.map((ing) => (

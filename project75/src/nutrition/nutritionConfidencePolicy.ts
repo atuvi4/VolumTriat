@@ -44,9 +44,11 @@ export type MealDataKind = 'manual_label' | 'manual' | 'purchase_estimate' | 'ca
 
 const isPurchase = (meal: ResolvedMeal) => !!meal.originNote && /compra ia/i.test(meal.originNote);
 
-/** Quina mena de dada és aquest àpat (per etiquetes de font honestes). */
+/** Quina mena de dada és aquest àpat (per etiquetes de font honestes).
+ *  `logged` present = contingut introduït per l'usuari (també si encara és
+ *  PENDENT després de compondre'l a mà): mai presentar-ho com a càlcul. */
 export function mealDataKind(meal: ResolvedMeal, status: MealStatus): MealDataKind {
-  if (status === 'changed') {
+  if (status === 'changed' || meal.logged) {
     return meal.logged?.note && /etiqueta/i.test(meal.logged.note) ? 'manual_label' : 'manual';
   }
   if (isPurchase(meal)) return 'purchase_estimate';

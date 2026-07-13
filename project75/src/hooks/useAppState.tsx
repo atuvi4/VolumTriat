@@ -405,6 +405,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (keepPending) {
           // Actualitza el CONTINGUT de l'àpat i el deixa PENDENT: no suma ni compta
           // fins que marquis «Fet». Sense outcome (encara no s'ha menjat).
+          // Es conserva `logged` (nom/nota amb els grams del compositor) perquè
+          // el detall no es perdi; com que l'estat és pending, NO compta.
           return {
             ...s,
             meals: s.meals.map((m) =>
@@ -421,7 +423,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     tags: withTags(m),
                     status: 'pending' as const,
                     done: false,
-                    logged: undefined,
+                    logged: { ...data },
                     partialPct: undefined,
                   }
                 : m,
