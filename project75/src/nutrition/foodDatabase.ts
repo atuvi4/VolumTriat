@@ -389,6 +389,40 @@ export const FOODS: FoodItem[] = [
     portions: { petit: 70, normal: 100, gran: 150, 'molt gran': 200 },
   },
 
+  /* ---- Plats quotidians (sopar de casa de veritat) ---- */
+  {
+    id: 'ravioli_cooked', name: 'Raviolis / pasta farcida (cuits)', category: 'carb',
+    kcalPer100g: 170, proteinPer100g: 7, carbsPer100g: 26, fatPer100g: 4.5, fiberPer100g: 1.5,
+    source: 'local_verified', confidence: 'low', // varia molt pel farcit (carn, formatge, espinacs)
+    portions: { petit: 150, normal: 250, gran: 320, 'molt gran': 400 },
+  },
+  {
+    id: 'llibret_pollastre', name: 'Llibret de pollastre (farcit i arrebossat)', category: 'protein',
+    servingName: '1 llibret ≈ 130 g',
+    kcalPer100g: 230, proteinPer100g: 20, carbsPer100g: 8, fatPer100g: 13,
+    source: 'local_verified', confidence: 'low', // varia per farcit i arrebossat
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 260 },
+  },
+  {
+    id: 'meatballs', name: 'Mandonguilles (amb salsa)', category: 'protein',
+    kcalPer100g: 190, proteinPer100g: 14, carbsPer100g: 6, fatPer100g: 12,
+    source: 'local_verified', confidence: 'low', // varia per carn i salsa
+    portions: { petit: 120, normal: 180, gran: 250, 'molt gran': 320 },
+  },
+  {
+    id: 'croquettes', name: 'Croquetes', category: 'protein',
+    servingName: '1 croqueta ≈ 30 g',
+    kcalPer100g: 230, proteinPer100g: 7, carbsPer100g: 20, fatPer100g: 13,
+    source: 'local_verified', confidence: 'low', // varia per farcit i fregit
+    portions: { petit: 90, normal: 150, gran: 210, 'molt gran': 270 },
+  },
+  {
+    id: 'tomato_sauce', name: 'Salsa de tomàquet / fregit', category: 'fruit',
+    kcalPer100g: 75, proteinPer100g: 1.5, carbsPer100g: 8, fatPer100g: 4,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 50, normal: 100, gran: 150, 'molt gran': 200 },
+  },
+
   /* ---- Hamburgueses i acompanyaments ---- */
   {
     id: 'burger_beef', name: 'Hamburguesa de vedella (cuita)', category: 'protein',

@@ -54,7 +54,7 @@ const MAIN_SLOTS: MealSlot[] = ['esmorzar', 'dinar', 'berenar', 'sopar'];
 const DEFAULT_TARGET_KCAL = 3000;
 
 const CARB_BASE: Record<string, string> = {
-  rice_cooked: 'arròs', rice_brown: 'arròs', pasta_cooked: 'pasta',
+  rice_cooked: 'arròs', rice_brown: 'arròs', pasta_cooked: 'pasta', ravioli_cooked: 'pasta',
   potato_cooked: 'patata', sweet_potato: 'moniato',
   bread: 'pa', bread_whole: 'pa', sliced_bread: 'pa', burger_bun: 'pa',
   oats: 'civada', couscous_cooked: 'cuscús', quinoa: 'quinoa', cereal: 'cereals',
@@ -62,9 +62,9 @@ const CARB_BASE: Record<string, string> = {
   lentils_cooked: 'llegums', chickpeas_cooked: 'llegums', white_beans: 'llegums',
 };
 const PROTEIN_SRC: Record<string, string> = {
-  chicken_breast: 'pollastre', chicken_thigh: 'pollastre', burger_chicken: 'pollastre',
+  chicken_breast: 'pollastre', chicken_thigh: 'pollastre', burger_chicken: 'pollastre', llibret_pollastre: 'pollastre',
   turkey_breast: 'gall dindi',
-  beef_lean: 'vedella', beef_steak: 'vedella', beef_mince_cooked: 'carn picada', burger_beef: 'vedella',
+  beef_lean: 'vedella', beef_steak: 'vedella', beef_mince_cooked: 'carn picada', burger_beef: 'vedella', meatballs: 'carn picada',
   pork_loin: 'porc', ham_cured: 'pernil', ham_cooked: 'pernil',
   tuna_can: 'tonyina', salmon: 'salmó', white_fish: 'peix blanc', sardines: 'sardines', prawns: 'marisc',
   egg: 'ous', egg_white: 'ous',

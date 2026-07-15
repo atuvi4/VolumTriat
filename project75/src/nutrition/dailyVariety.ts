@@ -24,7 +24,7 @@ interface ThemeDef {
 }
 
 const THEMES: Record<Theme, ThemeDef> = {
-  pasta: { keywords: ['pasta', 'macarr', 'espagueti', 'tallarin', 'fideu', 'noodle', 'lasany', 'canelo'], foodIds: ['pasta_cooked'], warn: 'strong', label: 'pasta', suggest: 'arròs, patata o ous' },
+  pasta: { keywords: ['pasta', 'macarr', 'espagueti', 'tallarin', 'fideu', 'noodle', 'lasany', 'canelo', 'ravioli', 'tortellini'], foodIds: ['pasta_cooked', 'ravioli_cooked'], warn: 'strong', label: 'pasta', suggest: 'arròs, patata o ous' },
   rice: { keywords: ['arros', 'rice', 'risotto', 'sushi'], foodIds: ['rice_cooked', 'rice_ready', 'rice_brown'], warn: 'soft', label: 'arròs', suggest: 'pasta, patata o llegums' },
   potato: { keywords: ['patata', 'potato'], foodIds: ['potato_cooked', 'potato_ready'], warn: 'soft', label: 'patata', suggest: 'arròs, pasta o llegums' },
   bread: { keywords: ['pa', 'pan', 'bread', 'entrepa', 'bocata', 'bocadillo', 'sandwich', 'torrad', 'tostad', 'baguet'], foodIds: ['bread', 'bread_whole', 'sliced_bread', 'burger_bun'], warn: 'strong', label: 'pa', suggest: 'civada o fruita' },
@@ -33,7 +33,7 @@ const THEMES: Record<Theme, ThemeDef> = {
   shake: { keywords: ['batut', 'shake', 'batido', 'smoothie', 'whey'], foodIds: ['protein_shake', 'whey'], warn: 'soft', label: 'batut', suggest: 'un àpat sòlid' },
   milk: { keywords: ['llet', 'leche', 'milk'], foodIds: ['milk_whole', 'milk'], warn: 'soft', label: 'llet', suggest: 'aigua o iogurt' },
   tuna: { keywords: ['tonyina', 'atun', 'tuna'], foodIds: ['tuna_can'], warn: 'soft', label: 'tonyina', suggest: 'pollastre o ous' },
-  chicken: { keywords: ['pollastre', 'pollo', 'chicken', 'pechuga'], foodIds: ['chicken_breast', 'chicken_ready', 'chicken_thigh', 'burger_chicken'], warn: 'soft', label: 'pollastre', suggest: 'tonyina, ous o llegums' },
+  chicken: { keywords: ['pollastre', 'pollo', 'chicken', 'pechuga', 'llibret'], foodIds: ['chicken_breast', 'chicken_ready', 'chicken_thigh', 'burger_chicken', 'llibret_pollastre'], warn: 'soft', label: 'pollastre', suggest: 'tonyina, ous o llegums' },
   egg: { keywords: ['ou', 'ous', 'huevo', 'egg', 'eggs', 'truita', 'tortilla'], foodIds: ['egg', 'eggs_boiled'], warn: 'soft', label: 'ous', suggest: 'tonyina o pollastre' },
   legumes: { keywords: ['llenti', 'lenteja', 'lentil', 'cigro', 'garbanzo', 'chickpea', 'mongeta', 'judia', 'llegum', 'fesol'], foodIds: ['lentils_cooked', 'chickpeas_cooked', 'lentils_can', 'white_beans'], warn: 'soft', label: 'llegums', suggest: 'pollastre o peix' },
   salmon: { keywords: ['salmo', 'salmon'], foodIds: ['salmon'], warn: 'soft', label: 'salmó', suggest: 'pollastre o ous' },

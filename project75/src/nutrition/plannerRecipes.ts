@@ -400,6 +400,42 @@ export const PLANNER_POOL: MealRecipe[] = [
       { foodId: 'olive_oil', grams: 12, portionLabel: 'normal', precision: P },
     ],
   },
+  {
+    id: 'w-raviolis-tomaquet', slot: 'sopar', slots: ['dinar'], name: 'Raviolis amb salsa de tomàquet i formatge', tags: ['homemade', 'quick'],
+    ingredients: [
+      { foodId: 'ravioli_cooked', grams: 300, portionLabel: 'gran', precision: P },
+      { foodId: 'tomato_sauce', grams: 100, portionLabel: 'normal', precision: P },
+      { foodId: 'cheese', grams: 25, portionLabel: 'normal', precision: P },
+    ],
+  },
+  {
+    id: 'w-llibret-patata', slot: 'sopar', slots: ['dinar'], name: 'Llibret de pollastre + patata + amanida', tags: ['high_protein', 'homemade'],
+    ingredients: [
+      { foodId: 'llibret_pollastre', grams: 180, portionLabel: 'normal', precision: P },
+      { foodId: 'potato_cooked', grams: 250, portionLabel: 'normal', precision: P },
+      { foodId: 'lettuce', grams: 40, portionLabel: 'normal', precision: P },
+      { foodId: 'tomato', grams: 80, portionLabel: 'petit', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
+    ],
+  },
+  {
+    id: 'w-mandonguilles-arros', slot: 'dinar', slots: ['sopar'], name: 'Mandonguilles amb salsa i arròs', tags: ['high_protein', 'homemade'],
+    ingredients: [
+      { foodId: 'meatballs', grams: 200, portionLabel: 'gran', precision: P },
+      { foodId: 'rice_cooked', grams: 220, portionLabel: 'petit', precision: P },
+      { foodId: 'vegetables', grams: 100, portionLabel: 'petit', precision: P },
+    ],
+  },
+  {
+    id: 'w-croquetes-amanida', slot: 'sopar', name: 'Croquetes + amanida completa', tags: ['homemade'],
+    ingredients: [
+      { foodId: 'croquettes', grams: 180, portionLabel: 'normal', precision: P },
+      { foodId: 'lettuce', grams: 50, portionLabel: 'normal', precision: P },
+      { foodId: 'tomato', grams: 120, portionLabel: 'normal', precision: P },
+      { foodId: 'egg', grams: 100, portionLabel: 'normal', precision: P },
+      { foodId: 'olive_oil', grams: 10, portionLabel: 'petit', precision: P },
+    ],
+  },
 
   /* ---------------- BERENARS / SNACKS ---------------- */
   {
