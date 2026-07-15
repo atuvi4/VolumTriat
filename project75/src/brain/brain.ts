@@ -29,9 +29,37 @@ export function appendOutcome(outcomes: MealOutcome[], o: MealOutcome): MealOutc
   return [...outcomes, o].slice(-MAX_OUTCOMES);
 }
 
+const daysBetweenISO = (a: string, b: string) =>
+  Math.round((new Date(b + 'T00:00:00').getTime() - new Date(a + 'T00:00:00').getTime()) / 86400000);
+
+/** Dates en què cada àpat (per nom) es va menjar de veritat (done/partial). */
+function eatenDatesByMeal(outcomes: MealOutcome[]): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const o of outcomes) {
+    if (!o.mealName || (o.action !== 'done' && o.action !== 'partial')) continue;
+    const arr = map.get(o.mealName) ?? [];
+    arr.push(o.date);
+    map.set(o.mealName, arr);
+  }
+  return map;
+}
+
+/** Canviar/saltar un àpat que havies MENJAT fa 1-3 dies és, molt probablement,
+ *  fatiga de repetició ("estic cansat de menjar-lo"), NO aversió. Aquests
+ *  events pesen la meitat: el plat no ha de quedar vetat, només descansar. */
+function isRepetitionFatigue(o: MealOutcome, eatenByMeal: Map<string, string[]>): boolean {
+  const dates = eatenByMeal.get(o.mealName) ?? [];
+  return dates.some((d) => {
+    const diff = daysBetweenISO(d, o.date);
+    return diff >= 1 && diff <= 3;
+  });
+}
+
 /** Preferències agregades per àpat (nom + slot). */
 export function foodPreferences(outcomes: MealOutcome[]): FoodPreference[] {
+  const eatenByMeal = eatenDatesByMeal(outcomes);
   const map = new Map<string, FoodPreference>();
+  const penalty = new Map<string, number>(); // pes efectiu de saltats/canviats (fatiga = ×0.5)
   for (const o of outcomes) {
     if (!o.mealName) continue;
     const key = `${o.slot}::${o.mealName}`;
@@ -39,13 +67,16 @@ export function foodPreferences(outcomes: MealOutcome[]): FoodPreference[] {
       map.get(key) ??
       { key: o.mealName, slot: o.slot, doneCount: 0, skippedCount: 0, changedCount: 0, dislikedCount: 0, score: 0 };
     if (o.action === 'done') p.doneCount++;
-    else if (o.action === 'skipped') p.skippedCount++;
-    else if (o.action === 'changed') p.changedCount++;
-    else if (o.action === 'disliked') p.dislikedCount++;
+    else if (o.action === 'skipped' || o.action === 'changed') {
+      if (o.action === 'skipped') p.skippedCount++;
+      else p.changedCount++;
+      const w = (o.action === 'skipped' ? 1 : 1.5) * (isRepetitionFatigue(o, eatenByMeal) ? 0.5 : 1);
+      penalty.set(key, (penalty.get(key) ?? 0) + w);
+    } else if (o.action === 'disliked') p.dislikedCount++;
     map.set(key, p);
   }
-  for (const p of map.values()) {
-    p.score = p.doneCount * 2 - p.skippedCount - p.changedCount * 1.5 - p.dislikedCount * 3;
+  for (const [key, p] of map.entries()) {
+    p.score = p.doneCount * 2 - (penalty.get(key) ?? 0) - p.dislikedCount * 3;
   }
   return [...map.values()];
 }
@@ -190,6 +221,13 @@ export function brainInsights(state: AppState): string[] {
       /batut/i.test(o.mealName),
   ).length;
   if (shakeLowApp >= 2) out.push('Els batuts et funcionen en dies de poca gana.');
+
+  // Fatiga de repetició: canvies/saltes plats que havies menjat feia pocs dies.
+  const eatenByMeal = eatenDatesByMeal(outcomes);
+  const fatigueEvents = outcomes.filter(
+    (o) => (o.action === 'changed' || o.action === 'skipped') && isRepetitionFatigue(o, eatenByMeal),
+  ).length;
+  if (fatigueEvents >= 2) out.push('Quan un plat es repeteix pocs dies després, el sols canviar: el menú ara rota més.');
 
   // Preferit repetit.
   if (profile.preferredMeals.length) out.push(`Repeteixes sovint «${profile.preferredMeals[0]}».`);

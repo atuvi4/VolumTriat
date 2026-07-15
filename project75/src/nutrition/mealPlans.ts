@@ -1,4 +1,5 @@
 import type { MealRecipe, MealSlot } from './nutritionTypes';
+import { PLANNER_POOL } from './plannerRecipes';
 
 /* Àpats definits per INGREDIENTS (grams). La nutrició la calcula el motor.
    precision:
@@ -246,21 +247,27 @@ export function slotMatchesRecipe(r: MealRecipe, slot: MealSlot): boolean {
 }
 
 /** Alternatives per "Canviar" un àpat: específiques del slot, excloent la recepta
- *  actual i el que s'ha marcat com "no em ve de gust". Ordre estable (slot
- *  principal primer) — sense atzar per render. */
+ *  actual i el que s'ha marcat com "no em ve de gust". Inclou també el pool del
+ *  Weekly Planner (receptes reals: curry, wok, fajitas…) sense duplicar per nom.
+ *  Ordre estable (slot principal primer) — sense atzar per render. */
 export function swapOptionsFor(
   meal: { slot: MealSlot; name: string; recipeId?: string },
   dislikes: string[] = [],
 ): MealRecipe[] {
   const disliked = (name: string) =>
     dislikes.some((d) => d && name.toLowerCase().includes(d.toLowerCase()));
-  return RECIPE_POOL.filter(
-    (r) =>
-      slotMatchesRecipe(r, meal.slot) &&
-      r.id !== meal.recipeId &&
-      r.name !== meal.name &&
-      !disliked(r.name),
-  ).sort((a, b) => Number(b.slot === meal.slot) - Number(a.slot === meal.slot));
+  const seen = new Set<string>();
+  return [...RECIPE_POOL, ...PLANNER_POOL]
+    .filter((r) => {
+      if (!slotMatchesRecipe(r, meal.slot) || r.id === meal.recipeId || r.name === meal.name || disliked(r.name)) {
+        return false;
+      }
+      const key = r.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => Number(b.slot === meal.slot) - Number(a.slot === meal.slot));
 }
 
 /** Batuts d'alta densitat (rescat, afegir batut). */

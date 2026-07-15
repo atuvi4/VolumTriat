@@ -1,5 +1,5 @@
 import type { WeeklyMenu } from './weeklyPlanner';
-import { PLANNER_BY_ID } from './weeklyPlanner';
+import { PLANNER_BY_ID, proteinOf } from './weeklyPlanner';
 import { getFood } from './foodDatabase';
 
 /* Preparació setmanal, llista de compra i batch cooking a partir del menú.
@@ -117,13 +117,34 @@ export function weeklyPrepSuggestions(week: WeeklyMenu): string[] {
   return out;
 }
 
-/** Notes curtes de batch cooking. */
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Notes curtes de batch cooking. Filosofia: MATEIX ingredient, receptes
+ *  DIFERENTS — si una proteïna surt diversos cops a la setmana, es cuina una
+ *  sola tanda i es transforma en plats distints, mai el mateix plat repetit. */
 export function batchCookingNotes(week: WeeklyMenu): string[] {
   const ids = presentFoodIds(week);
-  const notes: string[] = [
-    'Cuina en tandes 2-3 cops per setmana; no cal cuinar cada dia.',
-    'Reaprofita restes amb criteri: canvia guarnició o proteïna per no repetir plat idèntic.',
-  ];
+  const notes: string[] = ['Cuina en tandes 2-3 cops per setmana; no cal cuinar cada dia.'];
+
+  const byProtein = new Map<string, Set<string>>();
+  for (const day of week.days) {
+    for (const m of day.meals) {
+      if (m.slot !== 'dinar' && m.slot !== 'sopar') continue;
+      const r = PLANNER_BY_ID[m.recipeId];
+      const ps = r ? proteinOf(r) : null;
+      if (!ps) continue;
+      const set = byProtein.get(ps) ?? new Set<string>();
+      set.add(m.name);
+      byProtein.set(ps, set);
+    }
+  }
+  for (const [prot, recipes] of byProtein) {
+    if (recipes.size >= 2) {
+      notes.push(`${cap(prot)}: una sola tanda, plats diferents → ${[...recipes].join(' · ')}.`);
+    }
+  }
+
+  notes.push('Reaprofita restes amb criteri: canvia guarnició o proteïna per no repetir plat idèntic.');
   if (ids.has('salmon')) notes.push('El peix (salmó) millor fresc del dia o congelat; cuina’l a prop de menjar-lo.');
   return notes;
 }

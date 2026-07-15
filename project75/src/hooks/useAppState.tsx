@@ -10,7 +10,7 @@ import {
 } from 'react';
 import type { AppState, CheckIn, Goal, PersonalIngredient, PersonalItem, Profile, Ritme, SavedProduct, Tab } from '../types';
 import { computeTargets } from '../nutrition/nutritionTargets';
-import { generateWeeklyMenu, regenerateDayInWeek, buildDayMealsFromPlan, type WeeklyMenu } from '../nutrition/weeklyPlanner';
+import { generateWeeklyMenu, regenerateDayInWeek, buildDayMealsFromPlan, buildFallbackDayMeals, getPlannedDay, type WeeklyMenu } from '../nutrition/weeklyPlanner';
 import type { AdjustContext, ManualLog, MealRecipe, MealSlot, ResolvedMeal } from '../nutrition/nutritionTypes';
 import type { PurchaseMealSnapshot } from '../nutrition/mealPurchaseAI';
 import { DEFAULT_PROFILE } from '../data/program';
@@ -38,9 +38,15 @@ function buildDayMeals(): ResolvedMeal[] {
   return defaultDayRecipes().map((r) => resolveRecipe(r, { id: `day-${r.slot}`, done: false }));
 }
 
-/** Àpats d'un dia: del pla setmanal si el conté, si no del pla base. */
-function dayMealsFor(dateISO: string, plan?: WeeklyMenu): ResolvedMeal[] {
-  return buildDayMealsFromPlan(plan, dateISO) ?? buildDayMeals();
+/** Àpats d'un dia: del pla setmanal si el conté; si no, un dia VARIAT i
+ *  determinista per data (rotació setmanal del planner), mai el mateix menú
+ *  fix cada dia. */
+function dayMealsFor(
+  dateISO: string,
+  plan?: WeeklyMenu,
+  opts?: { dislikes?: string[]; targetKcal?: number; targetProtein?: number },
+): ResolvedMeal[] {
+  return buildDayMealsFromPlan(plan, dateISO) ?? buildFallbackDayMeals(dateISO, opts);
 }
 
 /** Reset diari en canviar de dia (única lògica, usada en carregar i amb l'app
@@ -52,12 +58,20 @@ function rolloverToToday(s: AppState): AppState {
   // History v1: congela el dia que s'acaba (amb el seu estat FINAL: àpats,
   // extres, objectius del dia, mode, entrenament) abans de resetejar res.
   const history = pruneHistory({ ...(s.history ?? {}), [s.date]: buildDailyLog(s) });
+  const planOpts = { dislikes: s.dislikes, targetKcal: s.profile.kcalGoal, targetProtein: s.profile.protGoal };
+  // Weekly Planner: si tenies pla setmanal però ja no cobreix avui (setmana
+  // nova), es renova automàticament — la varietat no s'atura diumenge.
+  const weeklyPlan =
+    s.weeklyPlan && !getPlannedDay(s.weeklyPlan, todayISO())
+      ? generateWeeklyMenu({ startDate: todayISO(), ...planOpts })
+      : s.weeklyPlan;
   return {
     ...s,
     history,
     date: todayISO(),
     streak: keepStreak ? s.streak : 0,
-    meals: dayMealsFor(todayISO(), s.weeklyPlan),
+    weeklyPlan,
+    meals: dayMealsFor(todayISO(), weeklyPlan, planOpts),
     gymDone: false,
     checkin: null,
     dayMode: 'normal',
@@ -219,7 +233,9 @@ function loadState(userId: string | null): AppState {
     s.history = s.history ?? backfillHistoryFromOutcomes(s);
     if (s.date !== todayISO()) s = rolloverToToday(s);
     if (!Array.isArray(s.meals) || s.meals.some((m) => !m || !m.nutrition)) {
-      s.meals = dayMealsFor(todayISO(), s.weeklyPlan);
+      s.meals = dayMealsFor(todayISO(), s.weeklyPlan, {
+        dislikes: s.dislikes, targetKcal: s.profile.kcalGoal, targetProtein: s.profile.protGoal,
+      });
     }
     s.meals = repairMealSlots(s.meals); // corregeix slots antics (sopar marcat com dinar, etc.)
     s.completedDates = s.completedDates ?? [];

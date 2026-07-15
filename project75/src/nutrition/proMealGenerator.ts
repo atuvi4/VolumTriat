@@ -1,5 +1,6 @@
 import type { MealRecipe, MealSlot } from './nutritionTypes';
 import { RECIPE_POOL, SHAKE_RECIPES, NOCOOK_RECIPES, slotMatchesRecipe } from './mealPlans';
+import { PLANNER_POOL } from './plannerRecipes';
 import { previewNutrition } from './mealBuilder';
 import { recipeScore } from '../brain/brain';
 import type { MealOutcome } from '../brain/brainTypes';
@@ -60,8 +61,9 @@ export function generateMealOptionsPro(input: ProMealInput): MealRecipe[] {
   const noCook = constraints.some((c) => /no.?cook|cuinar/i.test(c));
   const disliked = (name: string) => dislikes.some((d) => d && name.toLowerCase().includes(d.toLowerCase()));
 
-  // 1) Base de plantilles del slot + reforços segons context.
-  let pool: MealRecipe[] = RECIPE_POOL.filter((r) => slotMatchesRecipe(r, slot));
+  // 1) Base de plantilles del slot (inclou el pool ampli del Weekly Planner:
+  //    receptes reals amb més rotació de proteïnes i hidrats) + reforços.
+  let pool: MealRecipe[] = [...RECIPE_POOL, ...PLANNER_POOL].filter((r) => slotMatchesRecipe(r, slot));
   if (slot === 'snack' || slot === 'berenar' || lowApp) pool = [...pool, ...SHAKE_RECIPES];
   if (noCook) pool = [...pool, ...NOCOOK_RECIPES.filter((r) => slotMatchesRecipe(r, slot))];
   pool = dedupById(pool).filter((r) => !disliked(r.name));

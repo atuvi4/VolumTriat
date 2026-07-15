@@ -463,6 +463,19 @@ export const FOODS: FoodItem[] = [
 
   /* ---- Altres bàsics habituals ---- */
   {
+    id: 'rice_cream', name: "Crema d'arròs (farina, en sec)", category: 'carb',
+    kcalPer100g: 366, proteinPer100g: 6.5, carbsPer100g: 80, fatPer100g: 1.4, fiberPer100g: 2,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 40, normal: 60, gran: 80, 'molt gran': 100 },
+  },
+  {
+    id: 'tortilla_wrap', name: 'Tortilla de blat (wrap)', category: 'carb',
+    servingName: '1 tortilla ≈ 60 g',
+    kcalPer100g: 300, proteinPer100g: 8, carbsPer100g: 50, fatPer100g: 7, fiberPer100g: 3,
+    source: 'local_verified', confidence: 'low', // varia per marca i mida
+    portions: { petit: 60, normal: 120, gran: 180, 'molt gran': 240 },
+  },
+  {
     id: 'rice_brown', name: 'Arròs integral cuit', category: 'carb',
     kcalPer100g: 112, proteinPer100g: 2.6, carbsPer100g: 24, fatPer100g: 0.9, fiberPer100g: 1.8,
     source: 'local_verified', confidence: 'medium',
