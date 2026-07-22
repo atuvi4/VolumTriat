@@ -528,6 +528,44 @@ export const FOODS: FoodItem[] = [
     source: 'local_verified', confidence: 'low',
     portions: { petit: 25, normal: 40, gran: 60, 'molt gran': 90 },
   },
+
+  /* ---- Snacks de cinema / fora de casa ---- */
+  {
+    id: 'popcorn_cinema', name: 'Crispetes de cinema (salades, amb oli/mantega)', category: 'carb',
+    kcalPer100g: 480, proteinPer100g: 7, carbsPer100g: 55, fatPer100g: 27, fiberPer100g: 9,
+    source: 'local_verified', confidence: 'low', // varia molt per sala: oli, mantega, sal
+    portions: { petit: 40, normal: 70, gran: 100, 'molt gran': 140 },
+  },
+  {
+    id: 'popcorn_sweet', name: 'Crispetes dolces (caramel)', category: 'carb',
+    kcalPer100g: 430, proteinPer100g: 4, carbsPer100g: 78, fatPer100g: 13, fiberPer100g: 6,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 40, normal: 70, gran: 100, 'molt gran': 140 },
+  },
+  {
+    id: 'nachos_cheese', name: 'Nachos amb formatge fos', category: 'carb',
+    kcalPer100g: 330, proteinPer100g: 7, carbsPer100g: 35, fatPer100g: 18, fiberPer100g: 3,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 100, normal: 150, gran: 200, 'molt gran': 280 },
+  },
+  {
+    id: 'cola_drink', name: 'Refresc de cola', category: 'sweetener', displayUnit: 'ml',
+    kcalPer100g: 42, proteinPer100g: 0, carbsPer100g: 10.6, fatPer100g: 0,
+    source: 'local_verified', confidence: 'medium',
+    portions: { petit: 250, normal: 400, gran: 500, 'molt gran': 700 },
+  },
+  {
+    id: 'ice_cream', name: 'Gelat (tallarina / cucurutxo)', category: 'dairy',
+    kcalPer100g: 207, proteinPer100g: 3.5, carbsPer100g: 24, fatPer100g: 11, fiberPer100g: 0.7,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 60, normal: 90, gran: 130, 'molt gran': 180 },
+  },
+  {
+    id: 'candy_mix', name: 'Dolços de cinema (gominoles / xocolata)', category: 'sweetener',
+    kcalPer100g: 400, proteinPer100g: 3, carbsPer100g: 70, fatPer100g: 12,
+    source: 'local_verified', confidence: 'low',
+    portions: { petit: 30, normal: 50, gran: 80, 'molt gran': 120 },
+  },
 ];
 
 export const FOOD_MAP: Record<string, FoodItem> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
